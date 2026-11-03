@@ -1,0 +1,9 @@
+node_modules/
+lib/
+coverage/
+.DS_Store
+*.tsbuildinfo
+.tmp-dsh-home/
+.pnpm-store/
+.npm-cache/
+docs/

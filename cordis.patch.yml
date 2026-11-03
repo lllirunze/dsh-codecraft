@@ -1,0 +1,12 @@
+# dsh-codecraft bundle patch
+#
+# The official plugin command appends this bundle to the profile's bundle stack:
+#
+#   dsh plugin --profile desktop add /path/to/dsh-codecraft
+#
+# Boot then merges this layer, mounting the Host half of the plugin (the
+# authenticated save route). The browser half is discovered from
+# package.json's `dsh.client` declaration.
+- insert:
+    - id: codecraft
+      name: dsh-codecraft
