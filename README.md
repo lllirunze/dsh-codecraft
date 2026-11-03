@@ -2,7 +2,7 @@
 
 Edit source and text files directly in DSH's native file tabs with CodeMirror 6.
 
-[Simplified Chinese](README.zh-CN.md)
+[中文](README.zh-CN.md)
 
 > **Status:** v0.1.0 is under pre-release validation. The implementation and automated checks are complete, but real DSH Desktop interaction still requires final manual acceptance.
 
