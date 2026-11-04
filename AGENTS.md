@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`src/index.ts` is the DSH host entry point. Host-side filesystem and HTTP logic lives in `src/host/`; shared request and response types live in `src/protocol.ts`. The browser entry point is `src/client/index.tsx`, with editor, API, theme, locale, and draft helpers alongside it in `src/client/`. Tests are flat under `tests/` and generally mirror the module name, such as `tests/files.test.ts`. Build scripts live in `scripts/`, CI workflows in `.github/workflows/`, and generated package output in `lib/`. Do not edit `lib/` by hand.
+`src/index.ts` is the DSH host entry point. Host-side filesystem and HTTP logic lives in `src/host/`; shared request and response types live in `src/protocol.ts`. The browser entry point is `src/client/index.tsx`. Client lifecycle and native-tab integration live in `src/client/core/` and `src/client/renderer/`; shared CodeMirror extensions, document state, and language selection live in `src/client/editor/`, `src/client/document/`, and `src/client/languages/`. Tests are flat under `tests/` and generally mirror the module name, such as `tests/files.test.ts`. Build scripts live in `scripts/`, CI workflows in `.github/workflows/`, and generated output in `lib/`. Do not edit `lib/` by hand.
 
 ## Build, Test, and Development Commands
 

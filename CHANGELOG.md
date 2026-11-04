@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] - 2026-11-04
+
+### Changed
+
+- Separated plugin lifecycle, native-tab rendering, editor composition, document state, and language selection into focused client modules.
+- Centralized shared CodeMirror bracket, completion, folding, and indentation extensions.
+- Replaced the language switch with a duplicate-safe adapter registry and conservative base adapter.
+- Extracted draft restoration, external-change decisions, and save reconciliation into testable document functions.
+
+### Quality
+
+- Added regression coverage for language registration, project-root defaults, draft restoration, disk changes, and edits made while saving.
+- Preserved the v0.1.0 host protocol, checked atomic saves, native-tab integration, and macOS-only compatibility policy.
+
+### Notes
+
+- This release does not add LSP support, project indexing, language-specific intelligent completion, or autosave.
+- Automated validation passes; native DSH Desktop regression testing remains manual.
+
 ## [0.1.0] - 2026-11-03
 
 ### Added

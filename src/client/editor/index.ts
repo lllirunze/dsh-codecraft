@@ -9,25 +9,12 @@
  */
 
 import {
-  autocompletion,
-  closeBrackets,
-  closeBracketsKeymap,
-  completionKeymap,
-} from '@codemirror/autocomplete'
-import {
   defaultKeymap,
   history,
   historyKeymap,
   indentWithTab,
   toggleComment,
 } from '@codemirror/commands'
-import {
-  bracketMatching,
-  foldGutter,
-  foldKeymap,
-  indentOnInput,
-  indentUnit,
-} from '@codemirror/language'
 import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search'
 import { EditorState, type Compartment, type Extension } from '@codemirror/state'
 import {
@@ -42,14 +29,13 @@ import {
   rectangularSelection,
   type ViewUpdate,
 } from '@codemirror/view'
-import type { IndentStyle } from '../protocol.js'
-import type { FileLanguage } from './languages.js'
-import { editorThemeExtensions } from './theme.js'
-
-/** Whether the live editor contains changes beyond one saved snapshot. */
-export function differsFromSavedText(currentText: string, savedText: string): boolean {
-  return currentText.length !== savedText.length || currentText !== savedText
-}
+import type { IndentStyle } from '../../protocol.js'
+import type { FileLanguage } from '../languages/index.js'
+import { editorThemeExtensions } from '../theme.js'
+import { bracketExtensions } from './extensions/brackets.js'
+import { completionExtensions } from './extensions/completion.js'
+import { foldingExtensions } from './extensions/folding.js'
+import { indentationExtensions } from './extensions/indentation.js'
 
 export interface EditorOptions {
   language: FileLanguage
@@ -74,36 +60,29 @@ export function setEditorReadOnly(view: EditorView, compartment: Compartment, re
 
 /** Build the full extension set for one editor instance. */
 export function buildEditorExtensions(options: EditorOptions): Extension[] {
-  const unit = options.indent.kind === 'tabs' ? '\t' : ' '.repeat(options.indent.size)
   return [
     lineNumbers(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),
     history(),
-    foldGutter(),
+    ...foldingExtensions(),
     drawSelection(),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
-    indentOnInput(),
-    bracketMatching(),
-    closeBrackets(),
-    autocompletion(),
+    ...indentationExtensions(options.indent),
+    ...bracketExtensions(),
+    ...completionExtensions(),
     rectangularSelection(),
     highlightActiveLine(),
     highlightSelectionMatches(),
     search({ top: true }),
     keymap.of([
       { key: 'Mod-/', run: toggleComment },
-      ...closeBracketsKeymap,
       ...defaultKeymap,
       ...searchKeymap,
       ...historyKeymap,
-      ...foldKeymap,
-      ...completionKeymap,
       indentWithTab,
     ]),
-    EditorState.tabSize.of(options.indent.size),
-    indentUnit.of(unit),
     EditorView.updateListener.of(options.onUpdate),
     options.readOnlyCompartment.of(readOnlyExtensions(options.readOnly)),
     options.language.support ?? [],

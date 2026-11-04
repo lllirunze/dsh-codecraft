@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Draft; source review and implementation validation pending |
+| Status | Implemented; automated validation passed, Desktop regression pending |
 | Target version | 0.1.1 |
 | Baseline | 0.1.0 |
 | Platform | DSH Desktop on macOS |
@@ -40,24 +40,24 @@ renderer -> editor + document -> host adapter
 - `host/` wraps verified DSH APIs and controlled filesystem access without UI logic.
 - `languages/<name>/` owns only file recognition, project-root discovery, environment detection, and truly language-specific behavior. Language modules must not depend on one another or implement their own save path.
 
-## Target Structure
+## Implemented Structure
 
 The structure is a logical destination, not a requirement to create empty files or directories:
 
 ```text
 src/
-├── core/                 # plugin lifecycle and composition
-├── renderer/             # native-tab renderer integration
-├── editor/               # CodeMirror setup, extensions, and theme
-├── languages/
-│   ├── base/             # minimal adapter contract and defaults
-│   └── registry.ts       # adapter registration and selection
-├── document/             # state, drafts, saves, and conflicts
-├── host/                 # DSH APIs and controlled file service
-└── settings/             # create only when real settings exist
+├── client/
+│   ├── core/             # plugin lifecycle and composition
+│   ├── renderer/         # native-tab renderer integration
+│   ├── editor/           # CodeMirror setup and shared extensions
+│   ├── languages/
+│   │   ├── base/         # minimal adapter contract and defaults
+│   │   └── registry.ts   # adapter registration and selection
+│   └── document/         # state, save reconciliation, and conflicts
+└── host/                 # DSH APIs and controlled file service
 ```
 
-Migration should remain proportional to the current codebase. Do not create placeholder language directories or an empty `lsp/` subsystem.
+The implementation remains proportional to the current codebase. It does not create placeholder language directories, a settings directory without settings, or an empty `lsp/` subsystem.
 
 ## Minimal Language Contract
 

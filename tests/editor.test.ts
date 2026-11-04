@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { differsFromSavedText } from '../src/client/editor.js'
+import { differsFromSavedText } from '../src/client/document/state.js'
 
 describe('differsFromSavedText', () => {
   it('keeps edits made while an older snapshot is being saved dirty', () => {

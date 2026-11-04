@@ -11,25 +11,27 @@
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
-import { ApiCallError, readFile, saveFile, statFile } from './api.js'
-import { fileNameOf, parseSessionFileAddress } from './address.js'
-import { drafts } from './drafts.js'
+import { ApiCallError, readFile, saveFile, statFile } from '../api.js'
+import { fileNameOf, parseSessionFileAddress } from '../address.js'
+import { drafts } from '../drafts.js'
 import {
   applyTextPreservingSelection,
   buildEditorExtensions,
   cursorPosition,
-  differsFromSavedText,
   revealLine,
   setEditorReadOnly,
-} from './editor.js'
-import { languageForFile } from './languages.js'
-import { ROOT_CLASS } from './theme.js'
-import type { DocumentBodyProps, RendererRequest } from './dsh.js'
+} from '../editor/index.js'
+import { languageForFile } from '../languages/index.js'
+import { ROOT_CLASS } from '../theme.js'
+import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
+import { assessDiskChange } from '../document/conflicts.js'
+import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
+import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import type {
   IndentStyle,
   TextFileSnapshot,
   UnsupportedFileSnapshot,
-} from '../protocol.js'
+} from '../../protocol.js'
 
 type Phase = 'loading' | 'editing' | 'notice' | 'error'
 type Status = 'idle' | 'saving' | 'saved' | 'error'
@@ -280,23 +282,20 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const view = viewRef.current
     if (view === null) {
       const draft = drafts.get(fileAddress)
-      const useDraft = draft !== undefined && draft.content !== snapshot.content
-      const text = useDraft ? draft.content : snapshot.content
-      savedTextRef.current = snapshot.content
-      baseVersionRef.current = useDraft ? draft.baseVersion : snapshot.version
-      newlineRef.current = useDraft ? draft.newline : snapshot.newline
-      bomRef.current = useDraft ? draft.bom : snapshot.bom
-      dirtyRef.current = useDraft
-      setDirty(useDraft)
-      setExternal(useDraft && draft.baseVersion !== snapshot.version)
-      setConflict(useDraft
-        ? { kind: draft.baseVersion !== snapshot.version ? 'external' : 'restored' }
-        : null)
+      const initial = initialDocumentState(snapshot, draft)
+      savedTextRef.current = initial.savedText
+      baseVersionRef.current = initial.baseVersion
+      newlineRef.current = initial.newline
+      bomRef.current = initial.bom
+      dirtyRef.current = initial.dirty
+      setDirty(initial.dirty)
+      setExternal(initial.conflict === 'external')
+      setConflict(initial.conflict === null ? null : { kind: initial.conflict })
       setError(null)
       setStatus('idle')
       setNewlineStyle(newlineRef.current)
       const created = createEditor({
-        text,
+        text: initial.text,
         readOnly: !snapshot.writable,
         indent: snapshot.indent,
         ...(draft !== undefined ? { selection: draft.selection, scrollTop: draft.scrollTop } : {}),
@@ -307,14 +306,20 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         currentRequest.failed()
         return
       }
-      if (useDraft) flushDraft()
+      if (initial.dirty) flushDraft()
       else drafts.remove(fileAddress)
       currentRequest.loaded(observed)
       return
     }
 
     if (dirtyRef.current) {
-      if (snapshot.version !== baseVersionRef.current) {
+      const change = assessDiskChange({
+        exists: true,
+        version: snapshot.version,
+        baseVersion: baseVersionRef.current,
+        dirty: true,
+      })
+      if (change === 'external') {
         setExternal(true)
         setConflict({ kind: 'external' })
       }
@@ -488,21 +493,22 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     setStatus('saving')
     setError(null)
     try {
-      const result = await saveFile({
+      const result = await saveFile(createSaveRequest({
         sessionId: parsed.sessionId,
         path: parsed.path,
         content,
         expectedVersion: baseVersionRef.current,
         newline: newlineRef.current,
         bom: bomRef.current,
-      })
-      savedTextRef.current = content
-      baseVersionRef.current = result.version
+      }))
       // The editor remains usable while the request is in flight. Reconcile
       // against its live document so keystrokes made after `content` was
       // captured remain dirty and protected by the draft store.
       const currentContent = viewRef.current?.state.doc.toString() ?? content
-      const stillDirty = differsFromSavedText(currentContent, content)
+      const reconciled = reconcileSaveSuccess(currentContent, content, result)
+      savedTextRef.current = reconciled.savedText
+      baseVersionRef.current = reconciled.baseVersion
+      const stillDirty = reconciled.dirty
       dirtyRef.current = stillDirty
       setDirty(stillDirty)
       if (stillDirty) flushDraft()
@@ -597,21 +603,19 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       void (async () => {
         try {
           const result = await statFile(parsed)
-          if (!result.exists) {
-            if (dirtyRef.current) {
-              setExternal(true)
-              setConflict({ kind: 'deleted' })
-            }
-            return
-          }
-          if (result.version !== undefined && result.version !== baseVersionRef.current) {
-            if (dirtyRef.current) {
-              setExternal(true)
-              setConflict({ kind: 'external' })
-            } else {
-              requestRef.current?.reload()
-            }
-          }
+          const decision = assessDiskChange({
+            exists: result.exists,
+            version: result.version,
+            baseVersion: baseVersionRef.current,
+            dirty: dirtyRef.current,
+          })
+          if (decision === 'deleted') {
+            setExternal(true)
+            setConflict({ kind: 'deleted' })
+          } else if (decision === 'external') {
+            setExternal(true)
+            setConflict({ kind: 'external' })
+          } else if (decision === 'reload') requestRef.current?.reload()
         } catch {
           // Opportunistic check; save still performs the authoritative one.
         }

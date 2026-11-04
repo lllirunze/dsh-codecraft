@@ -4,7 +4,7 @@ Edit source and text files directly in DSH's native file tabs with CodeMirror 6.
 
 [中文](README.zh-CN.md)
 
-> **Status:** v0.1.0 is under pre-release validation. The implementation and automated checks are complete, but real DSH Desktop interaction still requires final manual acceptance.
+> **Status:** v0.1.1 has passed automated validation. Real DSH Desktop regression testing is still required before release.
 
 ## Features
 
@@ -58,7 +58,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.0
+dsh plugin --profile desktop add dsh-codecraft@0.1.1
 ```
 
 Restart DSH Desktop after updating.
@@ -102,10 +102,10 @@ Restart DSH Desktop. Native file previews are restored automatically.
 
 ## Limitations
 
-- v0.1.0 supports UTF-8 source and text files up to 2 MiB.
+- CodeCraft supports UTF-8 source and text files up to 2 MiB.
 - Symbolic links are read-only.
 - There is no LSP, semantic diagnostics, automatic import, or go-to-definition support.
-- Windows and Linux are not supported in v0.1.0.
+- Windows and Linux are not supported in v0.1.1.
 - There is no cross-window draft synchronization.
 
 ## License

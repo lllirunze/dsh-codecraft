@@ -4,7 +4,7 @@
 
 [English](README.md)
 
-> **当前状态：** v0.1.0 正处于发布前验收阶段。代码实现和自动化检查已经完成，真实 DSH Desktop 交互仍需完成最终手工验收。
+> **当前状态：** v0.1.1 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
 
 ## 功能
 
@@ -58,7 +58,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.0
+dsh plugin --profile desktop add dsh-codecraft@0.1.1
 ```
 
 更新后重启 DSH Desktop。
@@ -102,10 +102,10 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 ## 限制
 
-- v0.1.0 只支持不超过 2 MiB 的 UTF-8 源码和文本文件。
+- CodeCraft 只支持不超过 2 MiB 的 UTF-8 源码和文本文件。
 - 符号链接只能只读打开。
 - 暂无 LSP、语义诊断、自动导入和跳转定义。
-- v0.1.0 不支持 Windows 和 Linux。
+- v0.1.1 不支持 Windows 和 Linux。
 - 暂无多窗口草稿同步。
 
 ## 许可证
