@@ -11,6 +11,8 @@ The root [README](../README.md) is the primary English user guide. [README.zh-CN
 | [v0.1.2 design](design-v0.1.2.md) | Persistent auto-save settings, safe scheduling, and bracket-pairing behavior |
 | [v0.1.2 validation](validation-v0.1.2.md) | Automated evidence and the required Desktop acceptance checklist |
 | [v0.1.3 validation](validation-v0.1.3.md) | Settings-entry regression fix and focused Desktop acceptance checklist |
+| [v0.1.4 design](design-v0.1.4.md) | Configurable space indentation, generic delimiter expansion, and aligned single- or multiline editing |
+| [v0.1.4 validation](validation-v0.1.4.md) | Automated indentation evidence and the required Desktop acceptance checklist |
 | [Plugin compatibility](plugin-compatibility.md) | Known conflicts and configuration workarounds for other DSH plugins |
 | [Release guidelines](releasing.md) | Required versioning checks and GitHub Release note format |
 

@@ -14,13 +14,14 @@
 
 </div>
 
-> **当前状态：** v0.1.3 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
+> **当前状态：** v0.1.4 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
 
 ## 功能
 
 - 复用 DSH 原生工作区文件树和文件 Tab。
 - 提供语法高亮、行号、折叠、搜索、行注释、缩进、撤销重做和基础补全。
 - 自动闭合常用括号与引号，并支持包裹选区、成对删除以及按语言启用反引号或 Python 三引号。
+- 支持 2 格或 4 格空格缩进、回车展开通用括号，以及按整数边界执行单行或多行 Tab 操作。
 - 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
 - macOS 使用 `Cmd+S`、Windows 使用 `Ctrl+S` 保存，并显示未保存、保存中、已保存、失败和只读状态。
 - 检测外部文件变化，拒绝基于旧版本覆盖。
@@ -70,7 +71,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.3
+dsh plugin --profile desktop add dsh-codecraft@0.1.4
 ```
 
 更新后重启 DSH Desktop。
@@ -102,6 +103,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 4. 需要时可通过 Tab 上方的查看器菜单切换到 DSH 原生“代码”或“纯文本”预览。
 
 自动保存默认关闭。在设置侧边栏打开 **设置 → CodeCraft** 即可启用，并选择 10、30、60 或 120 秒的保存间隔。自动保存和手动保存共用同一条冲突安全写入路径。
+
+新增缩进始终使用空格。可以在同一设置区域选择 2 格或 4 格宽度；修改会立即作用于已打开的编辑器，但不会重写文件中的已有内容。
 
 ### 快捷键
 

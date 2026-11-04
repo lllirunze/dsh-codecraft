@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.4] - 2026-11-04
+
+### Added
+
+- Added persistent two- or four-space indentation settings that apply immediately to open editors.
+- Added language-neutral Enter behavior for inherited indentation, unmatched openers, and empty brace, bracket, or parenthesis expansion.
+- Added boundary-aligned Tab and Shift+Tab commands for single lines and multiline selections.
+
+### Changed
+
+- New indentation is always space-only while historical tabs and existing file content remain unchanged until explicitly edited.
+- Multiline indentation now preserves selections, skips blank lines, excludes column-zero endpoints, and forms one undoable transaction.
+- The status bar now reports the configured indentation width instead of the file's detected historical style.
+
+### Notes
+
+- Language-specific indentation, project configuration discovery, and whole-file formatting remain outside this release.
+- Automated validation passes; native DSH Desktop regression testing remains manual.
+
 ## [0.1.3] - 2026-11-04
 
 ### Fixed

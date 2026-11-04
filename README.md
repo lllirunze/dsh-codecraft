@@ -14,13 +14,14 @@
 
 </div>
 
-> **Status:** v0.1.3 has passed automated validation. Real DSH Desktop regression testing is still required before release.
+> **Status:** v0.1.4 has passed automated validation. Real DSH Desktop regression testing is still required before release.
 
 ## Features
 
 - Uses DSH's native workspace explorer and file tabs.
 - Provides syntax highlighting, line numbers, folding, search, line comments, indentation, undo/redo, and basic completion.
 - Automatically closes common brackets and quotes, including selection wrapping, paired deletion, and language-aware backticks or Python triple quotes.
+- Provides configurable two- or four-space indentation, generic bracket expansion on Enter, and aligned single- or multiline Tab operations.
 - Offers optional auto save in DSH Settings with 10, 30, 60, or 120-second intervals; it is disabled by default.
 - Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
 - Detects external changes and refuses stale writes.
@@ -70,7 +71,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.3
+dsh plugin --profile desktop add dsh-codecraft@0.1.4
 ```
 
 Restart DSH Desktop after updating.
@@ -102,6 +103,8 @@ Restart DSH Desktop. Native file previews are restored automatically.
 4. Use the viewer menu above the tab to switch to DSH's native Code or Plain Text preview when needed.
 
 Auto save is disabled by default. Open **Settings → CodeCraft** from the settings sidebar to enable it and choose a 10, 30, 60, or 120-second interval. Automatic and manual saves use the same conflict-safe write path.
+
+New indentation always uses spaces. In the same settings section, choose a width of two or four spaces; the change applies to open editors without rewriting existing file content.
 
 ### Keyboard shortcuts
 

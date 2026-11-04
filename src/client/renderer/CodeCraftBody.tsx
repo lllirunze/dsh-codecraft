@@ -26,6 +26,7 @@ import {
   buildEditorExtensions,
   cursorPosition,
   revealLine,
+  setEditorIndentation,
   setEditorReadOnly,
 } from '../editor/index.js'
 import { languageForFile } from '../languages/index.js'
@@ -37,7 +38,6 @@ import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import type {
-  IndentStyle,
   TextFileSnapshot,
   UnsupportedFileSnapshot,
 } from '../../protocol.js'
@@ -65,7 +65,6 @@ interface UiError {
 interface InitialEditor {
   text: string
   readOnly: boolean
-  indent: IndentStyle
   selection?: { anchor: number, head: number }
   scrollTop?: number
 }
@@ -108,11 +107,13 @@ function unsupportedNotice(
 }
 
 export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
-  const autoSaveSettings = useSyncExternalStore(
+  const settings = useSyncExternalStore(
     editorSettings.subscribe,
     editorSettings.getSnapshot,
     editorSettings.getSnapshot,
   ).settings
+  const autoSaveSettings = settings.autoSave
+  const indentationSettings = settings.indentation
   const { tab } = props.useTabInfo()
   const request = props.content.kind === 'renderer' ? props.content : undefined
   const useResource = props.useResource ?? (() => ({ status: 'none' as const }))
@@ -135,6 +136,9 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
   const readOnlyCompartmentRef = useRef(new Compartment())
+  const indentationCompartmentRef = useRef(new Compartment())
+  const indentationSettingsRef = useRef(indentationSettings)
+  indentationSettingsRef.current = indentationSettings
   const savedTextRef = useRef('')
   const baseVersionRef = useRef('')
   const newlineRef = useRef<'lf' | 'crlf'>('lf')
@@ -161,7 +165,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [conflict, setConflict] = useState<Conflict | null>(null)
   const [external, setExternal] = useState(false)
   const [cursor, setCursor] = useState({ line: 1, column: 1 })
-  const [indent, setIndent] = useState<IndentStyle>({ kind: 'spaces', size: 2 })
+  const [indentSize, setIndentSize] = useState(indentationSettings.indentSize)
   const [readOnly, setReadOnly] = useState(false)
   const [languageLabel, setLanguageLabel] = useState('纯文本')
   const [fileWritable, setFileWritable] = useState(true)
@@ -178,6 +182,14 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   useEffect(() => {
     readOnlyRef.current = readOnly
   }, [readOnly])
+
+  useEffect(() => {
+    setIndentSize(indentationSettings.indentSize)
+    const view = viewRef.current
+    if (view !== null) {
+      setEditorIndentation(view, indentationCompartmentRef.current, indentationSettings)
+    }
+  }, [indentationSettings.indentSize])
 
   useEffect(() => {
     conflictRef.current = conflict
@@ -263,9 +275,10 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       doc: initial.text,
       extensions: buildEditorExtensions({
         language,
-        indent: initial.indent,
+        indentation: indentationSettingsRef.current,
         readOnly: initial.readOnly,
         readOnlyCompartment: readOnlyCompartmentRef.current,
+        indentationCompartment: indentationCompartmentRef.current,
         onUpdate,
       }),
     })
@@ -289,7 +302,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     }
     if (initial.scrollTop !== undefined) view.scrollDOM.scrollTop = initial.scrollTop
     setCursor(cursorPosition(view))
-    setIndent(initial.indent)
+    setIndentSize(indentationSettingsRef.current.indentSize)
     setReadOnly(initial.readOnly)
     setFileWritable(!initial.readOnly)
     setLanguageLabel(language.label)
@@ -318,7 +331,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       const created = createEditor({
         text: initial.text,
         readOnly: !snapshot.writable,
-        indent: snapshot.indent,
         ...(draft !== undefined ? { selection: draft.selection, scrollTop: draft.scrollTop } : {}),
       })
       if (!created) {
@@ -355,7 +367,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     bomRef.current = snapshot.bom
     setNewlineStyle(snapshot.newline)
     setFileWritable(snapshot.writable)
-    setIndent(snapshot.indent)
     setExternal(false)
     setConflict(null)
     setError(null)
@@ -463,7 +474,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         const created = createEditor({
           text: result.content,
           readOnly: !result.writable,
-          indent: result.indent,
           ...(draft?.selection !== undefined ? { selection: draft.selection } : {}),
           ...(draft?.scrollTop !== undefined ? { scrollTop: draft.scrollTop } : {}),
         })
@@ -474,7 +484,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         }
       } else {
         applyTextPreservingSelection(viewRef.current, result.content)
-        setIndent(result.indent)
         if (readOnlyRef.current !== !result.writable) {
           setEditorReadOnly(viewRef.current, readOnlyCompartmentRef.current, !result.writable)
           readOnlyRef.current = !result.writable
@@ -844,7 +853,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         )}
         {phase === 'editing' && (
           <span className={`${ROOT_CLASS}-status-item`}>
-            {indent.kind === 'tabs' ? t('status.tabs') : t('status.spaces', { size: indent.size })}
+            {t('status.spaces', { size: indentSize })}
           </span>
         )}
         {phase === 'editing' && (

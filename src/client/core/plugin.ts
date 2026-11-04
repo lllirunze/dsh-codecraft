@@ -36,7 +36,7 @@ const SETTINGS_ENTRY_ID = 'codecraft'
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
-    style.dataset.dshCodecraft = '0.1.2'
+    style.dataset.dshCodecraft = '0.1.4'
     style.textContent = CODECRAFT_CSS
     document.head.appendChild(style)
     return () => style.remove()

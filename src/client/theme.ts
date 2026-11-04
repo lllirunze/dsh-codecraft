@@ -199,6 +199,16 @@ body[data-ds-dark-theme] .dsh-codecraft {
   gap: 2px;
 }
 .dsh-codecraft-settings-title { font-size: 16px; font-weight: 500; line-height: 24px; }
+.dsh-codecraft-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dsh-codecraft-settings-group-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
 .dsh-codecraft-settings-description,
 .dsh-codecraft-settings-hint {
   color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45));
@@ -228,6 +238,10 @@ body[data-ds-dark-theme] .dsh-codecraft {
   min-width: 0;
 }
 .dsh-codecraft-settings-label { font-size: 14px; font-weight: 500; line-height: 22px; }
+.dsh-codecraft-settings-value {
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .7));
+  font-size: 14px;
+}
 .dsh-codecraft-settings-select {
   box-sizing: border-box;
   width: 132px;

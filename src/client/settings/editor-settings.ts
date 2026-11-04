@@ -1,8 +1,9 @@
 import {
-  DEFAULT_AUTO_SAVE_SETTINGS,
-  resolveAutoSaveSettings,
+  DEFAULT_EDITOR_SETTINGS,
+  resolveEditorSettings,
   type AutoSaveInterval,
-  type AutoSaveSettings,
+  type EditorSettings,
+  type IndentSize,
 } from '../../settings/schema.js'
 
 export interface ConfigFormSnapshot {
@@ -24,7 +25,7 @@ export interface ConfigForm {
 }
 
 export interface EditorSettingsSnapshot {
-  settings: AutoSaveSettings
+  settings: EditorSettings
   status: ConfigFormSnapshot['status']
   writable: boolean
   saving: boolean
@@ -32,7 +33,7 @@ export interface EditorSettingsSnapshot {
 }
 
 const DEFAULT_SNAPSHOT: EditorSettingsSnapshot = {
-  settings: DEFAULT_AUTO_SAVE_SETTINGS,
+  settings: DEFAULT_EDITOR_SETTINGS,
   status: 'loading',
   writable: false,
   saving: false,
@@ -67,14 +68,18 @@ export class EditorSettingsStore {
   }
 
   async setEnabled(enabled: boolean): Promise<boolean> {
-    return this.#write('enabled', enabled)
+    return this.#write(['editor', 'autoSave', 'enabled'], enabled)
   }
 
   async setInterval(intervalSeconds: AutoSaveInterval): Promise<boolean> {
-    return this.#write('intervalSeconds', intervalSeconds)
+    return this.#write(['editor', 'autoSave', 'intervalSeconds'], intervalSeconds)
   }
 
-  async #write(field: 'enabled' | 'intervalSeconds', value: boolean | AutoSaveInterval): Promise<boolean> {
+  async setIndentSize(indentSize: IndentSize): Promise<boolean> {
+    return this.#write(['editor', 'indentation', 'indentSize'], indentSize)
+  }
+
+  async #write(path: string[], value: boolean | number): Promise<boolean> {
     const form = this.#form
     if (form === undefined || this.#snapshot.saving || !this.#snapshot.writable) return false
     this.#replace({ ...this.#snapshot, saving: true, error: false })
@@ -82,7 +87,7 @@ export class EditorSettingsStore {
     try {
       accepted = await form.mutate([{
         op: 'set',
-        path: ['editor', 'autoSave', field],
+        path,
         value,
       }])
       return accepted
@@ -96,7 +101,7 @@ export class EditorSettingsStore {
   #sync(error = this.#snapshot.error): void {
     const formSnapshot = this.#form?.getSnapshot()
     this.#replace({
-      settings: resolveAutoSaveSettings(formSnapshot?.value),
+      settings: resolveEditorSettings(formSnapshot?.value),
       status: formSnapshot?.status ?? 'loading',
       writable: formSnapshot?.writable ?? false,
       saving: false,

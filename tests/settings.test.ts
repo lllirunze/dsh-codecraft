@@ -3,7 +3,10 @@ import { autoSaveDelay, canAutoSave } from '../src/client/document/auto-save.js'
 import { EditorSettingsStore, type ConfigForm } from '../src/client/settings/editor-settings.js'
 import {
   DEFAULT_AUTO_SAVE_SETTINGS,
+  DEFAULT_EDITOR_SETTINGS,
+  DEFAULT_INDENTATION_SETTINGS,
   resolveAutoSaveSettings,
+  resolveIndentationSettings,
 } from '../src/settings/schema.js'
 
 describe('resolveAutoSaveSettings', () => {
@@ -49,6 +52,23 @@ describe('automatic save policy', () => {
   })
 })
 
+describe('resolveIndentationSettings', () => {
+  it('defaults to two spaces and rejects unsupported values', () => {
+    expect(resolveIndentationSettings(undefined)).toEqual(DEFAULT_INDENTATION_SETTINGS)
+    expect(resolveIndentationSettings({
+      editor: { indentation: { useSpaces: false, indentSize: 3 } },
+    })).toEqual(DEFAULT_INDENTATION_SETTINGS)
+  })
+
+  it('accepts two or four spaces while keeping spaces mandatory', () => {
+    for (const indentSize of [2, 4]) {
+      expect(resolveIndentationSettings({
+        editor: { indentation: { useSpaces: false, indentSize } },
+      })).toEqual({ useSpaces: true, indentSize })
+    }
+  })
+})
+
 describe('EditorSettingsStore', () => {
   it('tracks accepted Host settings and writes nested fields immediately', async () => {
     let listener = (): void => {}
@@ -57,7 +77,12 @@ describe('EditorSettingsStore', () => {
       getSnapshot: () => ({
         status: 'ready',
         writable: true,
-        value: { editor: { autoSave: { enabled: true, intervalSeconds: 60 } } },
+        value: {
+          editor: {
+            autoSave: { enabled: true, intervalSeconds: 60 },
+            indentation: { useSpaces: true, indentSize: 4 },
+          },
+        },
       }),
       subscribe: next => { listener = next; return () => {} },
       mutate,
@@ -65,15 +90,24 @@ describe('EditorSettingsStore', () => {
     const store = new EditorSettingsStore()
     const unbind = store.bind(form)
 
-    expect(store.getSnapshot().settings).toEqual({ enabled: true, intervalSeconds: 60 })
+    expect(store.getSnapshot().settings).toEqual({
+      autoSave: { enabled: true, intervalSeconds: 60 },
+      indentation: { useSpaces: true, indentSize: 4 },
+    })
     await expect(store.setInterval(120)).resolves.toBe(true)
     expect(mutate).toHaveBeenCalledWith([{
       op: 'set',
       path: ['editor', 'autoSave', 'intervalSeconds'],
       value: 120,
     }])
+    await expect(store.setIndentSize(2)).resolves.toBe(true)
+    expect(mutate).toHaveBeenLastCalledWith([{
+      op: 'set',
+      path: ['editor', 'indentation', 'indentSize'],
+      value: 2,
+    }])
     listener()
     unbind()
-    expect(store.getSnapshot().settings).toEqual(DEFAULT_AUTO_SAVE_SETTINGS)
+    expect(store.getSnapshot().settings).toEqual(DEFAULT_EDITOR_SETTINGS)
   })
 })

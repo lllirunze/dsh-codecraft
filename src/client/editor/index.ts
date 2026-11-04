@@ -12,7 +12,6 @@ import {
   defaultKeymap,
   history,
   historyKeymap,
-  indentWithTab,
   toggleComment,
 } from '@codemirror/commands'
 import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search'
@@ -29,7 +28,7 @@ import {
   rectangularSelection,
   type ViewUpdate,
 } from '@codemirror/view'
-import type { IndentStyle } from '../../protocol.js'
+import type { IndentationSettings } from '../../settings/schema.js'
 import type { FileLanguage } from '../languages/index.js'
 import { editorThemeExtensions } from '../theme.js'
 import { bracketExtensions } from './extensions/brackets.js'
@@ -39,9 +38,10 @@ import { indentationExtensions } from './extensions/indentation.js'
 
 export interface EditorOptions {
   language: FileLanguage
-  indent: IndentStyle
+  indentation: IndentationSettings
   readOnly: boolean
   readOnlyCompartment: Compartment
+  indentationCompartment: Compartment
   onUpdate: (update: ViewUpdate) => void
 }
 
@@ -58,6 +58,14 @@ export function setEditorReadOnly(view: EditorView, compartment: Compartment, re
   view.dispatch({ effects: compartment.reconfigure(readOnlyExtensions(readOnly)) })
 }
 
+export function setEditorIndentation(
+  view: EditorView,
+  compartment: Compartment,
+  settings: IndentationSettings,
+): void {
+  view.dispatch({ effects: compartment.reconfigure(indentationExtensions(settings)) })
+}
+
 /** Build the full extension set for one editor instance. */
 export function buildEditorExtensions(options: EditorOptions): Extension[] {
   return [
@@ -69,7 +77,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     drawSelection(),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
-    ...indentationExtensions(options.indent),
+    options.indentationCompartment.of(indentationExtensions(options.indentation)),
     ...bracketExtensions(options.language),
     ...completionExtensions(),
     rectangularSelection(),
@@ -81,7 +89,6 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
       ...defaultKeymap,
       ...searchKeymap,
       ...historyKeymap,
-      indentWithTab,
     ]),
     EditorView.updateListener.of(options.onUpdate),
     options.readOnlyCompartment.of(readOnlyExtensions(options.readOnly)),
