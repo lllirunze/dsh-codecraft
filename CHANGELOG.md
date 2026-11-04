@@ -16,7 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Quality
 
 - Added regression coverage for language registration, project-root defaults, draft restoration, disk changes, and edits made while saving.
-- Preserved the v0.1.0 host protocol, checked atomic saves, native-tab integration, and macOS-only compatibility policy.
+- Preserved the v0.1.0 host protocol, checked atomic saves, and native-tab integration while validating Windows support alongside macOS.
 
 ### Notes
 

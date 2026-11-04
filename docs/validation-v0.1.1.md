@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Automated validation passed; Desktop regression pending |
 | Recorded | 2026-11-04 |
-| Target | macOS, DSH Desktop `0.2.1-rc.5` |
+| Target | macOS and Windows, DSH Desktop `0.2.1-rc.5` |
 | Design | [design-v0.1.1.md](design-v0.1.1.md) |
 
 ## Automated Result
@@ -31,11 +31,11 @@ Existing coverage continues to verify filesystem confinement, encoding and newli
 
 ## Manual Desktop Regression
 
-Complete these checks in DSH Desktop before publishing `v0.1.1`:
+Complete these checks in DSH Desktop on macOS and Windows before publishing `v0.1.1`:
 
 - [ ] Supported files still open in CodeMirror inside native file tabs.
 - [ ] Typing, selection, clipboard, undo/redo, search, folding, comments, indentation, and bracket closing work.
-- [ ] `Cmd+S` and the status-bar action save successfully.
+- [ ] `Cmd+S` on macOS, `Ctrl+S` on Windows, and the status-bar action save successfully.
 - [ ] Edits made while a save is pending remain dirty.
 - [ ] External changes reload a clean editor and conflict with a dirty editor without overwriting either copy.
 - [ ] Drafts survive tab switching, closing, and page refresh.
@@ -43,10 +43,10 @@ Complete these checks in DSH Desktop before publishing `v0.1.1`:
 - [ ] Light/dark themes and resizing remain stable.
 - [ ] The plugin works without community plugins.
 - [ ] Disabling or uninstalling CodeCraft restores the native preview.
-- [ ] Typing, scrolling, and tab switching show no visible performance regression.
+- [ ] Typing, scrolling, and tab switching show no visible performance regression on either supported platform.
 
 Draft loss, silent overwrite, or unauthorized writes are release blockers.
 
 ## Deferred Scope
 
-This release intentionally excludes LSP support, language-server processes, project indexing, language-specific intelligent completion, autosave, a separate IDE shell, and Windows/Linux support.
+This release intentionally excludes LSP support, language-server processes, project indexing, language-specific intelligent completion, autosave, a separate IDE shell, and Linux support.

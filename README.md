@@ -1,8 +1,18 @@
+<div align="center">
+
 # DSH CodeCraft
 
-Edit source and text files directly in DSH's native file tabs with CodeMirror 6.
+**A precise, safe CodeMirror 6 editor inside DSH's native file tabs.**
 
-[中文](README.zh-CN.md)
+[![npm version](https://img.shields.io/npm/v/dsh-codecraft?logo=npm&label=npm)](https://www.npmjs.com/package/dsh-codecraft)
+[![DSH compatibility](https://img.shields.io/badge/DSH-0.2.1--rc.5-5b5bd6)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.5)
+[![CI](https://github.com/lllirunze/dsh-codecraft/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/lllirunze/dsh-codecraft/actions/workflows/ci.yml)
+[![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows-4c8bf5)](#requirements)
+[![license](https://img.shields.io/github/license/lllirunze/dsh-codecraft)](LICENSE)
+
+[English](README.md) · [简体中文](README.zh-CN.md) · [Documentation](docs/README.md)
+
+</div>
 
 > **Status:** v0.1.1 has passed automated validation. Real DSH Desktop regression testing is still required before release.
 
@@ -10,24 +20,24 @@ Edit source and text files directly in DSH's native file tabs with CodeMirror 6.
 
 - Uses DSH's native workspace explorer and file tabs.
 - Provides syntax highlighting, line numbers, folding, search, line comments, indentation, undo/redo, and basic completion.
-- Saves with `Cmd+S` and reports dirty, saving, saved, failed, and read-only states.
+- Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
 - Detects external changes and refuses stale writes.
 - Restores unsaved drafts after tab switches, tab closure, or page reloads.
-- Preserves LF/CRLF, UTF-8 BOM, and POSIX file mode.
+- Preserves LF/CRLF, UTF-8 BOM, and POSIX file mode where supported.
 - Safely rejects files that are too large, binary, non-UTF-8, mixed-line-ending, or otherwise unsafe to edit.
 - Performs editing locally without model calls, telemetry, or file uploads.
 
 ## Requirements
 
-- macOS; Apple Silicon is the primary target.
-- DSH Desktop `0.2.1-rc.5`.
-- Node.js 20 or later when building from source.
+| Component | Supported |
+| --- | --- |
+| Operating system | macOS or Windows |
+| DSH Desktop | `0.2.1-rc.5` |
+| Node.js | 20 or later when building from source |
 
 ## Install
 
 ### Install from npm
-
-After the package is published:
 
 ```bash
 dsh plugin --profile desktop add dsh-codecraft@latest
@@ -38,7 +48,7 @@ Restart DSH Desktop after installation.
 ### Install from source
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/lllirunze/dsh-codecraft.git
 cd dsh-codecraft
 npm install
 npm run check
@@ -86,26 +96,32 @@ Restart DSH Desktop. Native file previews are restored automatically.
 
 1. Open a supported source or text file from DSH's workspace explorer.
 2. DSH opens its native file tab and selects the CodeCraft renderer.
-3. Edit the file and press `Cmd+S`, or use the Save action in the status bar.
+3. Edit the file and press `Cmd+S` on macOS or `Ctrl+S` on Windows, or use the Save action in the status bar.
 4. Use the viewer menu above the tab to switch to DSH's native Code or Plain Text preview when needed.
 
 ### Keyboard shortcuts
 
-| Shortcut | Action |
-| --- | --- |
-| `Cmd+S` | Save the current file |
-| `Cmd+F` | Search within the file |
-| `Cmd+/` | Toggle line comments |
-| `Cmd+Z` / `Cmd+Shift+Z` | Undo / redo |
-| `Tab` / `Shift+Tab` | Indent / outdent |
-| `Ctrl+Space` | Open basic completion |
+| macOS | Windows | Action |
+| --- | --- | --- |
+| `Cmd+S` | `Ctrl+S` | Save the current file |
+| `Cmd+F` | `Ctrl+F` | Search within the file |
+| `Cmd+/` | `Ctrl+/` | Toggle line comments |
+| `Cmd+Z` / `Cmd+Shift+Z` | `Ctrl+Z` / `Ctrl+Y` | Undo / redo |
+| `Tab` / `Shift+Tab` | `Tab` / `Shift+Tab` | Indent / outdent |
+| `Ctrl+Space` | `Ctrl+Space` | Open basic completion |
+
+## Documentation
+
+- [Architecture and validation records](docs/README.md)
+- [Plugin compatibility and known workarounds](docs/plugin-compatibility.md)
+- [Changelog](CHANGELOG.md)
 
 ## Limitations
 
 - CodeCraft supports UTF-8 source and text files up to 2 MiB.
 - Symbolic links are read-only.
 - There is no LSP, semantic diagnostics, automatic import, or go-to-definition support.
-- Windows and Linux are not supported in v0.1.1.
+- Linux has not been validated and is not currently supported.
 - There is no cross-window draft synchronization.
 
 ## License

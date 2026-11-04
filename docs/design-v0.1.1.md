@@ -5,7 +5,7 @@
 | Status | Implemented; automated validation passed, Desktop regression pending |
 | Target version | 0.1.1 |
 | Baseline | 0.1.0 |
-| Platform | DSH Desktop on macOS |
+| Platform | DSH Desktop on macOS and Windows |
 | Release type | Internal maintenance refactoring |
 
 v0.1.1 reorganizes CodeCraft while preserving its public behavior and file-safety semantics. It centralizes shared CodeMirror capabilities, separates host integration from document state, and creates a minimal extension point for future language-aware features. It does not add project-level completion or LSP support.
@@ -20,7 +20,7 @@ The refactoring should:
 - use composition for shared editor behavior and limited inheritance for language-specific defaults;
 - retain all v0.1.0 editing, draft, conflict, fallback, and security behavior.
 
-This release will not implement language servers, project indexes, language-specific intelligent completion, a separate IDE shell, third-party plugin dependencies, Windows/Linux support, or periodic autosave. A future autosave feature may default to 30 seconds with fixed interval options, but it must reuse the existing checked save path.
+This release will not implement language servers, project indexes, language-specific intelligent completion, a separate IDE shell, third-party plugin dependencies, Linux support, or periodic autosave. A future autosave feature may default to 30 seconds with fixed interval options, but it must reuse the existing checked save path.
 
 ## Architectural Boundaries
 
@@ -84,7 +84,7 @@ This is an internal CodeCraft example, not a confirmed DSH API. New capabilities
 
 ## Compatibility Requirements
 
-After refactoring, supported files must still open inside native tabs with the same editing features. `Cmd+S`, status reporting, checked atomic saves, conflict handling, and draft recovery must not regress. Tab changes, close operations, plugin disabling, and save failures must never silently discard unsaved content. Unsupported files must remain with native DSH viewers, and uninstalling CodeCraft must restore the native experience. macOS-only support and independence from community plugins remain unchanged.
+After refactoring, supported files must still open inside native tabs with the same editing features. `Cmd+S` on macOS, `Ctrl+S` on Windows, status reporting, checked atomic saves, conflict handling, and draft recovery must not regress. Tab changes, close operations, plugin disabling, and save failures must never silently discard unsaved content. Unsupported files must remain with native DSH viewers, and uninstalling CodeCraft must restore the native experience. Support for macOS and Windows and independence from community plugins remain unchanged.
 
 Any draft loss, silent overwrite, or unauthorized write is a release blocker.
 
@@ -94,11 +94,11 @@ Any draft loss, silent overwrite, or unauthorized write is a release blocker.
 2. **Extract editor composition:** centralize CodeMirror initialization, shared extensions, and theme without changing interaction.
 3. **Separate document and host boundaries:** move state, save coordination, and conflict protection out of UI callbacks while retaining validation.
 4. **Add the minimal language mechanism:** introduce the adapter, base defaults, and registry only when consumed; do not start LSP work.
-5. **Validate and release:** run the automated suite, complete macOS Desktop regression checks, inspect package output, update the changelog and release notes, and publish `v0.1.1`.
+5. **Validate and release:** run the automated suite, complete macOS and Windows Desktop regression checks, inspect package output, update the changelog and release notes, and publish `v0.1.1`.
 
 ## Acceptance and Risks
 
-Acceptance covers native-tab integration, editing parity, safe saves, external modifications, draft lifecycle, fallback behavior, unsupported files, plugin independence, clean module boundaries, and responsive typing/scrolling/tab switching on macOS.
+Acceptance covers native-tab integration, editing parity, safe saves, external modifications, draft lifecycle, fallback behavior, unsupported files, plugin independence, clean module boundaries, and responsive typing/scrolling/tab switching on macOS and Windows.
 
 The main risks are reliance on unverified host behavior, over-designing language infrastructure, and regressions in document state. Mitigate them through small focused commits, public DSH extension points, minimal interfaces, and preservation of the `v0.1.0` tag as a rollback baseline.
 
@@ -118,7 +118,7 @@ Future minor releases may add one language ecosystem at a time. Shared LSP trans
 
 ## Notes
 - No new language-specific completion features in this patch release.
-- macOS-only support remains unchanged.
+- macOS and Windows support remain unchanged.
 ```
 
 Final release notes must describe only changes that were implemented and verified.
