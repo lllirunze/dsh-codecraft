@@ -27,3 +27,7 @@ Write tests with Vitest (`describe`, `it`, `expect`) in `tests/<module>.test.ts`
 ## Commit & Pull Request Guidelines
 
 History follows Conventional Commit prefixes such as `feat:`, `fix:`, and `ci:`. Keep commits focused and use an imperative summary. Pull requests should explain the behavior change, link relevant issues, note compatibility or security effects, and include screenshots for editor UI changes. Confirm `npm run check` passes and update README files or `CHANGELOG.md` when user-facing behavior changes.
+
+## Release Guidelines
+
+Follow [`docs/releasing.md`](docs/releasing.md) whenever preparing a version, Git tag, or GitHub Release. Keep the package version, lockfile version, changelog entry, tag, Release title, and Release heading identical. Release notes use the repository's short single-section format; do not add installation, update, test-summary, compatibility, or other boilerplate sections unless the release itself changes those areas.

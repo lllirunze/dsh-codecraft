@@ -9,6 +9,7 @@ The root [README](../README.md) is the primary English user guide. [README.zh-CN
 | [v0.1.1 design](design-v0.1.1.md) | Implemented internal refactoring and language-extension foundation |
 | [v0.1.1 validation](validation-v0.1.1.md) | Automated results and the required Desktop regression checklist |
 | [Plugin compatibility](plugin-compatibility.md) | Known conflicts and configuration workarounds for other DSH plugins |
+| [Release guidelines](releasing.md) | Required versioning checks and GitHub Release note format |
 
 ## Documentation Rules
 
