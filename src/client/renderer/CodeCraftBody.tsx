@@ -8,7 +8,14 @@
  * @module dsh-codecraft/client/body
  */
 
-import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactElement,
+} from 'react'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
 import { ApiCallError, readFile, saveFile, statFile } from '../api.js'
@@ -25,8 +32,10 @@ import { languageForFile } from '../languages/index.js'
 import { ROOT_CLASS } from '../theme.js'
 import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
 import { assessDiskChange } from '../document/conflicts.js'
+import { autoSaveDelay, canAutoSave } from '../document/auto-save.js'
 import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
+import { editorSettings } from '../settings/editor-settings.js'
 import type {
   IndentStyle,
   TextFileSnapshot,
@@ -99,6 +108,11 @@ function unsupportedNotice(
 }
 
 export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
+  const autoSaveSettings = useSyncExternalStore(
+    editorSettings.subscribe,
+    editorSettings.getSnapshot,
+    editorSettings.getSnapshot,
+  ).settings
   const { tab } = props.useTabInfo()
   const request = props.content.kind === 'renderer' ? props.content : undefined
   const useResource = props.useResource ?? (() => ({ status: 'none' as const }))
@@ -128,6 +142,9 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const dirtyRef = useRef(false)
   const readOnlyRef = useRef(false)
   const savingRef = useRef(false)
+  const saveQueuedRef = useRef(false)
+  const doSaveRef = useRef<() => Promise<void>>(async () => {})
+  const conflictRef = useRef<Conflict | null>(null)
   const parsedRef = useRef<{ sessionId: string, path: string } | null>(null)
   const mountedRef = useRef(true)
   const initialisedRef = useRef(false)
@@ -161,6 +178,10 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   useEffect(() => {
     readOnlyRef.current = readOnly
   }, [readOnly])
+
+  useEffect(() => {
+    conflictRef.current = conflict
+  }, [conflict])
 
   const flushDraft = useCallback(() => {
     const view = viewRef.current
@@ -471,7 +492,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const doSave = useCallback(async () => {
     const view = viewRef.current
     const parsed = parsedRef.current
-    if (view === null || parsed === null || savingRef.current) return
+    if (view === null || parsed === null) return
+    if (savingRef.current) {
+      saveQueuedRef.current = true
+      return
+    }
     if (readOnlyRef.current) {
       setError({ kind: 'readOnly', message: tRef.current('error.readOnly') })
       setStatus('error')
@@ -514,6 +539,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       if (stillDirty) flushDraft()
       else drafts.remove(addressRef.current)
       setConflict(null)
+      conflictRef.current = null
       setExternal(false)
       setStatus(stillDirty ? 'idle' : 'saved')
       if (!stillDirty) {
@@ -527,15 +553,43 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       const apiFailure = failure instanceof ApiCallError ? failure : undefined
       if (apiFailure?.code === 'conflict') {
         setExternal(true)
-        setConflict({ kind: 'save' })
+        const nextConflict: Conflict = { kind: 'save' }
+        conflictRef.current = nextConflict
+        setConflict(nextConflict)
       } else {
         setError({ kind: 'save', message: apiFailure?.message ?? messageOf(failure) })
       }
       setStatus('error')
     } finally {
       savingRef.current = false
+      if (saveQueuedRef.current) {
+        saveQueuedRef.current = false
+        queueMicrotask(() => {
+          if (
+            mountedRef.current
+            && dirtyRef.current
+            && conflictRef.current === null
+          ) void doSaveRef.current()
+        })
+      }
     }
   }, [flushDraft])
+  doSaveRef.current = doSave
+
+  useEffect(() => {
+    if (!autoSaveSettings.enabled) return
+    const timer = window.setInterval(() => {
+      if (!canAutoSave({
+        editing: phase === 'editing',
+        dirty: dirtyRef.current,
+        readOnly: readOnlyRef.current,
+        saving: savingRef.current,
+        conflicted: conflictRef.current !== null,
+      })) return
+      void doSaveRef.current()
+    }, autoSaveDelay(autoSaveSettings))
+    return () => window.clearInterval(timer)
+  }, [autoSaveSettings.enabled, autoSaveSettings.intervalSeconds, phase])
 
   const keepDraft = useCallback(() => {
     setConflict(null)

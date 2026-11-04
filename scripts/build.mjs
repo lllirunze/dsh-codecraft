@@ -33,7 +33,7 @@ const client = await build({
   define: {
     'process.env.NODE_ENV': '"production"',
   },
-  external: ['react', 'react/jsx-runtime'],
+  external: ['@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'],
 })
 
 const code = client.outputFiles?.[0]?.text

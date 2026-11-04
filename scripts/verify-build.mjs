@@ -3,7 +3,11 @@ import { pathToFileURL } from 'node:url'
 import { resolve } from 'node:path'
 import vm from 'node:vm'
 
-const ALLOWED_EXTERNALS = new Set(['react', 'react/jsx-runtime'])
+const ALLOWED_EXTERNALS = new Set([
+  '@deepseek-ai/dsh-client-ui-primitives',
+  'react',
+  'react/jsx-runtime',
+])
 
 async function mustExist(path) {
   try {
@@ -113,6 +117,7 @@ function verifyClientRegistration(code) {
     useEffect() {},
     useCallback: callback => callback,
     useMemo: callback => callback(),
+    useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
     createElement: () => null,
     Fragment: Symbol('Fragment'),
   }
@@ -120,11 +125,14 @@ function verifyClientRegistration(code) {
   const plugin = row.factory(specifier => {
     if (specifier === 'react') return react
     if (specifier === 'react/jsx-runtime') return jsxRuntime
+    if (specifier === '@deepseek-ai/dsh-client-ui-primitives') {
+      return { Switch: () => null }
+    }
     throw new Error(`client factory requested unexpected external: ${specifier}`)
   })
   assert(typeof plugin.apply === 'function', 'client bundle does not export apply()')
   assert(
-    Array.isArray(plugin.inject) && ['documentPreviews', 'slots', 'locale'].every(name => plugin.inject.includes(name)),
+    Array.isArray(plugin.inject) && ['documentPreviews', 'slots', 'locale', 'configForms'].every(name => plugin.inject.includes(name)),
     'client bundle is missing required service injections',
   )
 
@@ -141,6 +149,14 @@ function verifyClientRegistration(code) {
       register: (namespace, dictionaries) => { localeRows.push({ namespace, dictionaries }); return () => {} },
       bind: () => key => key,
     },
+    configForms: {
+      get: () => ({
+        getSnapshot: () => ({ status: 'ready', value: {}, writable: true }),
+        subscribe: () => () => {},
+        mutate: async () => true,
+      }),
+      whileServed: (_namespaces, register) => register(new Set(['dsh-codecraft'])),
+    },
     effect: callback => { callback() },
   }
   plugin.apply(context)
@@ -151,10 +167,16 @@ function verifyClientRegistration(code) {
   assert(preview.priority === 'extension' && preview.loading === 'renderer', 'document preview uses the wrong priority or loading mode')
   assert(preview.extensions.includes('ts') && preview.extensions.includes('py'), 'document preview is missing source extensions')
   assert(!preview.extensions.includes('png') && !preview.extensions.includes('pdf'), 'document preview claims binary extensions')
-  assert(bodyRows.length === 1, `client registered ${bodyRows.length} document bodies`)
+  assert(bodyRows.length === 2, `client registered ${bodyRows.length} slot contributions`)
+  const documentBody = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document')
+  const settingsCard = bodyRows.find(row => row.options.name === 'plugins.item')
   assert(
-    bodyRows[0].options.name === 'sidebar.right.tab.document' && bodyRows[0].options.key === 'dsh-codecraft',
+    documentBody?.options.key === 'dsh-codecraft',
     'client document body is registered in the wrong keyed slot',
+  )
+  assert(
+    settingsCard?.options.id === 'dsh-codecraft',
+    'client settings card is registered in the wrong slot',
   )
   assert(localeRows.length === 1 && localeRows[0].namespace === 'sidebarCodeCraft', 'client locale registration is missing')
   assert(appendedStyles.length === 1, `client appended ${appendedStyles.length} style elements`)

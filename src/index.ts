@@ -15,6 +15,7 @@ import type { HostContext } from './host/context.js'
 import { createApiHandler } from './host/routes.js'
 
 export { CODECRAFT_ROUTE } from './protocol.js'
+export { Config } from './config.js'
 export type {
   CodeCraftEnvelope,
   CodeCraftErrorBody,

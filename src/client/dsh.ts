@@ -35,6 +35,9 @@ export interface DocumentPreviewsService {
 export interface SlotRegisterOptions {
   name: string
   key?: string
+  id?: string
+  order?: number
+  label?: () => string
   locale?: string
   store?: unknown
   inject?: (...args: never[]) => Record<string, unknown>
@@ -46,11 +49,33 @@ export interface SlotsService {
   inject(name: string, callback: () => () => void): () => void
 }
 
+export interface ConfigFormSnapshot {
+  status: 'loading' | 'ready' | 'unavailable'
+  value?: unknown
+  writable: boolean
+}
+
+export interface ConfigFormService {
+  getSnapshot(): ConfigFormSnapshot
+  subscribe(listener: () => void): () => void
+  mutate(operations: Array<{
+    op: 'set' | 'unset'
+    path: string[]
+    value?: unknown
+  }>): Promise<boolean>
+}
+
+export interface ConfigFormsService {
+  get(entryId: string): ConfigFormService
+  whileServed(namespaces: string[], register: (served: Set<string>) => () => void): () => void
+}
+
 /** The Cordis browser context this plugin consumes. */
 export interface ClientContext {
   documentPreviews: DocumentPreviewsService
   slots: SlotsService
   locale: LocaleService
+  configForms: ConfigFormsService
   effect(callback: () => (() => void) | void, label?: string): void
 }
 

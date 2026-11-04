@@ -186,6 +186,75 @@ body[data-ds-dark-theme] .dsh-codecraft {
   0%, 100% { opacity: .35; transform: scale(.85); }
   50% { opacity: 1; transform: scale(1); }
 }
+.dsh-codecraft-settings {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+.dsh-codecraft-settings-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dsh-codecraft-settings-title { font-size: 16px; font-weight: 500; line-height: 24px; }
+.dsh-codecraft-settings-description,
+.dsh-codecraft-settings-hint {
+  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45));
+  font-size: 12px;
+  line-height: 18px;
+}
+.dsh-codecraft-settings-card {
+  border: .5px solid var(--dsw-alias-settings-card-stroke, rgba(0, 0, 0, .1));
+  border-radius: var(--dsw-radius-xl, 16px);
+  background: var(--dsw-alias-settings-card-fill, rgba(0, 0, 0, .02));
+  overflow: hidden;
+}
+.dsh-codecraft-settings-row {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 14px;
+}
+.dsh-codecraft-settings-row + .dsh-codecraft-settings-row {
+  border-top: .5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .1));
+}
+.dsh-codecraft-settings-row label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dsh-codecraft-settings-label { font-size: 14px; font-weight: 500; line-height: 22px; }
+.dsh-codecraft-settings-select {
+  box-sizing: border-box;
+  width: 132px;
+  height: 32px;
+  flex: none;
+  appearance: none;
+  border: .5px solid var(--dsw-alias-border-l4, rgba(0, 0, 0, .16));
+  border-radius: var(--dsw-radius-md, 8px);
+  background-color: var(--dsw-alias-bg-layer-1, #fff);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  padding: 0 32px 0 10px;
+  font: inherit;
+  font-size: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2381858C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+}
+.dsh-codecraft-settings-select:focus {
+  border-color: var(--dsw-alias-state-business-primary, #4078f2);
+  outline: none;
+}
+.dsh-codecraft-settings-select:disabled { cursor: default; opacity: .55; }
+.dsh-codecraft-settings-error {
+  color: var(--dsw-alias-state-error-primary, #d1242f);
+  font-size: 12px;
+  line-height: 18px;
+}
 .dsh-codecraft .cm-editor {
   height: 100%;
   background: transparent;

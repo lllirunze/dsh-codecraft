@@ -14,12 +14,14 @@
 
 </div>
 
-> **Status:** v0.1.1 has passed automated validation. Real DSH Desktop regression testing is still required before release.
+> **Status:** v0.1.2 has passed automated validation. Real DSH Desktop regression testing is still required before release.
 
 ## Features
 
 - Uses DSH's native workspace explorer and file tabs.
 - Provides syntax highlighting, line numbers, folding, search, line comments, indentation, undo/redo, and basic completion.
+- Automatically closes common brackets and quotes, including selection wrapping, paired deletion, and language-aware backticks or Python triple quotes.
+- Offers optional auto save in DSH Settings with 10, 30, 60, or 120-second intervals; it is disabled by default.
 - Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
 - Detects external changes and refuses stale writes.
 - Restores unsaved drafts after tab switches, tab closure, or page reloads.
@@ -68,7 +70,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.1
+dsh plugin --profile desktop add dsh-codecraft@0.1.2
 ```
 
 Restart DSH Desktop after updating.
@@ -98,6 +100,8 @@ Restart DSH Desktop. Native file previews are restored automatically.
 2. DSH opens its native file tab and selects the CodeCraft renderer.
 3. Edit the file and press `Cmd+S` on macOS or `Ctrl+S` on Windows, or use the Save action in the status bar.
 4. Use the viewer menu above the tab to switch to DSH's native Code or Plain Text preview when needed.
+
+Auto save is disabled by default. Open **Settings → Plugins → CodeCraft** to enable it and choose a 10, 30, 60, or 120-second interval. Automatic and manual saves use the same conflict-safe write path.
 
 ### Keyboard shortcuts
 

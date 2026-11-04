@@ -70,7 +70,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),
     ...indentationExtensions(options.indent),
-    ...bracketExtensions(),
+    ...bracketExtensions(options.language),
     ...completionExtensions(),
     rectangularSelection(),
     highlightActiveLine(),

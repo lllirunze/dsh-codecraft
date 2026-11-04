@@ -14,12 +14,14 @@
 
 </div>
 
-> **当前状态：** v0.1.1 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
+> **当前状态：** v0.1.2 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
 
 ## 功能
 
 - 复用 DSH 原生工作区文件树和文件 Tab。
 - 提供语法高亮、行号、折叠、搜索、行注释、缩进、撤销重做和基础补全。
+- 自动闭合常用括号与引号，并支持包裹选区、成对删除以及按语言启用反引号或 Python 三引号。
+- 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
 - macOS 使用 `Cmd+S`、Windows 使用 `Ctrl+S` 保存，并显示未保存、保存中、已保存、失败和只读状态。
 - 检测外部文件变化，拒绝基于旧版本覆盖。
 - 切换或关闭 Tab、刷新页面后恢复未保存草稿。
@@ -68,7 +70,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.1
+dsh plugin --profile desktop add dsh-codecraft@0.1.2
 ```
 
 更新后重启 DSH Desktop。
@@ -98,6 +100,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 2. DSH 打开原生文件 Tab，并选择 CodeCraft 渲染器。
 3. 编辑文件后，在 macOS 按 `Cmd+S`，在 Windows 按 `Ctrl+S`；也可以点击状态栏中的保存操作。
 4. 需要时可通过 Tab 上方的查看器菜单切换到 DSH 原生“代码”或“纯文本”预览。
+
+自动保存默认关闭。打开 **设置 → 插件 → CodeCraft** 即可启用，并选择 10、30、60 或 120 秒的保存间隔。自动保存和手动保存共用同一条冲突安全写入路径。
 
 ### 快捷键
 

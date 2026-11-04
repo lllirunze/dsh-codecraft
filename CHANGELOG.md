@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-11-04
+
+### Added
+
+- Added persistent auto-save settings to DSH's native Plugins settings surface, disabled by default with 10, 30, 60, and 120-second intervals.
+- Added per-document auto-save scheduling that only writes dirty, writable, conflict-free documents through the existing checked save path.
+- Added explicit common bracket and quote pairing with selection wrapping, paired deletion, closer skipping, language-aware backticks, and Python triple quotes.
+
+### Changed
+
+- Serialized overlapping automatic and manual save requests so edits made during an in-flight save remain dirty and receive a follow-up save.
+- Expanded automated coverage for settings validation, auto-save eligibility, Host settings mutations, and bracket interaction behavior.
+
+### Notes
+
+- Auto save preserves external-change detection, drafts, read-only handling, and the existing manual save shortcuts.
+- Automated validation passes; native DSH Desktop regression testing remains manual.
+
 ## [0.1.1] - 2026-11-04
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "dsh-codecraft",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A precise, safe code editor inside DSH's native file tabs.",
   "repository": {
     "type": "git",
@@ -48,10 +48,13 @@
       "platform": "web",
       "inject": [
         "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins",
         "@deepseek-ai/dsh-client-ui-sidebar-right",
         "@deepseek-ai/dsh-client-ui-sidebar-documentpreview"
       ],
       "external": [
+        "@deepseek-ai/dsh-client-ui-primitives",
         "react",
         "react/jsx-runtime"
       ]
@@ -108,5 +111,8 @@
     "react-dom": "^18.3.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.5"
   }
 }

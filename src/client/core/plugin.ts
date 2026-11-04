@@ -10,13 +10,15 @@
 
 import type { ClientContext } from '../dsh.js'
 import { CodeCraftBody } from '../renderer/CodeCraftBody.js'
+import { CodeCraftSettingsCard } from '../settings/CodeCraftSettingsCard.js'
+import { editorSettings } from '../settings/editor-settings.js'
 import { EDITOR_EXTENSIONS } from '../languages/index.js'
 import { drafts } from '../drafts.js'
 import { en, zh } from '../locales.js'
 import { CODECRAFT_CSS } from '../theme.js'
 
 /** Browser services required before mounting. */
-export const inject = ['documentPreviews', 'slots', 'locale']
+export const inject = ['documentPreviews', 'slots', 'locale', 'configForms']
 
 /** Locale namespace bound to both the viewer label and the body copy. */
 const LOCALE_NAMESPACE = 'sidebarCodeCraft'
@@ -31,7 +33,7 @@ const PREVIEW_ID = 'dsh-codecraft'
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
-    style.dataset.dshCodecraft = '0.1.1'
+    style.dataset.dshCodecraft = '0.1.2'
     style.textContent = CODECRAFT_CSS
     document.head.appendChild(style)
     return () => style.remove()
@@ -52,6 +54,22 @@ export function apply(ctx: ClientContext): void {
     'dsh-codecraft: dictionaries',
   )
   const t = ctx.locale.bind(LOCALE_NAMESPACE)
+
+  ctx.effect(
+    () => editorSettings.bind(ctx.configForms.get(PREVIEW_ID)),
+    'dsh-codecraft: editor settings',
+  )
+
+  ctx.effect(() => ctx.configForms.whileServed([PREVIEW_ID], () => ctx.slots.inject(
+    'plugins.item',
+    () => ctx.slots.register({
+      name: 'plugins.item',
+      id: PREVIEW_ID,
+      order: 50,
+      label: () => t('settings.title'),
+      locale: LOCALE_NAMESPACE,
+    }, CodeCraftSettingsCard),
+  )), 'dsh-codecraft: settings page')
 
   ctx.effect(() => ctx.documentPreviews.register({
     id: PREVIEW_ID,

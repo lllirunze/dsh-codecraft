@@ -54,6 +54,16 @@ export const zh = {
   'status.tabs': '制表符',
   'status.spaces': '空格: {size}',
   'status.loading': '正在载入',
+  'settings.title': 'CodeCraft',
+  'settings.description': '配置 CodeCraft 编辑器的文件保存行为。',
+  'settings.autoSave.label': '自动保存',
+  'settings.autoSave.hint': '按所选周期保存存在未保存修改的可写文件。',
+  'settings.interval.label': '自动保存间隔',
+  'settings.interval.hint': '关闭自动保存时也可以预先选择间隔。',
+  'settings.interval.seconds': '{seconds} 秒',
+  'settings.unavailable': 'CodeCraft 设置当前不可用。',
+  'settings.readOnly': '当前 DSH 配置不允许修改设置。',
+  'settings.saveFailed': 'DSH 未接受这次设置修改，请重试。',
 }
 
 export const en: Record<keyof typeof zh, string> = {
@@ -107,4 +117,14 @@ export const en: Record<keyof typeof zh, string> = {
   'status.tabs': 'Tabs',
   'status.spaces': 'Spaces: {size}',
   'status.loading': 'Loading',
+  'settings.title': 'CodeCraft',
+  'settings.description': 'Configure file-saving behavior for the CodeCraft editor.',
+  'settings.autoSave.label': 'Auto save',
+  'settings.autoSave.hint': 'Periodically save writable files that have unsaved changes.',
+  'settings.interval.label': 'Auto-save interval',
+  'settings.interval.hint': 'You can choose an interval before enabling auto save.',
+  'settings.interval.seconds': '{seconds} seconds',
+  'settings.unavailable': 'CodeCraft settings are currently unavailable.',
+  'settings.readOnly': 'This DSH configuration does not allow settings changes.',
+  'settings.saveFailed': 'DSH did not accept this settings change. Try again.',
 }
