@@ -21,7 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Notes
 
 - Language-specific indentation, project configuration discovery, and whole-file formatting remain outside this release.
-- Automated validation passes; native DSH Desktop regression testing remains manual.
+- Automated validation and macOS DSH Desktop acceptance pass; the focused Windows regression remains pending.
 
 ## [0.1.3] - 2026-11-04
 

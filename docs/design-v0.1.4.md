@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed, Desktop regression pending |
+| Status | Implemented; automated validation and macOS Desktop acceptance passed |
 | Target version | 0.1.4 |
 | Baseline | 0.1.3 |
 | Platforms | DSH Desktop on macOS and Windows |

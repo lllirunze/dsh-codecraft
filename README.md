@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.1.4 has passed automated validation. Real DSH Desktop regression testing is still required before release.
+> **Status:** v0.1.4 has passed automated validation and macOS DSH Desktop acceptance. The focused Windows regression remains pending.
 
 ## Features
 
