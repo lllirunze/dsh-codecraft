@@ -16,7 +16,7 @@ import { xml } from '@codemirror/lang-xml'
 import { yaml } from '@codemirror/lang-yaml'
 import type { LanguageSupport } from '@codemirror/language'
 import { CODECRAFT_EDITABLE_EXTENSIONS } from '../../protocol.js'
-import { BaseLanguageAdapter } from './base/BaseLanguageAdapter.js'
+import type { EditorLanguageAdapter } from './EditorLanguageAdapter.js'
 import { LanguageRegistry } from './registry.js'
 
 export const EDITOR_EXTENSIONS = CODECRAFT_EDITABLE_EXTENSIONS
@@ -27,14 +27,13 @@ export interface FileLanguage {
   support: LanguageSupport | null
 }
 
-class CodeMirrorLanguageAdapter extends BaseLanguageAdapter {
+class CodeMirrorLanguageAdapter implements EditorLanguageAdapter {
   constructor(
     readonly id: string,
     readonly label: string,
     readonly extensions: readonly string[],
     readonly createSupport: () => LanguageSupport,
   ) {
-    super()
   }
 }
 

@@ -197,8 +197,8 @@ if (!/from\s+["']@deepseek-ai\/schemastery["']/.test(hostCode)) {
 const host = await import(pathToFileURL(resolve('lib/index.js')).href)
 if (host.name !== 'dsh-codecraft') throw new Error(`unexpected host plugin name: ${String(host.name)}`)
 if (typeof host.apply !== 'function') throw new Error('host bundle does not export apply()')
-if (!Array.isArray(host.inject) || !host.inject.includes('webServer')) {
-  throw new Error('host bundle does not declare the webServer injection')
+if (!Array.isArray(host.inject) || !['webServer', 'subprocess'].every(name => host.inject.includes(name))) {
+  throw new Error('host bundle does not declare the webServer and subprocess injections')
 }
 
 console.log(`verified: host exports + client registration (${required.length} external requires)`)

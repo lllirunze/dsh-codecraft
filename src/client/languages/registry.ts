@@ -1,4 +1,4 @@
-import type { LanguageAdapter } from './base/LanguageAdapter.js'
+import type { EditorLanguageAdapter } from './EditorLanguageAdapter.js'
 
 function extensionOf(name: string): string | undefined {
   const finalSegment = name.replaceAll('\\', '/').split('/').at(-1)?.toLowerCase() ?? ''
@@ -7,7 +7,7 @@ function extensionOf(name: string): string | undefined {
 }
 
 /** Ordered, duplicate-safe lookup for independent language adapters. */
-export class LanguageRegistry<T extends LanguageAdapter> {
+export class LanguageRegistry<T extends EditorLanguageAdapter> {
   readonly #byId = new Map<string, T>()
   readonly #byExtension = new Map<string, T>()
 

@@ -43,6 +43,7 @@ function makeContext(root: string, rejection: number | undefined = undefined): H
   return {
     webServer: { register: () => () => undefined },
     connection: { requestRejection: () => rejection },
+    subprocess: undefined as unknown as HostContext['subprocess'],
     sessions: {
       get: (id: string) => id === 's1' ? { header: { cwd: root } } : undefined,
     },
@@ -93,6 +94,33 @@ describe('CodeCraft API route', () => {
     expect((await call(ctx, { action: 'nope', sessionId: 's1', path: 'a.ts' })).statusCode).toBe(400)
     expect((await call(ctx, { action: 'read', sessionId: 's1' })).statusCode).toBe(400)
     expect((await call(ctx, { action: 'save', sessionId: 's1', path: 'a.ts', content: 'x' })).statusCode).toBe(400)
+    expect((await call(ctx, {
+      action: 'intelligence-complete',
+      sessionId: 's1',
+      path: 'a.py',
+      tabId: 'tab',
+      revision: 1,
+      content: 'value.',
+      position: { line: -1, character: 0 },
+    })).statusCode).toBe(400)
+  })
+
+  it('reports unavailable intelligence when no manager is mounted', async () => {
+    const root = await workspace()
+    await writeFile(join(root, 'a.py'), 'value = 1\n')
+    const response = await call(makeContext(root), {
+      action: 'intelligence-sync',
+      sessionId: 's1',
+      path: 'a.py',
+      tabId: 'tab',
+      revision: 1,
+      content: 'value = 2\n',
+    })
+    expect(response.statusCode).toBe(503)
+    expect(response.json()).toMatchObject({
+      ok: false,
+      error: { code: 'intelligence-unavailable' },
+    })
   })
 
   it('reports an unknown session without resolving a path', async () => {

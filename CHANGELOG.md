@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- Added project-aware Python completion backed by a bundled Pyright language server.
+- Added unsaved document synchronization, workspace-scoped LSP sessions, request cancellation, stale-result rejection, bounded restart with document replay, and managed process teardown.
+- Added Python Intelligence settings for enablement, semantic completion, interpreter selection, and an optional server override.
+- Added extension boundaries for language, framework, and ecosystem intelligence providers.
+
+### Changed
+
+- Narrowed client language adapters to CodeMirror presentation and moved semantic language responsibilities to the Host boundary.
+- Added DSH's managed subprocess service as a Host requirement while preserving the authenticated Session-derived workspace boundary.
+- Added one bounded self-recovery attempt when a stale Pyright session unexpectedly returns no member completions.
+
+### Notes
+
+- Python Intelligence targets macOS in v0.2.0; the existing editor remains supported on macOS and Windows.
+- Hover, signature help, diagnostics, go to definition, frameworks, and other semantic languages remain future work.
+- Automated validation and macOS Host startup pass; interactive Desktop acceptance remains pending.
+
 ## [0.1.4] - 2026-11-04
 
 ### Added

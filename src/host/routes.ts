@@ -1,6 +1,7 @@
 import { isAbsolute } from 'node:path'
 import { CodeCraftError } from './errors.js'
 import { readTextFile, saveTextFile, statFile } from './files.js'
+import type { IntelligenceManager } from './intelligence/manager.js'
 import type {
   HostContext,
   HostSessionLike,
@@ -75,8 +76,50 @@ function requireRequest(value: unknown): CodeCraftRequest {
   if (typeof path !== 'string' || path === '' || path.length > 4096) {
     throw new CodeCraftError(ERROR_CODES.badRequest, '缺少有效的 path。', 400)
   }
-  if (action === 'read' || action === 'stat') {
+  if (action === 'read' || action === 'stat' || action === 'intelligence-status') {
     return { action, sessionId, path }
+  }
+  if (action === 'intelligence-close') {
+    const { tabId } = value
+    if (typeof tabId !== 'string' || tabId === '') {
+      throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求缺少 tabId。', 400)
+    }
+    return { action, sessionId, path, tabId }
+  }
+  if (action === 'intelligence-sync' || action === 'intelligence-complete') {
+    const { tabId, revision, content } = value
+    if (typeof tabId !== 'string' || tabId === '' || tabId.length > 512) {
+      throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求缺少有效的 tabId。', 400)
+    }
+    if (!Number.isSafeInteger(revision) || Number(revision) < 1) {
+      throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求的 revision 无效。', 400)
+    }
+    if (typeof content !== 'string' || Buffer.byteLength(content) > MAX_REQUEST_BYTES) {
+      throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求的文档内容无效或过大。', 400)
+    }
+    if (action === 'intelligence-sync') {
+      return { action, sessionId, path, tabId, revision: Number(revision), content }
+    }
+    const requestPosition = value.position
+    if (!isRecord(requestPosition)
+      || !Number.isInteger(requestPosition.line)
+      || !Number.isInteger(requestPosition.character)
+      || Number(requestPosition.line) < 0
+      || Number(requestPosition.character) < 0) {
+      throw new CodeCraftError(ERROR_CODES.badRequest, '智能补全位置无效。', 400)
+    }
+    return {
+      action,
+      sessionId,
+      path,
+      tabId,
+      revision: Number(revision),
+      content,
+      position: {
+        line: Number(requestPosition.line),
+        character: Number(requestPosition.character),
+      },
+    }
   }
   if (action === 'save') {
     const { content, expectedVersion, newline, bom } = value
@@ -116,13 +159,29 @@ async function workspaceOf(ctx: HostContext, sessionId: string): Promise<{ sessi
 }
 
 /** Test seam: perform one validated request against the Host filesystem. */
-export async function dispatch(ctx: HostContext, request: CodeCraftRequest): Promise<unknown> {
+export async function dispatch(
+  ctx: HostContext,
+  request: CodeCraftRequest,
+  intelligence?: IntelligenceManager,
+): Promise<unknown> {
   const { root } = await workspaceOf(ctx, request.sessionId)
   switch (request.action) {
     case 'read': return readTextFile(root, request.path) satisfies Promise<ReadResult>
     case 'save': return saveTextFile({ root, ...request }) satisfies Promise<SaveResult>
     case 'stat': return statFile(root, request.path) satisfies Promise<StatResult>
+    case 'intelligence-sync': return requireIntelligence(intelligence).sync(root, request)
+    case 'intelligence-complete': return requireIntelligence(intelligence).complete(root, request)
+    case 'intelligence-close': {
+      await requireIntelligence(intelligence).close(root, request.path, request.tabId)
+      return { closed: true }
+    }
+    case 'intelligence-status': return requireIntelligence(intelligence).status(root, request.path)
   }
+}
+
+function requireIntelligence(manager: IntelligenceManager | undefined): IntelligenceManager {
+  if (manager !== undefined) return manager
+  throw new CodeCraftError(ERROR_CODES.intelligenceUnavailable, 'Python 智能服务不可用。', 503)
 }
 
 /**
@@ -130,7 +189,10 @@ export async function dispatch(ctx: HostContext, request: CodeCraftRequest): Pro
  * @param ctx - Host context carrying the web server, admission fence, and Sessions.
  * @returns the handler registered at {@link CODECRAFT_ROUTE}.
  */
-export function createApiHandler(ctx: HostContext): (req: RequestLike, res: ResponseLike) => Promise<void> {
+export function createApiHandler(
+  ctx: HostContext,
+  intelligence?: IntelligenceManager,
+): (req: RequestLike, res: ResponseLike) => Promise<void> {
   return async (req, res) => {
     try {
       const rejection = ctx.connection.requestRejection(req)
@@ -167,7 +229,7 @@ export function createApiHandler(ctx: HostContext): (req: RequestLike, res: Resp
         return
       }
       const request = requireRequest(parsed)
-      const result = await dispatch(ctx, request)
+      const result = await dispatch(ctx, request, intelligence)
       sendJson(res, 200, { ok: true, result })
     } catch (error) {
       const normalized = error instanceof CodeCraftError

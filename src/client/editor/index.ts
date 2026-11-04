@@ -30,6 +30,7 @@ import {
 } from '@codemirror/view'
 import type { IndentationSettings } from '../../settings/schema.js'
 import type { FileLanguage } from '../languages/index.js'
+import type { CompletionSource } from '@codemirror/autocomplete'
 import { editorThemeExtensions } from '../theme.js'
 import { bracketExtensions } from './extensions/brackets.js'
 import { completionExtensions } from './extensions/completion.js'
@@ -43,6 +44,7 @@ export interface EditorOptions {
   readOnlyCompartment: Compartment
   indentationCompartment: Compartment
   onUpdate: (update: ViewUpdate) => void
+  completionSource?: CompletionSource
 }
 
 /** Editable/read-only extensions, kept reconfigurable without rebuilding the view. */
@@ -79,7 +81,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     EditorState.allowMultipleSelections.of(true),
     options.indentationCompartment.of(indentationExtensions(options.indentation)),
     ...bracketExtensions(options.language),
-    ...completionExtensions(),
+    ...completionExtensions(options.completionSource),
     rectangularSelection(),
     highlightActiveLine(),
     highlightSelectionMatches(),

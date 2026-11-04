@@ -259,6 +259,17 @@ body[data-ds-dark-theme] .dsh-codecraft {
   background-position: right 10px center;
   background-repeat: no-repeat;
 }
+
+.dsh-codecraft-settings-input {
+  min-width: 240px;
+  max-width: 48%;
+  padding: 7px 9px;
+  border: 1px solid var(--dsh-border, rgba(127, 127, 127, 0.28));
+  border-radius: 7px;
+  color: inherit;
+  background: var(--dsh-background, rgba(127, 127, 127, 0.08));
+  font: inherit;
+}
 .dsh-codecraft-settings-select:focus {
   border-color: var(--dsw-alias-state-business-primary, #4078f2);
   outline: none;

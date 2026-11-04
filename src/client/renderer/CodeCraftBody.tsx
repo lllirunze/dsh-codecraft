@@ -18,7 +18,14 @@ import {
 } from 'react'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
-import { ApiCallError, readFile, saveFile, statFile } from '../api.js'
+import {
+  ApiCallError,
+  closeIntelligence,
+  readFile,
+  saveFile,
+  statFile,
+  syncIntelligence,
+} from '../api.js'
 import { fileNameOf, parseSessionFileAddress } from '../address.js'
 import { drafts } from '../drafts.js'
 import {
@@ -29,6 +36,7 @@ import {
   setEditorIndentation,
   setEditorReadOnly,
 } from '../editor/index.js'
+import { semanticCompletionSource } from '../editor/extensions/semantic-completion.js'
 import { languageForFile } from '../languages/index.js'
 import { ROOT_CLASS } from '../theme.js'
 import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
@@ -38,6 +46,7 @@ import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import type {
+  IntelligenceStatusKind,
   TextFileSnapshot,
   UnsupportedFileSnapshot,
 } from '../../protocol.js'
@@ -114,6 +123,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   ).settings
   const autoSaveSettings = settings.autoSave
   const indentationSettings = settings.indentation
+  const pythonIntelligenceSettings = useSyncExternalStore(
+    editorSettings.subscribe,
+    editorSettings.getSnapshot,
+    editorSettings.getSnapshot,
+  ).pythonIntelligence
   const { tab } = props.useTabInfo()
   const request = props.content.kind === 'renderer' ? props.content : undefined
   const useResource = props.useResource ?? (() => ({ status: 'none' as const }))
@@ -139,6 +153,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const indentationCompartmentRef = useRef(new Compartment())
   const indentationSettingsRef = useRef(indentationSettings)
   indentationSettingsRef.current = indentationSettings
+  const pythonIntelligenceSettingsRef = useRef(pythonIntelligenceSettings)
+  pythonIntelligenceSettingsRef.current = pythonIntelligenceSettings
   const savedTextRef = useRef('')
   const baseVersionRef = useRef('')
   const newlineRef = useRef<'lf' | 'crlf'>('lf')
@@ -156,6 +172,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const draftTimerRef = useRef<number | undefined>(undefined)
   const flashTimerRef = useRef<number | undefined>(undefined)
   const copyTimerRef = useRef<number | undefined>(undefined)
+  const intelligenceTimerRef = useRef<number | undefined>(undefined)
+  const intelligenceRevisionRef = useRef(1)
+  const intelligenceGenerationRef = useRef(0)
+  const intelligenceDocumentIdRef = useRef<string | undefined>(undefined)
+  const syncIntelligenceDocumentRef = useRef<() => Promise<void>>(async () => {})
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -171,6 +192,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [fileWritable, setFileWritable] = useState(true)
   const [newlineStyle, setNewlineStyle] = useState<'lf' | 'crlf'>('lf')
   const [copied, setCopied] = useState(false)
+  const [intelligenceStatus, setIntelligenceStatus] = useState<IntelligenceStatusKind>('disabled')
+  const [intelligenceMessage, setIntelligenceMessage] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     mountedRef.current = true
@@ -190,6 +213,15 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       setEditorIndentation(view, indentationCompartmentRef.current, indentationSettings)
     }
   }, [indentationSettings.indentSize])
+
+  useEffect(() => {
+    if (viewRef.current !== null) void syncIntelligenceDocumentRef.current()
+  }, [
+    pythonIntelligenceSettings.enabled,
+    pythonIntelligenceSettings.completion,
+    pythonIntelligenceSettings.interpreterPath,
+    pythonIntelligenceSettings.serverPath,
+  ])
 
   useEffect(() => {
     conflictRef.current = conflict
@@ -223,6 +255,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const destroyEditor = useCallback(() => {
     const view = viewRef.current
     if (view === null) return
+    const parsed = parsedRef.current
+    const documentId = intelligenceDocumentIdRef.current
+    intelligenceDocumentIdRef.current = undefined
+    if (intelligenceTimerRef.current !== undefined) {
+      window.clearTimeout(intelligenceTimerRef.current)
+      intelligenceTimerRef.current = undefined
+    }
     flushDraft()
     viewRef.current = null
     try {
@@ -231,6 +270,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       // The owner may already have released its callback ref.
     }
     view.destroy()
+    if (parsed !== null && documentId !== undefined) {
+      void closeIntelligence({
+        sessionId: parsed.sessionId,
+        path: parsed.path,
+        tabId: documentId,
+      }).catch(() => undefined)
+    }
   }, [flushDraft])
 
   const syncDirty = useCallback((view: EditorView) => {
@@ -251,10 +297,52 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     }, 700)
   }, [flushDraft])
 
+  const syncIntelligenceDocument = useCallback(async (): Promise<void> => {
+    const parsed = parsedRef.current
+    const view = viewRef.current
+    const documentId = intelligenceDocumentIdRef.current
+    const enabled = pythonIntelligenceSettingsRef.current.enabled
+      && pythonIntelligenceSettingsRef.current.completion
+      && parsed !== null
+      && /\.(?:py|pyi|pyw)$/i.test(parsed.path)
+    if (!enabled || parsed === null || view === null || documentId === undefined) {
+      if (mountedRef.current) setIntelligenceStatus('disabled')
+      return
+    }
+    if (mountedRef.current) {
+      setIntelligenceStatus('starting')
+      setIntelligenceMessage(undefined)
+    }
+    try {
+      const result = await syncIntelligence({
+        sessionId: parsed.sessionId,
+        path: parsed.path,
+        tabId: documentId,
+        revision: intelligenceRevisionRef.current,
+        content: view.state.doc.toString(),
+      })
+      if (!mountedRef.current || intelligenceDocumentIdRef.current !== documentId) return
+      setIntelligenceStatus(result.status)
+      setIntelligenceMessage(result.message)
+    } catch (failure) {
+      if (!mountedRef.current || intelligenceDocumentIdRef.current !== documentId) return
+      const apiFailure = failure instanceof ApiCallError ? failure : undefined
+      setIntelligenceStatus(apiFailure?.code === 'intelligence-disabled' ? 'disabled' : 'unavailable')
+      setIntelligenceMessage(messageOf(failure))
+    }
+  }, [])
+  syncIntelligenceDocumentRef.current = syncIntelligenceDocument
+
   const onUpdate = useCallback((update: ViewUpdate) => {
     if (update.docChanged) {
       syncDirty(update.view)
       scheduleDraft()
+      intelligenceRevisionRef.current += 1
+      if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
+      intelligenceTimerRef.current = window.setTimeout(() => {
+        intelligenceTimerRef.current = undefined
+        void syncIntelligenceDocument()
+      }, 150)
     }
     if (update.docChanged || update.selectionSet) {
       if (cursorFrameRef.current !== 0) return
@@ -264,13 +352,44 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         if (view !== null && mountedRef.current) setCursor(cursorPosition(view))
       })
     }
-  }, [scheduleDraft, syncDirty])
+  }, [scheduleDraft, syncDirty, syncIntelligenceDocument])
 
   const createEditor = useCallback((initial: InitialEditor): boolean => {
     const host = hostRef.current
     if (host === null) return false
     if (viewRef.current !== null) return true
     const language = languageForFile(fileNameOf(parsedRef.current?.path ?? ''))
+    const completionSource = language.id === 'python'
+      ? semanticCompletionSource({
+          getInput: () => {
+            const parsed = parsedRef.current
+            const view = viewRef.current
+            const documentId = intelligenceDocumentIdRef.current
+            if (parsed === null || view === null || documentId === undefined) return undefined
+            return {
+              sessionId: parsed.sessionId,
+              path: parsed.path,
+              tabId: documentId,
+              revision: intelligenceRevisionRef.current,
+              content: view.state.doc.toString(),
+              enabled: pythonIntelligenceSettingsRef.current.enabled
+                && pythonIntelligenceSettingsRef.current.completion,
+            }
+          },
+          onReady: () => {
+            if (mountedRef.current) {
+              setIntelligenceStatus('ready')
+              setIntelligenceMessage(undefined)
+            }
+          },
+          onError: (message) => {
+            if (mountedRef.current) {
+              setIntelligenceStatus('unavailable')
+              setIntelligenceMessage(message)
+            }
+          },
+        })
+      : undefined
     const state = EditorState.create({
       doc: initial.text,
       extensions: buildEditorExtensions({
@@ -280,10 +399,14 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         readOnlyCompartment: readOnlyCompartmentRef.current,
         indentationCompartment: indentationCompartmentRef.current,
         onUpdate,
+        ...(completionSource === undefined ? {} : { completionSource }),
       }),
     })
     const view = new EditorView({ state, parent: host })
     viewRef.current = view
+    intelligenceRevisionRef.current = 1
+    intelligenceGenerationRef.current += 1
+    intelligenceDocumentIdRef.current = `${tab.id}:${intelligenceGenerationRef.current}`
     initialisedRef.current = true
     readOnlyRef.current = initial.readOnly
     try {
@@ -306,9 +429,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     setReadOnly(initial.readOnly)
     setFileWritable(!initial.readOnly)
     setLanguageLabel(language.label)
+    setIntelligenceStatus(language.id === 'python' && pythonIntelligenceSettingsRef.current.enabled
+      ? 'starting'
+      : 'disabled')
+    if (language.id === 'python') queueMicrotask(() => { void syncIntelligenceDocument() })
     setPhase('editing')
     return true
-  }, [onUpdate])
+  }, [onUpdate, syncIntelligenceDocument, tab.id])
 
   const applySnapshot = useCallback((snapshot: TextFileSnapshot, currentRequest: RendererRequest) => {
     const fileAddress = addressRef.current
@@ -701,6 +828,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (draftTimerRef.current !== undefined) window.clearTimeout(draftTimerRef.current)
     if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
     if (copyTimerRef.current !== undefined) window.clearTimeout(copyTimerRef.current)
+    if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
     destroyEditor()
   }, [destroyEditor])
 
@@ -858,6 +986,15 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         )}
         {phase === 'editing' && (
           <span className={`${ROOT_CLASS}-status-item`}>{newlineStyle === 'crlf' ? 'CRLF' : 'LF'}</span>
+        )}
+        {phase === 'editing' && intelligenceStatus !== 'disabled' && (
+          <span
+            className={`${ROOT_CLASS}-status-item`}
+            data-state={intelligenceStatus === 'error' || intelligenceStatus === 'unavailable' ? 'error' : undefined}
+            title={intelligenceMessage}
+          >
+            {t(`status.intelligence.${intelligenceStatus}`)}
+          </span>
         )}
         {pending && <span className={`${ROOT_CLASS}-status-item`}>{t('status.loading')}</span>}
         <span className={`${ROOT_CLASS}-status-spacer`} />

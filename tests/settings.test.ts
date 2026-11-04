@@ -5,8 +5,10 @@ import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,
   DEFAULT_INDENTATION_SETTINGS,
+  DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveAutoSaveSettings,
   resolveIndentationSettings,
+  resolvePythonIntelligenceSettings,
 } from '../src/settings/schema.js'
 
 describe('resolveAutoSaveSettings', () => {
@@ -69,6 +71,36 @@ describe('resolveIndentationSettings', () => {
   })
 })
 
+describe('resolvePythonIntelligenceSettings', () => {
+  it('uses bundled and auto-discovered defaults for malformed values', () => {
+    expect(resolvePythonIntelligenceSettings(undefined)).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
+    expect(resolvePythonIntelligenceSettings({
+      pythonIntelligence: {
+        enabled: 'yes',
+        completion: null,
+        interpreterPath: 3,
+        serverPath: false,
+      },
+    })).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
+  })
+
+  it('accepts booleans and trims explicit paths', () => {
+    expect(resolvePythonIntelligenceSettings({
+      pythonIntelligence: {
+        enabled: false,
+        completion: false,
+        interpreterPath: ' /workspace/.venv/bin/python ',
+        serverPath: ' /tools/pyright-langserver ',
+      },
+    })).toEqual({
+      enabled: false,
+      completion: false,
+      interpreterPath: '/workspace/.venv/bin/python',
+      serverPath: '/tools/pyright-langserver',
+    })
+  })
+})
+
 describe('EditorSettingsStore', () => {
   it('tracks accepted Host settings and writes nested fields immediately', async () => {
     let listener = (): void => {}
@@ -94,6 +126,7 @@ describe('EditorSettingsStore', () => {
       autoSave: { enabled: true, intervalSeconds: 60 },
       indentation: { useSpaces: true, indentSize: 4 },
     })
+    expect(store.getSnapshot().pythonIntelligence).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
     await expect(store.setInterval(120)).resolves.toBe(true)
     expect(mutate).toHaveBeenCalledWith([{
       op: 'set',
@@ -105,6 +138,18 @@ describe('EditorSettingsStore', () => {
       op: 'set',
       path: ['editor', 'indentation', 'indentSize'],
       value: 2,
+    }])
+    await expect(store.setPythonIntelligenceEnabled(false)).resolves.toBe(true)
+    expect(mutate).toHaveBeenLastCalledWith([{
+      op: 'set',
+      path: ['pythonIntelligence', 'enabled'],
+      value: false,
+    }])
+    await expect(store.setPythonInterpreterPath(' /workspace/.venv/bin/python ')).resolves.toBe(true)
+    expect(mutate).toHaveBeenLastCalledWith([{
+      op: 'set',
+      path: ['pythonIntelligence', 'interpreterPath'],
+      value: '/workspace/.venv/bin/python',
     }])
     listener()
     unbind()

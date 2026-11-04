@@ -12,7 +12,9 @@
 
 import { CODECRAFT_ROUTE } from './protocol.js'
 import type { HostContext } from './host/context.js'
+import { IntelligenceManager } from './host/intelligence/manager.js'
 import { createApiHandler } from './host/routes.js'
+import { resolveCodeCraftSettings, type CodeCraftSettings } from './settings/schema.js'
 
 export { CODECRAFT_ROUTE } from './protocol.js'
 export { Config } from './config.js'
@@ -38,19 +40,27 @@ export const name = 'dsh-codecraft'
  * `workingDirectory` is read optionally (the Session header provides the
  * fallback workspace), so it is intentionally absent here.
  */
-export const inject = ['webServer', 'connection', 'sessions']
+export const inject = ['webServer', 'connection', 'sessions', 'subprocess']
 
 /**
  * Register the save adapter for this plugin's lifetime.
  * @param ctx - Host context carrying the web server, admission fence, and Sessions.
  */
-export function apply(ctx: HostContext): void {
+export function apply(ctx: HostContext, config: CodeCraftSettings): void {
+  const settings = resolveCodeCraftSettings(config)
+  const intelligence = new IntelligenceManager(ctx.subprocess, settings.pythonIntelligence)
   ctx.effect(
-    () => ctx.webServer.register({
-      kind: 'exact',
-      path: CODECRAFT_ROUTE,
-      handler: createApiHandler(ctx),
-    }),
+    () => {
+      const unregister = ctx.webServer.register({
+        kind: 'exact',
+        path: CODECRAFT_ROUTE,
+        handler: createApiHandler(ctx, intelligence),
+      })
+      return async () => {
+        unregister()
+        await intelligence.dispose()
+      }
+    },
     'dsh-codecraft: authenticated save API',
   )
 }

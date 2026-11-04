@@ -95,6 +95,73 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
           </div>
         </div>
       </section>
+      <section className="dsh-codecraft-settings-group">
+        <div className="dsh-codecraft-settings-group-title">{t('settings.group.pythonIntelligence')}</div>
+        <div className="dsh-codecraft-settings-card">
+          <div className="dsh-codecraft-settings-row">
+            <div>
+              <div className="dsh-codecraft-settings-label">{t('settings.python.enabled.label')}</div>
+              <div className="dsh-codecraft-settings-hint">{t('settings.python.enabled.hint')}</div>
+            </div>
+            <Switch
+              checked={snapshot.pythonIntelligence.enabled}
+              label={t('settings.python.enabled.label')}
+              disabled={disabled}
+              onChange={(enabled: boolean) => { void editorSettings.setPythonIntelligenceEnabled(enabled) }}
+            />
+          </div>
+          <div className="dsh-codecraft-settings-row">
+            <div>
+              <div className="dsh-codecraft-settings-label">{t('settings.python.completion.label')}</div>
+              <div className="dsh-codecraft-settings-hint">{t('settings.python.completion.hint')}</div>
+            </div>
+            <Switch
+              checked={snapshot.pythonIntelligence.completion}
+              label={t('settings.python.completion.label')}
+              disabled={disabled || !snapshot.pythonIntelligence.enabled}
+              onChange={(enabled: boolean) => { void editorSettings.setSemanticCompletionEnabled(enabled) }}
+            />
+          </div>
+          <div className="dsh-codecraft-settings-row">
+            <label htmlFor="dsh-codecraft-python-path">
+              <span className="dsh-codecraft-settings-label">{t('settings.python.interpreter.label')}</span>
+              <span className="dsh-codecraft-settings-hint">{t('settings.python.interpreter.hint')}</span>
+            </label>
+            <input
+              key={snapshot.pythonIntelligence.interpreterPath}
+              id="dsh-codecraft-python-path"
+              className="dsh-codecraft-settings-input"
+              defaultValue={snapshot.pythonIntelligence.interpreterPath}
+              placeholder={t('settings.python.path.auto')}
+              disabled={disabled}
+              onBlur={(event) => {
+                if (event.target.value.trim() !== snapshot.pythonIntelligence.interpreterPath) {
+                  void editorSettings.setPythonInterpreterPath(event.target.value)
+                }
+              }}
+            />
+          </div>
+          <div className="dsh-codecraft-settings-row">
+            <label htmlFor="dsh-codecraft-pyright-path">
+              <span className="dsh-codecraft-settings-label">{t('settings.python.server.label')}</span>
+              <span className="dsh-codecraft-settings-hint">{t('settings.python.server.hint')}</span>
+            </label>
+            <input
+              key={snapshot.pythonIntelligence.serverPath}
+              id="dsh-codecraft-pyright-path"
+              className="dsh-codecraft-settings-input"
+              defaultValue={snapshot.pythonIntelligence.serverPath}
+              placeholder={t('settings.python.path.bundled')}
+              disabled={disabled}
+              onBlur={(event) => {
+                if (event.target.value.trim() !== snapshot.pythonIntelligence.serverPath) {
+                  void editorSettings.setPyrightServerPath(event.target.value)
+                }
+              }}
+            />
+          </div>
+        </div>
+      </section>
       {snapshot.status === 'unavailable' && <div className="dsh-codecraft-settings-error">{t('settings.unavailable')}</div>}
       {!snapshot.writable && snapshot.status === 'ready' && <div className="dsh-codecraft-settings-error">{t('settings.readOnly')}</div>}
       {snapshot.error && <div className="dsh-codecraft-settings-error" role="alert">{t('settings.saveFailed')}</div>}

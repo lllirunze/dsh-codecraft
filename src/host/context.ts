@@ -51,10 +51,47 @@ export interface WorkingDirectoryService {
 }
 
 /** The subset of the Cordis Host context used by this plugin. */
+export interface ManagedSubprocessHandle {
+  readonly pid: number
+  readonly stdin: import('node:stream').Writable | undefined
+  readonly stdout: import('node:stream').Readable | undefined
+  readonly stderr: import('node:stream').Readable | undefined
+  readonly collected: {
+    readonly stderr?: { readFrom(offset: number): { text: string } }
+  }
+  readonly done: Promise<{ exitCode: number | null; signal: NodeJS.Signals | null }>
+  terminate(): void
+  waitForExit(signal?: AbortSignal): Promise<boolean>
+}
+
+export interface ManagedSubprocessSpawnSpec {
+  argv: readonly string[]
+  cwd: string
+  stdio: {
+    stdin: 'ignore' | 'pipe' | { readonly data: string }
+    stdout: 'pipe' | 'inherit' | { maxBytes: number }
+    stderr: 'pipe' | 'inherit' | { maxBytes: number }
+  }
+  graceMs: number
+  signal?: AbortSignal
+  env?: NodeJS.ProcessEnv
+}
+
+/** Structural subset of DSH's public ctx.subprocess service. */
+export interface ManagedSubprocessService {
+  resolveExecutable(
+    command: string,
+    env?: Readonly<Record<string, string>>,
+    signal?: AbortSignal,
+  ): Promise<string>
+  spawn(spec: ManagedSubprocessSpawnSpec): ManagedSubprocessHandle
+}
+
 export interface HostContext {
   webServer: WebServerService
   connection: ConnectionService
   sessions: SessionStoreService
-  effect(callback: () => (() => void) | void, label?: string): void
+  subprocess: ManagedSubprocessService
+  effect(callback: () => (() => void | Promise<void>) | void, label?: string): void
   get(name: string): unknown
 }

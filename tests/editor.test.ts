@@ -12,6 +12,7 @@ import {
 import { EditorView, type Command } from '@codemirror/view'
 import { differsFromSavedText } from '../src/client/document/state.js'
 import { bracketExtensions, closeBracketTokens } from '../src/client/editor/extensions/brackets.js'
+import { offsetAt } from '../src/client/editor/extensions/semantic-completion.js'
 import {
   alignedClosingDelimiter,
   indentLessByBoundary,
@@ -60,6 +61,16 @@ describe('differsFromSavedText', () => {
     const submittedSnapshot = 'const value = 2\n'
 
     expect(differsFromSavedText(submittedSnapshot, submittedSnapshot)).toBe(false)
+  })
+})
+
+describe('LSP position conversion', () => {
+  it('uses zero-based UTF-16 line and character coordinates', () => {
+    const state = EditorState.create({ doc: 'alpha\n😀value\n' })
+    expect(offsetAt(state.doc, { line: 0, character: 5 })).toBe(5)
+    expect(offsetAt(state.doc, { line: 1, character: 2 })).toBe(8)
+    expect(offsetAt(state.doc, { line: 1, character: 7 })).toBe(13)
+    expect(offsetAt(state.doc, { line: 3, character: 0 })).toBeUndefined()
   })
 })
 

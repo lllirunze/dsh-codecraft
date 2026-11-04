@@ -101,7 +101,84 @@ export interface StatRequest {
   path: string
 }
 
-export type CodeCraftRequest = ReadRequest | SaveRequest | StatRequest
+export interface IntelligenceDocumentRequest {
+  sessionId: string
+  path: string
+  tabId: string
+  revision: number
+  content: string
+}
+
+export interface IntelligenceSyncRequest extends IntelligenceDocumentRequest {
+  action: 'intelligence-sync'
+}
+
+export interface IntelligenceCompletionRequest extends IntelligenceDocumentRequest {
+  action: 'intelligence-complete'
+  position: IntelligencePosition
+}
+
+export interface IntelligenceCloseRequest {
+  action: 'intelligence-close'
+  sessionId: string
+  path: string
+  tabId: string
+}
+
+export interface IntelligenceStatusRequest {
+  action: 'intelligence-status'
+  sessionId: string
+  path: string
+}
+
+export type CodeCraftRequest =
+  | ReadRequest
+  | SaveRequest
+  | StatRequest
+  | IntelligenceSyncRequest
+  | IntelligenceCompletionRequest
+  | IntelligenceCloseRequest
+  | IntelligenceStatusRequest
+
+export interface IntelligencePosition {
+  line: number
+  character: number
+}
+
+export interface IntelligenceRange {
+  start: IntelligencePosition
+  end: IntelligencePosition
+}
+
+export interface IntelligenceTextEdit {
+  range: IntelligenceRange
+  newText: string
+}
+
+export interface IntelligenceCompletionItem {
+  label: string
+  kind?: number
+  detail?: string
+  sortText?: string
+  filterText?: string
+  insertText?: string
+  insertTextFormat?: 1 | 2
+  textEdit?: IntelligenceTextEdit
+  additionalTextEdits?: IntelligenceTextEdit[]
+}
+
+export interface IntelligenceCompletionResult {
+  revision: number
+  items: IntelligenceCompletionItem[]
+}
+
+export type IntelligenceStatusKind = 'disabled' | 'starting' | 'ready' | 'unavailable' | 'error'
+
+export interface IntelligenceStatusResult {
+  status: IntelligenceStatusKind
+  message?: string
+  interpreterPath?: string
+}
 
 export interface SaveResult {
   absolutePath: string
@@ -143,6 +220,9 @@ export const ERROR_CODES = {
   conflict: 'conflict',
   writeFailed: 'write-failed',
   internal: 'internal',
+  intelligenceDisabled: 'intelligence-disabled',
+  intelligenceUnavailable: 'intelligence-unavailable',
+  intelligenceStale: 'intelligence-stale',
 } as const
 
 /** Why a path was rejected, as a short human-readable explanation. */

@@ -14,12 +14,14 @@
 
 </div>
 
-> **当前状态：** v0.1.4 已通过自动化验证和 macOS DSH Desktop 验收，仍需完成 Windows 专项回归测试。
+> **当前状态：** v0.2.0 开发版本已通过自动化验证和 macOS Host 启动检查，仍需在 DSH Desktop 中完成 Python 智能功能交互验收。
 
 ## 功能
 
 - 复用 DSH 原生工作区文件树和文件 Tab。
-- 提供语法高亮、行号、折叠、搜索、行注释、缩进、撤销重做和基础补全。
+- 提供语法高亮、行号、折叠、搜索、行注释、缩进、撤销重做和补全。
+- 在 macOS 上提供项目级 Python 补全，包括 import、跨文件符号、推断成员和所选环境中的依赖。
+- 将未保存的 Python 内容同步到工作区级 Pyright，并通过 DSH 托管子进程服务管理其生命周期。
 - 自动闭合常用括号与引号，并支持包裹选区、成对删除以及按语言启用反引号或 Python 三引号。
 - 支持 2 格或 4 格空格缩进、回车展开通用括号，以及按整数边界执行单行或多行 Tab 操作。
 - 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
@@ -34,7 +36,8 @@
 
 | 组件 | 支持范围 |
 | --- | --- |
-| 操作系统 | macOS 或 Windows |
+| 基础编辑器 | macOS 或 Windows |
+| Python 智能编程 | v0.2.0 支持 macOS |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 从源码构建时需要 20 或更高版本 |
 
@@ -106,6 +109,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 新增缩进始终使用空格。可以在同一设置区域选择 2 格或 4 格宽度；修改会立即作用于已打开的编辑器，但不会重写文件中的已有内容。
 
+在 macOS 的 Python 文件中，Python 智能编程默认开启。CodeCraft 使用随附的 Pyright，并按“明确设置、工作区 `.venv`、工作区 `venv`、`python3`、`python`”的顺序选择解释器。可以在 **设置 → CodeCraft → Python 智能编程** 中关闭语义补全，或指定解释器和语言服务器的绝对路径。状态栏会显示“启动中”“就绪”或“不可用”；智能服务不可用时不会影响普通编辑和保存。
+
 ### 快捷键
 
 | macOS | Windows | 功能 |
@@ -115,7 +120,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 | `Cmd+/` | `Ctrl+/` | 切换行注释 |
 | `Cmd+Z` / `Cmd+Shift+Z` | `Ctrl+Z` / `Ctrl+Y` | 撤销 / 重做 |
 | `Tab` / `Shift+Tab` | `Tab` / `Shift+Tab` | 缩进 / 反缩进 |
-| `Ctrl+Space` | `Ctrl+Space` | 打开基础补全 |
+| `Option+I` / `Option+\`` | `Ctrl+Space` | 打开补全 |
 
 ## 文档
 
@@ -127,7 +132,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 - CodeCraft 只支持不超过 2 MiB 的 UTF-8 源码和文本文件。
 - 符号链接只能只读打开。
-- 暂无 LSP、语义诊断、自动导入和跳转定义。
+- 暂未提供 Python 悬浮说明、参数提示、诊断、跨文件自动编辑和跳转定义。
+- v0.2.0 尚未在 Windows 上启用 Python 智能编程，但基础编辑器仍受支持。
 - Linux 尚未完成验证，目前不在支持范围内。
 - 暂无多窗口草稿同步。
 

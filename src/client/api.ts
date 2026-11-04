@@ -11,6 +11,9 @@
 import {
   CODECRAFT_ROUTE,
   type CodeCraftEnvelope,
+  type IntelligenceCompletionResult,
+  type IntelligencePosition,
+  type IntelligenceStatusResult,
   type ReadResult,
   type SaveResult,
   type StatResult,
@@ -99,4 +102,40 @@ export function saveFile(input: {
   bom: boolean
 }, signal?: AbortSignal): Promise<SaveResult> {
   return callApi<SaveResult>({ action: 'save', ...input }, signal)
+}
+
+export interface IntelligenceDocumentInput {
+  sessionId: string
+  path: string
+  tabId: string
+  revision: number
+  content: string
+}
+
+export function syncIntelligence(
+  input: IntelligenceDocumentInput,
+  signal?: AbortSignal,
+): Promise<IntelligenceStatusResult> {
+  return callApi<IntelligenceStatusResult>({ action: 'intelligence-sync', ...input }, signal)
+}
+
+export function completeIntelligence(
+  input: IntelligenceDocumentInput & { position: IntelligencePosition },
+  signal?: AbortSignal,
+): Promise<IntelligenceCompletionResult> {
+  return callApi<IntelligenceCompletionResult>({ action: 'intelligence-complete', ...input }, signal)
+}
+
+export function closeIntelligence(
+  input: Pick<IntelligenceDocumentInput, 'sessionId' | 'path' | 'tabId'>,
+  signal?: AbortSignal,
+): Promise<{ closed: true }> {
+  return callApi<{ closed: true }>({ action: 'intelligence-close', ...input }, signal)
+}
+
+export function intelligenceStatus(
+  input: Pick<IntelligenceDocumentInput, 'sessionId' | 'path'>,
+  signal?: AbortSignal,
+): Promise<IntelligenceStatusResult> {
+  return callApi<IntelligenceStatusResult>({ action: 'intelligence-status', ...input }, signal)
 }

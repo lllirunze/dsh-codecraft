@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { EDITOR_EXTENSIONS, languageForFile, languageRegistry } from '../src/client/languages/index.js'
-import { BaseLanguageAdapter } from '../src/client/languages/base/BaseLanguageAdapter.js'
+import type { EditorLanguageAdapter } from '../src/client/languages/EditorLanguageAdapter.js'
 import { LanguageRegistry } from '../src/client/languages/registry.js'
+import type { LanguageSupport } from '@codemirror/language'
 
 describe('EDITOR_EXTENSIONS', () => {
   it('is lowercase, unique, and dot-free', () => {
@@ -49,9 +50,15 @@ describe('languageForFile', () => {
   })
 })
 
-class TestAdapter extends BaseLanguageAdapter {
+class TestAdapter implements EditorLanguageAdapter {
+  readonly label: string
+  readonly createSupport: () => LanguageSupport
+
   constructor(readonly id: string, readonly extensions: readonly string[]) {
-    super()
+    this.label = id
+    this.createSupport = () => {
+      throw new Error('not used by registry tests')
+    }
   }
 }
 
@@ -61,10 +68,5 @@ describe('LanguageRegistry', () => {
     registry.register(new TestAdapter('one', ['one']))
     expect(() => registry.register(new TestAdapter('one', ['two']))).toThrow('duplicate language id')
     expect(() => registry.register(new TestAdapter('two', ['.ONE']))).toThrow('duplicate language extension')
-  })
-
-  it('provides a workspace-root default without language-specific infrastructure', async () => {
-    const adapter = new TestAdapter('test', ['test'])
-    await expect(adapter.detectProjectRoot('file:///workspace/a.test', 'file:///workspace')).resolves.toBe('file:///workspace')
   })
 })

@@ -21,8 +21,16 @@ export interface EditorSettings {
   indentation: IndentationSettings
 }
 
+export interface PythonIntelligenceSettings {
+  enabled: boolean
+  completion: boolean
+  interpreterPath: string
+  serverPath: string
+}
+
 export interface CodeCraftSettings {
   editor: EditorSettings
+  pythonIntelligence: PythonIntelligenceSettings
 }
 
 export const DEFAULT_AUTO_SAVE_SETTINGS: AutoSaveSettings = {
@@ -40,8 +48,16 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   indentation: DEFAULT_INDENTATION_SETTINGS,
 }
 
+export const DEFAULT_PYTHON_INTELLIGENCE_SETTINGS: PythonIntelligenceSettings = {
+  enabled: true,
+  completion: true,
+  interpreterPath: '',
+  serverPath: '',
+}
+
 export const DEFAULT_CODECRAFT_SETTINGS: CodeCraftSettings = {
   editor: DEFAULT_EDITOR_SETTINGS,
+  pythonIntelligence: DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
 }
 
 export function isAutoSaveInterval(value: unknown): value is AutoSaveInterval {
@@ -94,5 +110,34 @@ export function resolveEditorSettings(value: unknown): EditorSettings {
   return {
     autoSave: resolveAutoSaveSettings(value),
     indentation: resolveIndentationSettings(value),
+  }
+}
+
+/** Resolve Python intelligence settings without accepting non-string paths. */
+export function resolvePythonIntelligenceSettings(value: unknown): PythonIntelligenceSettings {
+  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
+  const intelligence = typeof root.pythonIntelligence === 'object' && root.pythonIntelligence !== null
+    ? root.pythonIntelligence as Record<string, unknown>
+    : {}
+  return {
+    enabled: typeof intelligence.enabled === 'boolean'
+      ? intelligence.enabled
+      : DEFAULT_PYTHON_INTELLIGENCE_SETTINGS.enabled,
+    completion: typeof intelligence.completion === 'boolean'
+      ? intelligence.completion
+      : DEFAULT_PYTHON_INTELLIGENCE_SETTINGS.completion,
+    interpreterPath: typeof intelligence.interpreterPath === 'string'
+      ? intelligence.interpreterPath.trim()
+      : DEFAULT_PYTHON_INTELLIGENCE_SETTINGS.interpreterPath,
+    serverPath: typeof intelligence.serverPath === 'string'
+      ? intelligence.serverPath.trim()
+      : DEFAULT_PYTHON_INTELLIGENCE_SETTINGS.serverPath,
+  }
+}
+
+export function resolveCodeCraftSettings(value: unknown): CodeCraftSettings {
+  return {
+    editor: resolveEditorSettings(value),
+    pythonIntelligence: resolvePythonIntelligenceSettings(value),
   }
 }
