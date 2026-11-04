@@ -26,6 +26,9 @@ const LOCALE_NAMESPACE = 'sidebarCodeCraft'
 /** Unique identity in DSH's preview registry and the keyed body slot. */
 const PREVIEW_ID = 'dsh-codecraft'
 
+/** Loader entry id from cordis.patch.yml; DSH settings are keyed by this id. */
+const SETTINGS_ENTRY_ID = 'codecraft'
+
 /**
  * Register the editor for this plugin's lifetime.
  * @param ctx - browser context carrying the preview registry, slots, and copy.
@@ -56,11 +59,11 @@ export function apply(ctx: ClientContext): void {
   const t = ctx.locale.bind(LOCALE_NAMESPACE)
 
   ctx.effect(
-    () => editorSettings.bind(ctx.configForms.get(PREVIEW_ID)),
+    () => editorSettings.bind(ctx.configForms.get(SETTINGS_ENTRY_ID)),
     'dsh-codecraft: editor settings',
   )
 
-  ctx.effect(() => ctx.configForms.whileServed([PREVIEW_ID], () => ctx.slots.inject(
+  ctx.effect(() => ctx.configForms.whileServed([SETTINGS_ENTRY_ID], () => ctx.slots.inject(
     'plugins.item',
     () => ctx.slots.register({
       name: 'plugins.item',

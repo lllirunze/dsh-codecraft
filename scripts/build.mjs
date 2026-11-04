@@ -16,6 +16,9 @@ await build({
   sourcemap: false,
   legalComments: 'none',
   logLevel: 'warning',
+  // DSH and plugins must share the same Schemastery instance. Bundling it
+  // creates incompatible schema symbols at the Host/plugin boundary.
+  external: ['@deepseek-ai/schemastery'],
 })
 
 const client = await build({

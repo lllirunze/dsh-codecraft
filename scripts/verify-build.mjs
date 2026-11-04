@@ -155,7 +155,12 @@ function verifyClientRegistration(code) {
         subscribe: () => () => {},
         mutate: async () => true,
       }),
-      whileServed: (_namespaces, register) => register(new Set(['dsh-codecraft'])),
+      whileServed: (namespaces, register) => {
+        const served = new Set(['codecraft'])
+        return namespaces.some(namespace => served.has(namespace))
+          ? register(served)
+          : () => {}
+      },
     },
     effect: callback => { callback() },
   }
@@ -183,6 +188,11 @@ function verifyClientRegistration(code) {
 }
 
 verifyClientRegistration(client)
+
+const hostCode = await readFile('lib/index.js', 'utf8')
+if (!/from\s+["']@deepseek-ai\/schemastery["']/.test(hostCode)) {
+  throw new Error('host bundle must keep @deepseek-ai/schemastery external')
+}
 
 const host = await import(pathToFileURL(resolve('lib/index.js')).href)
 if (host.name !== 'dsh-codecraft') throw new Error(`unexpected host plugin name: ${String(host.name)}`)

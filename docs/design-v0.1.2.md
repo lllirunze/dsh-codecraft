@@ -12,7 +12,7 @@ v0.1.2 improves two frequent, language-independent editing behaviors: optional a
 
 ## Auto-Save Settings
 
-CodeCraft contributes a card to DSH's native Plugins settings surface. The Host exports a volatile `Config` schema, and the browser binds to the `codecraft` entry through DSH's `configForms` service. Accepted values are persisted by DSH and take effect without restarting Desktop.
+CodeCraft contributes a dedicated section to DSH's native settings surface. The Host exports a volatile `Config` schema, and the browser binds to the `codecraft` entry through DSH's `configForms` service. Accepted values are persisted by DSH and take effect without restarting Desktop.
 
 Auto save is disabled by default. The interval defaults to 30 seconds and accepts only 10, 30, 60, or 120 seconds. Missing or invalid values resolve to safe defaults. The interval remains editable while auto save is disabled.
 

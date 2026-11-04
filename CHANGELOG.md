@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] - 2026-11-04
+
+### Fixed
+
+- Fixed the CodeCraft settings card not appearing because the client watched the package name instead of the Cordis settings entry ID.
+- Kept Schemastery external to the Host bundle so CodeCraft shares DSH's schema instance and does not block Desktop startup.
+- Strengthened build verification so settings registration requires the requested namespace to be served by DSH.
+
+### Notes
+
+- This patch makes the auto-save controls introduced in v0.1.2 accessible as a dedicated CodeCraft section in DSH Settings.
+
 ## [0.1.2] - 2026-11-04
 
 ### Added

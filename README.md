@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.1.2 has passed automated validation. Real DSH Desktop regression testing is still required before release.
+> **Status:** v0.1.3 has passed automated validation. Real DSH Desktop regression testing is still required before release.
 
 ## Features
 
@@ -70,7 +70,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.2
+dsh plugin --profile desktop add dsh-codecraft@0.1.3
 ```
 
 Restart DSH Desktop after updating.
@@ -101,7 +101,7 @@ Restart DSH Desktop. Native file previews are restored automatically.
 3. Edit the file and press `Cmd+S` on macOS or `Ctrl+S` on Windows, or use the Save action in the status bar.
 4. Use the viewer menu above the tab to switch to DSH's native Code or Plain Text preview when needed.
 
-Auto save is disabled by default. Open **Settings → Plugins → CodeCraft** to enable it and choose a 10, 30, 60, or 120-second interval. Automatic and manual saves use the same conflict-safe write path.
+Auto save is disabled by default. Open **Settings → CodeCraft** from the settings sidebar to enable it and choose a 10, 30, 60, or 120-second interval. Automatic and manual saves use the same conflict-safe write path.
 
 ### Keyboard shortcuts
 

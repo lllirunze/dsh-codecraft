@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.1.2 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
+> **当前状态：** v0.1.3 已通过自动化验证，发布前仍需完成真实 DSH Desktop 回归测试。
 
 ## 功能
 
@@ -70,7 +70,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.2
+dsh plugin --profile desktop add dsh-codecraft@0.1.3
 ```
 
 更新后重启 DSH Desktop。
@@ -101,7 +101,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 3. 编辑文件后，在 macOS 按 `Cmd+S`，在 Windows 按 `Ctrl+S`；也可以点击状态栏中的保存操作。
 4. 需要时可通过 Tab 上方的查看器菜单切换到 DSH 原生“代码”或“纯文本”预览。
 
-自动保存默认关闭。打开 **设置 → 插件 → CodeCraft** 即可启用，并选择 10、30、60 或 120 秒的保存间隔。自动保存和手动保存共用同一条冲突安全写入路径。
+自动保存默认关闭。在设置侧边栏打开 **设置 → CodeCraft** 即可启用，并选择 10、30、60 或 120 秒的保存间隔。自动保存和手动保存共用同一条冲突安全写入路径。
 
 ### 快捷键
 
