@@ -4,14 +4,14 @@
 | --- | --- |
 | Status | Proposed; implementation has not started |
 | Target version | 0.2.1 |
-| Baseline | 0.2.0 |
+| Baseline | 0.2.1-rc.0 Windows compatibility preview |
 | Release type | Patch |
 | Release theme | Python indentation, editing refinements, and module conventions |
-| Platform scope | Python Intelligence: macOS; existing editor: macOS and Windows |
+| Platform scope | Python Intelligence and editor: macOS and Windows |
 
 ## Purpose
 
-v0.2.1 refines the Python experience introduced in v0.2.0. It is not a second LSP implementation and does not add another language. The release must fix Python-aware indentation, preserve the stable editor and semantic-completion behavior, and establish one maintainable convention for future language, framework, and ecosystem modules.
+v0.2.1 refines the Python experience introduced in v0.2.0 and preserves the Windows enablement validated by [v0.2.1-rc.0](../v0.2.1-rc.0/design.md). It is not a second LSP implementation and does not add another language. The release must fix Python-aware indentation, preserve the stable editor and semantic-completion behavior on macOS and Windows, and establish one maintainable convention for future language, framework, and ecosystem modules.
 
 The release has two required outcomes:
 
@@ -60,7 +60,7 @@ The repository already provides the foundations required by this release:
 - a custom Python parser or replacement for Pyright;
 - a general code-quality subsystem;
 - speculative framework or ecosystem implementations;
-- new Windows or Linux support for Python Intelligence.
+- Linux support for Python Intelligence; Windows support is a prerequisite delivered through v0.2.1-rc.0, not part of the indentation implementation.
 
 ## Python Indentation Design
 
@@ -191,7 +191,7 @@ Existing Host files remain under `src/host/languages/python/`. Shared LSP framin
 ### Stage D: validate and release
 
 1. Run `npm run check` and `npm pack --dry-run --json`.
-2. Record automated evidence and macOS Desktop acceptance in `docs/version/v0.2.1/validation.md`.
+2. Record automated evidence and macOS and Windows Desktop acceptance in `docs/version/v0.2.1/validation.md`.
 3. Verify native tabs, save flows, plugin coexistence, semantic completion, and Pyright teardown.
 4. Update README, changelog, package versions, and release metadata only after the delivered scope is known.
 
@@ -210,7 +210,7 @@ Automated tests must cover:
 - existing Pyright import, cross-file, unsaved-document, member, environment, restart, and cleanup tests;
 - Docstring syntax guards, sections, indentation, placeholders, and one-step Undo if that feature ships.
 
-Manual macOS acceptance must verify Enter and branch behavior in a real Python tab, both indent widths, triple quotes, semantic completion, save and auto-save, workspace switching, plugin unload, and absence of a residual Pyright process.
+Manual acceptance on macOS and Windows must verify Enter and branch behavior in a real Python tab, both indent widths, triple quotes, semantic completion, save and auto-save, workspace switching, plugin unload, and absence of a residual Pyright process. Windows acceptance must also repeat the rc.0 cross-file, virtual-environment, path, and lifecycle scenarios.
 
 ## Risks and Controls
 
@@ -226,5 +226,5 @@ Manual macOS acceptance must verify Enter and branch behavior in a real Python t
 
 ## Definition of Done
 
-v0.2.1 is ready when all P0 requirements pass automated and macOS Desktop validation; Python-specific behavior affects only Python documents; 2/4-space settings and shared Tab behavior remain correct; v0.2.0 semantic completion does not regress; the module convention is published and reflected by the actual Python layout; and unshipped P1 items are excluded from release claims.
+v0.2.1 is ready when all P0 requirements pass automated and macOS and Windows Desktop validation; Python-specific behavior affects only Python documents; 2/4-space settings and shared Tab behavior remain correct; v0.2.0 semantic completion and the rc.0 Windows compatibility contract do not regress; the module convention is published and reflected by the actual Python layout; and unshipped P1 items are excluded from release claims.
 

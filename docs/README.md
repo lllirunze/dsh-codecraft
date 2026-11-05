@@ -14,6 +14,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.1.3 | [Design](version/v0.1.3/design.md) | [Validation](version/v0.1.3/validation.md) | Settings-entry regression fix |
 | v0.1.4 | [Design](version/v0.1.4/design.md) | [Validation](version/v0.1.4/validation.md) | Configurable indentation and delimiter expansion |
 | v0.2.0 | [Design](version/v0.2.0/design.md) | [Validation](version/v0.2.0/validation.md) | Project-aware Python completion and reusable intelligence infrastructure |
+| v0.2.1-rc.0 | [Design](version/v0.2.1-rc.0/design.md) | [Validation plan](version/v0.2.1-rc.0/validation.md) | Proposed Windows compatibility for the existing Python Intelligence feature set |
 | v0.2.1 | [Design](version/v0.2.1/design.md) | [Validation plan](version/v0.2.1/validation.md) | Proposed Python-aware indentation and editing refinements |
 
 ## Project Guides

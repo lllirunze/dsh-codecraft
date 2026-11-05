@@ -76,6 +76,20 @@ Framework modules belong under `src/host/frameworks/<framework>/` when they prov
 
 An ecosystem represents a project or toolchain concern that may span languages, such as Kubernetes, Helm, or Maven. It declares all required capabilities and contributes only ecosystem-specific schemas, project recognition, or semantic enhancements. Generic YAML support must not contain Kubernetes rules, and a Kubernetes module must not copy the YAML language implementation.
 
+## Platform Compatibility
+
+Platform support belongs to the concrete language, framework, or ecosystem provider that owns the external tool requirement. Shared editor, intelligence, and LSP infrastructure must remain platform-neutral.
+
+- A provider declares and tests every supported Host platform; it must not infer Windows compatibility from macOS mocks.
+- Shared LSP framing, document synchronization, cancellation, and teardown must not contain Python-specific or single-platform gates.
+- Executable lookup and process creation use DSH `ctx.subprocess` with explicit argv, never browser APIs or interpolated shell strings.
+- Language-specific interpreter, SDK, compiler, and server discovery stays in that language's Host module.
+- Frameworks and ecosystems inherit the parent language's runtime capability and declare any additional platform constraints.
+- Adding a language or enhancement must not reduce an existing provider's supported platforms.
+- Every claimed platform runs the relevant automated suite in CI and receives native Desktop acceptance before release.
+
+Platform checks should be parameterized so unit tests can exercise support policy without mutating global process state. Do not create per-platform directory trees unless real behavior cannot be expressed cleanly through a small adapter or policy.
+
 ## Directory and File Roles
 
 Only create files required by working behavior. A mature module may use this shape:
@@ -169,6 +183,7 @@ Existing files should move only when extraction produces a real ownership or tes
 
 - [ ] The category, unique identity, and user-visible capability are clear.
 - [ ] Browser and Host responsibilities remain separated.
+- [ ] Supported platforms and external runtime requirements are explicit and tested natively.
 - [ ] Parent capabilities are reused; shared UI, LSP, save, and lifecycle code are not copied.
 - [ ] Framework and ecosystem dependencies are explicit and composable.
 - [ ] Only implemented features have files, settings, tests, and release claims.
