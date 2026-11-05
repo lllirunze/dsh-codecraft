@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** The v0.2.0 development build passes automated validation and macOS Host startup. Interactive Python Intelligence acceptance in DSH Desktop remains pending.
+> **Status:** The v0.2.0 release candidate passes automated validation, macOS Host startup, and core Python member-completion acceptance in DSH Desktop.
 
 ## Features
 
@@ -74,7 +74,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.4
+dsh plugin --profile desktop add dsh-codecraft@0.2.0
 ```
 
 Restart DSH Desktop after updating.
@@ -111,6 +111,8 @@ New indentation always uses spaces. In the same settings section, choose a width
 
 Python Intelligence is enabled by default for Python files on macOS. CodeCraft uses its bundled Pyright server and selects an interpreter in this order: an explicit setting, workspace `.venv`, workspace `venv`, `python3`, then `python`. Open **Settings → CodeCraft → Python Intelligence** to disable semantic completion or provide absolute interpreter and language-server paths. The status bar reports `Starting`, `Ready`, or `Unavailable`; an unavailable server never disables normal editing or saving.
 
+Semantic completion opens automatically while typing, including after member-access dots such as `service.`. CodeCraft does not bind macOS `Option` combinations because they may produce composed input characters. `Ctrl+Space` remains available where the operating system does not reserve it.
+
 ### Keyboard shortcuts
 
 | macOS | Windows | Action |
@@ -120,7 +122,7 @@ Python Intelligence is enabled by default for Python files on macOS. CodeCraft u
 | `Cmd+/` | `Ctrl+/` | Toggle line comments |
 | `Cmd+Z` / `Cmd+Shift+Z` | `Ctrl+Z` / `Ctrl+Y` | Undo / redo |
 | `Tab` / `Shift+Tab` | `Tab` / `Shift+Tab` | Indent / outdent |
-| `Option+I` / `Option+\`` | `Ctrl+Space` | Open completion |
+| — | `Ctrl+Space` | Open completion manually |
 
 ## Documentation
 

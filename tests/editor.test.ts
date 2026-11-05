@@ -12,6 +12,7 @@ import {
 import { EditorView, type Command } from '@codemirror/view'
 import { differsFromSavedText } from '../src/client/document/state.js'
 import { bracketExtensions, closeBracketTokens } from '../src/client/editor/extensions/brackets.js'
+import { codeCraftCompletionKeymap } from '../src/client/editor/extensions/completion.js'
 import { offsetAt } from '../src/client/editor/extensions/semantic-completion.js'
 import {
   alignedClosingDelimiter,
@@ -71,6 +72,14 @@ describe('LSP position conversion', () => {
     expect(offsetAt(state.doc, { line: 1, character: 2 })).toBe(8)
     expect(offsetAt(state.doc, { line: 1, character: 7 })).toBe(13)
     expect(offsetAt(state.doc, { line: 3, character: 0 })).toBeUndefined()
+  })
+})
+
+describe('completion keymap', () => {
+  it('does not claim macOS Option combinations used for composed text input', () => {
+    expect(codeCraftCompletionKeymap.some(binding => binding.mac === 'Alt-i')).toBe(false)
+    expect(codeCraftCompletionKeymap.some(binding => binding.mac === 'Alt-`')).toBe(false)
+    expect(codeCraftCompletionKeymap.some(binding => binding.key === 'Ctrl-Space')).toBe(true)
   })
 })
 

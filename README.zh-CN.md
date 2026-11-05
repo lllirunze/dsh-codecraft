@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.2.0 开发版本已通过自动化验证和 macOS Host 启动检查，仍需在 DSH Desktop 中完成 Python 智能功能交互验收。
+> **当前状态：** v0.2.0 发布候选版本已通过自动化验证、macOS Host 启动检查和 DSH Desktop 中的核心 Python 成员补全验收。
 
 ## 功能
 
@@ -74,7 +74,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.1.4
+dsh plugin --profile desktop add dsh-codecraft@0.2.0
 ```
 
 更新后重启 DSH Desktop。
@@ -111,6 +111,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 在 macOS 的 Python 文件中，Python 智能编程默认开启。CodeCraft 使用随附的 Pyright，并按“明确设置、工作区 `.venv`、工作区 `venv`、`python3`、`python`”的顺序选择解释器。可以在 **设置 → CodeCraft → Python 智能编程** 中关闭语义补全，或指定解释器和语言服务器的绝对路径。状态栏会显示“启动中”“就绪”或“不可用”；智能服务不可用时不会影响普通编辑和保存。
 
+语义补全会在输入时自动打开，包括输入 `service.` 这类成员访问点之后。CodeCraft 不绑定 macOS 的 `Option` 组合键，因为它们可能产生输入法组合字符；如果操作系统没有占用 `Ctrl+Space`，仍可使用它手动打开补全。
+
 ### 快捷键
 
 | macOS | Windows | 功能 |
@@ -120,7 +122,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 | `Cmd+/` | `Ctrl+/` | 切换行注释 |
 | `Cmd+Z` / `Cmd+Shift+Z` | `Ctrl+Z` / `Ctrl+Y` | 撤销 / 重做 |
 | `Tab` / `Shift+Tab` | `Tab` / `Shift+Tab` | 缩进 / 反缩进 |
-| `Option+I` / `Option+\`` | `Ctrl+Space` | 打开补全 |
+| — | `Ctrl+Space` | 手动打开补全 |
 
 ## 文档
 
