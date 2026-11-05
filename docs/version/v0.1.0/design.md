@@ -8,7 +8,7 @@
 | Target host | DSH Desktop `0.2.1-rc.5` on macOS |
 | Scope | Local source editing inside native file tabs |
 
-This document describes the implemented v0.1.0 system. See the [validation record](validation-v0.1.0.md) for evidence, release gates, and remaining risks.
+This document describes the implemented v0.1.0 system. See [validation.md](validation.md) for evidence, release gates, and remaining risks.
 
 ## Goals and Scope
 

@@ -191,7 +191,7 @@ Add Python environment selection, Pyright initialization, live full-text synchro
 
 ### Stage 3: Regression and release evidence
 
-Run the full repository check and add `docs/validation-v0.2.0.md`. Complete macOS DSH Desktop acceptance for multiple tabs, unsaved edits, cancellation, server absence and failure, configuration changes, save/autosave/conflicts, indentation, brackets, plugin unload, and process cleanup. README, changelog, package versions, badges, and release notes change only after implementation and validation.
+Run the full repository check and record the result in `docs/version/v0.2.0/validation.md`. Complete macOS DSH Desktop acceptance for multiple tabs, unsaved edits, cancellation, server absence and failure, configuration changes, save/autosave/conflicts, indentation, brackets, plugin unload, and process cleanup. README, changelog, package versions, badges, and release notes change only after implementation and validation.
 
 ## Verification Requirements
 

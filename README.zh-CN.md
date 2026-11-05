@@ -127,7 +127,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 ## 文档
 
 - [架构设计与验证记录](docs/README.md)
-- [插件兼容性与已知解决办法](docs/plugin-compatibility.md)
+- [插件兼容性与已知解决办法](docs/guide/plugin-compatibility.md)
 - [更新记录](CHANGELOG.md)
 
 ## 限制

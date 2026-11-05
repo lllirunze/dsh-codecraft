@@ -30,4 +30,4 @@ History follows Conventional Commit prefixes such as `feat:`, `fix:`, and `ci:`.
 
 ## Release Guidelines
 
-Follow [`docs/releasing.md`](docs/releasing.md) whenever preparing a version, Git tag, or GitHub Release. Keep the package version, lockfile version, changelog entry, tag, Release title, and Release heading identical. Release notes use the repository's short single-section format; do not add installation, update, test-summary, compatibility, or other boilerplate sections unless the release itself changes those areas.
+Follow [`docs/guide/releasing.md`](docs/guide/releasing.md) whenever preparing a version, Git tag, or GitHub Release. Keep the package version, lockfile version, changelog entry, tag, Release title, and Release heading identical. Release notes use the repository's short single-section format; do not add installation, update, test-summary, compatibility, or other boilerplate sections unless the release itself changes those areas.

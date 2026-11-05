@@ -5,7 +5,7 @@
 | Status | Automated validation and macOS Desktop acceptance passed |
 | Recorded | 2026-11-04 |
 | Target | macOS and Windows, DSH Desktop `0.2.1-rc.5` |
-| Design | [design-v0.1.4.md](design-v0.1.4.md) |
+| Design | [design.md](design.md) |
 
 ## Automated Result
 

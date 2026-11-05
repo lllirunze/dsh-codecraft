@@ -5,7 +5,7 @@
 | Status | Automated validation passed; Desktop regression pending |
 | Recorded | 2026-11-04 |
 | Target | macOS and Windows, DSH Desktop `0.2.1-rc.5` |
-| Design | [design-v0.1.2.md](design-v0.1.2.md) |
+| Design | [design.md](design.md) |
 
 ## Automated Result
 

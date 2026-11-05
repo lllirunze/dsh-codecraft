@@ -127,7 +127,7 @@ Semantic completion opens automatically while typing, including after member-acc
 ## Documentation
 
 - [Architecture and validation records](docs/README.md)
-- [Plugin compatibility and known workarounds](docs/plugin-compatibility.md)
+- [Plugin compatibility and known workarounds](docs/guide/plugin-compatibility.md)
 - [Changelog](CHANGELOG.md)
 
 ## Limitations

@@ -5,7 +5,7 @@
 | Status | Automated validation passed; Desktop manual acceptance pending |
 | Recorded | 2026-11-03 |
 | Target | macOS Apple Silicon, DSH `0.2.1-rc.5` |
-| Design | [design-v0.1.0.md](design-v0.1.0.md) |
+| Design | [design.md](design.md) |
 
 This record separates completed evidence from unverified Desktop behavior.
 
