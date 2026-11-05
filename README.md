@@ -14,13 +14,13 @@
 
 </div>
 
-> **Status:** The v0.2.0 release candidate passes automated validation, macOS Host startup, and core Python member-completion acceptance in DSH Desktop.
+> **Status:** v0.2.1-rc.0 adds Windows Python Intelligence compatibility. Windows DSH Desktop acceptance remains required before publication.
 
 ## Features
 
 - Uses DSH's native workspace explorer and file tabs.
 - Provides syntax highlighting, line numbers, folding, search, line comments, indentation, undo/redo, and completion.
-- Provides project-aware Python completion for imports, cross-file symbols, inferred members, and packages from the selected environment on macOS.
+- Provides project-aware Python completion for imports, cross-file symbols, inferred members, and packages from the selected environment on macOS and Windows.
 - Synchronizes unsaved Python content with a workspace-scoped Pyright language server managed through DSH's subprocess service.
 - Automatically closes common brackets and quotes, including selection wrapping, paired deletion, and language-aware backticks or Python triple quotes.
 - Provides configurable two- or four-space indentation, generic bracket expansion on Enter, and aligned single- or multiline Tab operations.
@@ -37,7 +37,7 @@
 | Component | Supported |
 | --- | --- |
 | Base editor | macOS or Windows |
-| Python Intelligence | macOS in v0.2.0 |
+| Python Intelligence | macOS or Windows in v0.2.1-rc.0 |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 20 or later when building from source |
 
@@ -74,7 +74,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.2.0
+dsh plugin --profile desktop add dsh-codecraft@0.2.1-rc.0
 ```
 
 Restart DSH Desktop after updating.
@@ -109,7 +109,7 @@ Auto save is disabled by default. Open **Settings → CodeCraft** from the setti
 
 New indentation always uses spaces. In the same settings section, choose a width of two or four spaces; the change applies to open editors without rewriting existing file content.
 
-Python Intelligence is enabled by default for Python files on macOS. CodeCraft uses its bundled Pyright server and selects an interpreter in this order: an explicit setting, workspace `.venv`, workspace `venv`, `python3`, then `python`. Open **Settings → CodeCraft → Python Intelligence** to disable semantic completion or provide absolute interpreter and language-server paths. The status bar reports `Starting`, `Ready`, or `Unavailable`; an unavailable server never disables normal editing or saving.
+Python Intelligence is enabled by default for Python files on macOS and Windows. CodeCraft uses its bundled Pyright server and first selects an explicit interpreter or workspace `.venv`/`venv`; PATH fallback prefers `python3` on macOS and `python` on Windows. Open **Settings → CodeCraft → Python Intelligence** to disable semantic completion or provide absolute interpreter and language-server paths. The status bar reports `Starting`, `Ready`, or `Unavailable`; an unavailable server never disables normal editing or saving.
 
 Semantic completion opens automatically while typing, including after member-access dots such as `service.`. CodeCraft does not bind macOS `Option` combinations because they may produce composed input characters. `Ctrl+Space` remains available where the operating system does not reserve it.
 
@@ -135,7 +135,6 @@ Semantic completion opens automatically while typing, including after member-acc
 - CodeCraft supports UTF-8 source and text files up to 2 MiB.
 - Symbolic links are read-only.
 - Python hover, signature help, diagnostics, automatic cross-file edits, and go-to-definition are not included yet.
-- Python Intelligence is not enabled on Windows in v0.2.0; the base editor remains supported.
 - Linux has not been validated and is not currently supported.
 - There is no cross-window draft synchronization.
 

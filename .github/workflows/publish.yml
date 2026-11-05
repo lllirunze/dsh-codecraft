@@ -37,6 +37,13 @@ jobs:
         run: npm ci
 
       - name: Publish package
-        run: npm publish
+        shell: bash
+        run: |
+          package_version="$(node -p "require('./package.json').version")"
+          if [[ "${package_version}" == *-* ]]; then
+            npm publish --tag rc
+          else
+            npm publish
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

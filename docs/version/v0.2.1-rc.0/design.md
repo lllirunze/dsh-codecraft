@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed; source analysis complete, implementation not started |
+| Status | Implemented; macOS automated validation passed, Windows CI and Desktop acceptance pending |
 | Target version | 0.2.1-rc.0 |
 | Baseline | 0.2.0 |
 | Release type | Preview / release candidate |

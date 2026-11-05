@@ -3,6 +3,7 @@ import type {
   IntelligenceCompletionResult,
   IntelligenceStatusResult,
   IntelligenceSyncRequest,
+  IntelligenceUnavailableReason,
 } from '../../protocol.js'
 import { ERROR_CODES } from '../../protocol.js'
 import type { PythonIntelligenceSettings } from '../../settings/schema.js'
@@ -10,6 +11,10 @@ import { CodeCraftError } from '../errors.js'
 import type { ManagedSubprocessService } from '../context.js'
 import { resolveReadablePath } from '../files.js'
 import { resolvePyrightLaunch, resolvePythonInterpreter } from '../languages/python/environment.js'
+import {
+  supportsPythonIntelligence,
+  unsupportedPythonPlatformMessage,
+} from '../languages/python/platform.js'
 import { LspSession } from '../lsp/session.js'
 import { LspTransportError } from '../lsp/connection.js'
 
@@ -23,6 +28,33 @@ export function followsMemberAccess(content: string, line: number, character: nu
   return text !== undefined && text.charAt(character - 1) === '.'
 }
 
+function unavailableReason(error: unknown): IntelligenceUnavailableReason {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase()
+  if (message.includes('interpreter')) return 'environment-limited'
+  if (message.includes('timeout') || (error instanceof Error && error.name === 'TimeoutError')) {
+    return 'initialize-timeout'
+  }
+  if (message.includes('failed to start') || message.includes('spawn') || message.includes('enoent')) {
+    return 'spawn-failed'
+  }
+  if (message.includes('exited')) return 'server-exited'
+  if (error instanceof LspTransportError) return 'server-exited'
+  if (error instanceof CodeCraftError) return 'workspace-invalid'
+  return 'server-not-found'
+}
+
+function unavailableMessage(reason: IntelligenceUnavailableReason): string {
+  switch (reason) {
+    case 'environment-limited': return 'The configured Python interpreter is unavailable. Check the CodeCraft settings.'
+    case 'initialize-timeout': return 'Pyright did not initialize in time. Restart DSH Desktop and try again.'
+    case 'spawn-failed': return 'Pyright could not start. Restart DSH Desktop and check the configured server path.'
+    case 'server-exited': return 'Pyright stopped unexpectedly. CodeCraft will retry on the next request.'
+    case 'workspace-invalid': return 'The Python file is not available inside the active workspace.'
+    case 'server-not-found': return 'Pyright or its Node.js runtime could not be resolved.'
+    case 'unsupported-platform': return 'Python Intelligence is supported on macOS and Windows.'
+  }
+}
+
 /** Workspace-scoped owner of Python language-server sessions. */
 export class IntelligenceManager {
   readonly #sessions = new Map<string, Promise<LspSession>>()
@@ -32,6 +64,7 @@ export class IntelligenceManager {
   constructor(
     readonly subprocess: ManagedSubprocessService,
     readonly settings: PythonIntelligenceSettings,
+    readonly platform: NodeJS.Platform = process.platform,
   ) {}
 
   async sync(root: string, request: IntelligenceSyncRequest): Promise<IntelligenceStatusResult> {
@@ -121,8 +154,12 @@ export class IntelligenceManager {
 
   async status(root: string, path: string): Promise<IntelligenceStatusResult> {
     if (!this.settings.enabled) return { status: 'disabled' }
-    if (process.platform !== 'darwin') {
-      return { status: 'unavailable', message: 'Python Intelligence is supported on macOS in v0.2.0.' }
+    if (!supportsPythonIntelligence(this.platform)) {
+      return {
+        status: 'unavailable',
+        reason: 'unsupported-platform',
+        message: unsupportedPythonPlatformMessage(this.platform),
+      }
     }
     if (!isPythonPath(path)) return { status: 'disabled' }
     try {
@@ -133,7 +170,8 @@ export class IntelligenceManager {
         ...(session.interpreterPath === undefined ? {} : { interpreterPath: session.interpreterPath }),
       }
     } catch (error) {
-      return { status: 'unavailable', message: error instanceof Error ? error.message : String(error) }
+      const reason = unavailableReason(error)
+      return { status: 'unavailable', reason, message: unavailableMessage(reason) }
     }
   }
 
@@ -148,8 +186,12 @@ export class IntelligenceManager {
   #assertAvailable(path: string): void {
     if (this.#disposed) throw new CodeCraftError(ERROR_CODES.intelligenceUnavailable, 'Python 智能服务已停止。', 503)
     if (!this.settings.enabled) throw new CodeCraftError(ERROR_CODES.intelligenceDisabled, 'Python 智能服务已关闭。', 409)
-    if (process.platform !== 'darwin') {
-      throw new CodeCraftError(ERROR_CODES.intelligenceUnavailable, 'Python Intelligence 在 v0.2.0 中仅支持 macOS。', 503)
+    if (!supportsPythonIntelligence(this.platform)) {
+      throw new CodeCraftError(
+        ERROR_CODES.intelligenceUnavailable,
+        unsupportedPythonPlatformMessage(this.platform),
+        503,
+      )
     }
     if (!isPythonPath(path)) throw new CodeCraftError(ERROR_CODES.intelligenceDisabled, '该文件不使用 Python 智能服务。', 409)
   }
@@ -168,9 +210,16 @@ export class IntelligenceManager {
   async #createSession(root: string): Promise<LspSession> {
     const [argv, interpreterPath] = await Promise.all([
       resolvePyrightLaunch(this.subprocess, this.settings),
-      resolvePythonInterpreter(this.subprocess, root, this.settings),
+      resolvePythonInterpreter(this.subprocess, root, this.settings, this.platform),
     ])
-    return new LspSession(this.subprocess, root, argv, interpreterPath)
+    const session = new LspSession(this.subprocess, root, argv, interpreterPath)
+    try {
+      await session.ready()
+      return session
+    } catch (error) {
+      await session.dispose().catch(() => undefined)
+      throw error
+    }
   }
 
   async #restart(root: string, failed: LspSession): Promise<LspSession> {

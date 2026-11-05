@@ -174,10 +174,20 @@ export interface IntelligenceCompletionResult {
 
 export type IntelligenceStatusKind = 'disabled' | 'starting' | 'ready' | 'unavailable' | 'error'
 
+export type IntelligenceUnavailableReason =
+  | 'unsupported-platform'
+  | 'server-not-found'
+  | 'spawn-failed'
+  | 'initialize-timeout'
+  | 'workspace-invalid'
+  | 'environment-limited'
+  | 'server-exited'
+
 export interface IntelligenceStatusResult {
   status: IntelligenceStatusKind
   message?: string
   interpreterPath?: string
+  reason?: IntelligenceUnavailableReason
 }
 
 export interface SaveResult {

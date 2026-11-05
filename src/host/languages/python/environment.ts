@@ -7,9 +7,9 @@ import type { ManagedSubprocessService } from '../../context.js'
 
 const require = createRequire(import.meta.url)
 
-async function executableFile(path: string): Promise<boolean> {
+async function executableFile(path: string, platform: NodeJS.Platform): Promise<boolean> {
   try {
-    await access(path, constants.X_OK)
+    await access(path, platform === 'win32' ? constants.F_OK : constants.X_OK)
     return true
   } catch {
     return false
@@ -20,18 +20,22 @@ export async function resolvePythonInterpreter(
   subprocess: ManagedSubprocessService,
   workspace: string,
   settings: PythonIntelligenceSettings,
+  platform: NodeJS.Platform = process.platform,
 ): Promise<string | undefined> {
   if (settings.interpreterPath !== '') {
-    if (!isAbsolute(settings.interpreterPath) || !await executableFile(settings.interpreterPath)) {
+    if (!isAbsolute(settings.interpreterPath) || !await executableFile(settings.interpreterPath, platform)) {
       throw new Error('The configured Python interpreter is not an executable absolute path.')
     }
     return settings.interpreterPath
   }
   for (const environment of ['.venv', 'venv']) {
-    const candidate = join(workspace, environment, process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
-    if (await executableFile(candidate)) return candidate
+    const candidate = platform === 'win32'
+      ? join(workspace, environment, 'Scripts', 'python.exe')
+      : join(workspace, environment, 'bin', 'python')
+    if (await executableFile(candidate, platform)) return candidate
   }
-  for (const command of ['python3', 'python']) {
+  const commands = platform === 'win32' ? ['python', 'python3'] : ['python3', 'python']
+  for (const command of commands) {
     try {
       return await subprocess.resolveExecutable(command)
     } catch {

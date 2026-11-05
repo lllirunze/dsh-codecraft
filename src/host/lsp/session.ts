@@ -97,6 +97,11 @@ export class LspSession {
     this.#ready = this.#initialize()
   }
 
+  /** Resolve only after the language server has completed LSP initialization. */
+  async ready(): Promise<void> {
+    await this.#ready
+  }
+
   async sync(target: string, tabId: string, revision: number, content: string): Promise<void> {
     await this.#ready
     if (this.#disposed) throw new Error('Python intelligence session is disposed')
@@ -174,7 +179,7 @@ export class LspSession {
     const rootUri = pathToFileURL(this.workspace).href
     await this.#connection.request('initialize', {
       processId: null,
-      clientInfo: { name: 'DSH CodeCraft', version: '0.2.0' },
+      clientInfo: { name: 'DSH CodeCraft', version: '0.2.1-rc.0' },
       rootUri,
       workspaceFolders: [{ uri: rootUri, name: this.workspace.split(/[\\/]/).at(-1) ?? 'workspace' }],
       capabilities: {

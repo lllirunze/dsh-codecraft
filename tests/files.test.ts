@@ -150,7 +150,7 @@ describe('saveTextFile', () => {
     expect(info.version).toBe(result.version)
   })
 
-  it('preserves the file mode', async () => {
+  it.skipIf(process.platform === 'win32')('preserves the POSIX file mode', async () => {
     const { root } = await fixture()
     const file = join(root, 'mode.sh')
     await writeFile(file, '#!/bin/sh\necho hi\n')

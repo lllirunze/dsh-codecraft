@@ -9,23 +9,25 @@ Before creating a release, confirm that the following values are identical:
 - `package.json` version;
 - root package versions in `package-lock.json`;
 - the current version heading in `CHANGELOG.md`;
-- Git tag in the form `vX.Y.Z`;
+- Git tag in the form `vX.Y.Z` or `vX.Y.Z-prerelease.N`;
 - GitHub Release title and Markdown heading.
 
 Run `npm run check` before tagging. A GitHub Release must target the validated commit on `master`; publishing the Release triggers the npm workflow.
+
+For a release candidate such as `0.2.1-rc.0`, publish a GitHub Pre-release and use the npm `rc` dist-tag. A pre-release must not move npm's `latest` tag.
 
 ## Release Note Format
 
 The Release title must contain only the version tag:
 
 ```text
-vX.Y.Z
+vX.Y.Z[-prerelease.N]
 ```
 
 The description must use this structure:
 
 ```markdown
-## DSH CodeCraft vX.Y.Z
+## DSH CodeCraft vX.Y.Z[-prerelease.N]
 
 One short sentence summarizing the release.
 

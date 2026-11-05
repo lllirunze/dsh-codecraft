@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1-rc.0] - 2026-11-05
+
+### Added
+
+- Added Windows support for the existing project-aware Python Intelligence feature set.
+- Added native Windows environment discovery for `.venv\\Scripts\\python.exe` and `venv\\Scripts\\python.exe`.
+- Added stable unavailable reasons for unsupported platforms, interpreter failures, launch failures, initialization timeouts, workspace failures, and unexpected server exits.
+
+### Changed
+
+- Moved Python platform support into a provider-owned policy while keeping shared LSP infrastructure platform-neutral.
+- Added macOS and Windows CI coverage, including real Pyright completion from a workspace path containing spaces and Unicode.
+- Published preview packages through the npm `rc` dist-tag without moving `latest`.
+
+### Notes
+
+- This preview contains only Windows Python Intelligence compatibility work; the broader v0.2.1 indentation and Docstring scope is not included.
+- Linux remains unsupported.
+- Windows DSH Desktop acceptance must be completed before this release candidate is published.
+
 ## [0.2.0] - 2026-11-05
 
 ### Added

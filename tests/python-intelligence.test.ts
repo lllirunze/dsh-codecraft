@@ -10,7 +10,8 @@ import type {
   ManagedSubprocessSpawnSpec,
 } from '../src/host/context.js'
 import { LspSession } from '../src/host/lsp/session.js'
-import { followsMemberAccess } from '../src/host/intelligence/manager.js'
+import { followsMemberAccess, IntelligenceManager } from '../src/host/intelligence/manager.js'
+import { DEFAULT_PYTHON_INTELLIGENCE_SETTINGS } from '../src/settings/schema.js'
 
 const require = createRequire(import.meta.url)
 const cleanups: string[] = []
@@ -21,7 +22,10 @@ afterEach(async () => {
 
 function localTestSubprocess(): ManagedSubprocessService {
   return {
-    resolveExecutable: async command => command,
+    resolveExecutable: async command => {
+      if (command === 'node') return process.execPath
+      throw new Error(`${command} is intentionally unavailable in this test`)
+    },
     spawn(spec: ManagedSubprocessSpawnSpec): ManagedSubprocessHandle {
       const child = spawn(spec.argv[0] ?? '', spec.argv.slice(1), {
         cwd: spec.cwd,
@@ -60,7 +64,7 @@ describe('Python Intelligence with Pyright', () => {
   })
 
   it('completes a cross-file member from unsaved editor content', async () => {
-    const workspace = await mkdtemp(join(tmpdir(), 'codecraft-pyright-'))
+    const workspace = await mkdtemp(join(tmpdir(), 'codecraft pyright-测试-'))
     cleanups.push(workspace)
     await writeFile(join(workspace, 'service.py'), [
       'class UserService:',
@@ -90,4 +94,25 @@ describe('Python Intelligence with Pyright', () => {
       await session.dispose()
     }
   }, 20_000)
+
+  it.runIf(process.platform === 'darwin' || process.platform === 'win32')(
+    'initializes the provider manager and reports Ready on the native platform',
+    async () => {
+      const workspace = await mkdtemp(join(tmpdir(), 'codecraft manager-测试-'))
+      cleanups.push(workspace)
+      const main = join(workspace, 'main.py')
+      await writeFile(main, 'value = "ready"\n')
+      const manager = new IntelligenceManager(
+        localTestSubprocess(),
+        DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+        process.platform,
+      )
+      try {
+        await expect(manager.status(workspace, main)).resolves.toMatchObject({ status: 'ready' })
+      } finally {
+        await manager.dispose()
+      }
+    },
+    20_000,
+  )
 })

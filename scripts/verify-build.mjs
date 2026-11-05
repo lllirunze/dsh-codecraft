@@ -45,7 +45,7 @@ function assert(condition, message) {
   if (!condition) throw new Error(message)
 }
 
-function verifyClientRegistration(code) {
+function verifyClientRegistration(code, platform) {
   const moduleRows = []
   const appendedStyles = []
   const documentStub = {
@@ -64,7 +64,7 @@ function verifyClientRegistration(code) {
     querySelectorAll: () => [],
     addEventListener() {},
     removeEventListener() {},
-    documentElement: { style: { tabSize: '' }, dataset: { platform: 'darwin' } },
+    documentElement: { style: { tabSize: '' }, dataset: { platform } },
     body: {
       style: {},
       dataset: {},
@@ -78,7 +78,7 @@ function verifyClientRegistration(code) {
   const sandbox = {
     console,
     document: documentStub,
-    navigator: { userAgent: 'node', platform: 'MacIntel' },
+    navigator: { userAgent: 'node', platform: platform === 'win32' ? 'Win32' : 'MacIntel' },
     setTimeout,
     clearTimeout,
     queueMicrotask,
@@ -187,7 +187,8 @@ function verifyClientRegistration(code) {
   assert(appendedStyles.length === 1, `client appended ${appendedStyles.length} style elements`)
 }
 
-verifyClientRegistration(client)
+verifyClientRegistration(client, 'darwin')
+verifyClientRegistration(client, 'win32')
 
 const hostCode = await readFile('lib/index.js', 'utf8')
 if (!/from\s+["']@deepseek-ai\/schemastery["']/.test(hostCode)) {
