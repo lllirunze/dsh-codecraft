@@ -95,6 +95,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     EditorView.updateListener.of(options.onUpdate),
     options.readOnlyCompartment.of(readOnlyExtensions(options.readOnly)),
     options.language.support ?? [],
+    options.language.editorExtensions,
     ...editorThemeExtensions(),
   ]
 }

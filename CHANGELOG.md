@@ -4,7 +4,24 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.2.1] - 2026-11-05
+
+### Added
+
+- Added Python syntax-aware Enter indentation for block headers, multiline expressions, and container literals.
+- Added safe input-time alignment for `elif`, `else`, `except`, `finally`, `case`, and closing delimiters.
+- Added a browser-side Python module boundary for language-specific editor extensions.
+
+### Changed
+
+- Preserved generic delimiter expansion while delegating Python indentation decisions to CodeMirror's Python syntax tree.
+- Kept two- and four-space settings authoritative without rewriting existing file content.
+- Preserved the macOS and Windows Python Intelligence behavior validated in v0.2.1-rc.0.
+
+### Notes
+
+- Dictionary, slice, annotation, string, comment, lambda, and URL colons do not trigger block indentation.
+- Docstring generation and new semantic language features remain outside this release.
 
 ## [0.2.1-rc.0] - 2026-11-05
 

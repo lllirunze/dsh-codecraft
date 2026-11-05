@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.2.1-rc.0 增加了 Windows Python 智能编程兼容性；发布前仍需完成 Windows DSH Desktop 验收。
+> **当前状态：** v0.2.1 增加了 Python 语法感知缩进，并保留 macOS 和 Windows 上的 Python 智能编程能力。
 
 ## 功能
 
@@ -24,6 +24,7 @@
 - 将未保存的 Python 内容同步到工作区级 Pyright，并通过 DSH 托管子进程服务管理其生命周期。
 - 自动闭合常用括号与引号，并支持包裹选区、成对删除以及按语言启用反引号或 Python 三引号。
 - 支持 2 格或 4 格空格缩进、回车展开通用括号，以及按整数边界执行单行或多行 Tab 操作。
+- 根据 Python 语法上下文处理代码块、分支、多行表达式和结束括号的缩进。
 - 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
 - macOS 使用 `Cmd+S`、Windows 使用 `Ctrl+S` 保存，并显示未保存、保存中、已保存、失败和只读状态。
 - 检测外部文件变化，拒绝基于旧版本覆盖。
@@ -37,7 +38,7 @@
 | 组件 | 支持范围 |
 | --- | --- |
 | 基础编辑器 | macOS 或 Windows |
-| Python 智能编程 | v0.2.1-rc.0 支持 macOS 或 Windows |
+| Python 智能编程 | v0.2.1 支持 macOS 或 Windows |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 从源码构建时需要 20 或更高版本 |
 
@@ -74,7 +75,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.2.1-rc.0
+dsh plugin --profile desktop add dsh-codecraft@0.2.1
 ```
 
 更新后重启 DSH Desktop。
@@ -107,7 +108,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 自动保存默认关闭。在设置侧边栏打开 **设置 → CodeCraft** 即可启用，并选择 10、30、60 或 120 秒的保存间隔。自动保存和手动保存共用同一条冲突安全写入路径。
 
-新增缩进始终使用空格。可以在同一设置区域选择 2 格或 4 格宽度；修改会立即作用于已打开的编辑器，但不会重写文件中的已有内容。
+新增缩进始终使用空格。可以在同一设置区域选择 2 格或 4 格宽度；修改会立即作用于已打开的编辑器，但不会重写文件中的已有内容。Python 文件还会根据语法上下文处理代码块、分支和多行表达式的回车缩进。
 
 在 macOS 和 Windows 的 Python 文件中，Python 智能编程默认开启。CodeCraft 使用随附的 Pyright，优先选择明确设置的解释器或工作区 `.venv`/`venv`；PATH 回退在 macOS 上优先使用 `python3`，在 Windows 上优先使用 `python`。可以在 **设置 → CodeCraft → Python 智能编程** 中关闭语义补全，或指定解释器和语言服务器的绝对路径。状态栏会显示“启动中”“就绪”或“不可用”；智能服务不可用时不会影响普通编辑和保存。
 

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed; implementation has not started |
+| Status | Implemented; automated validation passed, Desktop acceptance pending |
 | Target version | 0.2.1 |
 | Baseline | 0.2.1-rc.0 Windows compatibility preview |
 | Release type | Patch |

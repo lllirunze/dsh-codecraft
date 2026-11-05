@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implementation complete; macOS automated validation passed, Windows CI and Desktop acceptance pending |
+| Status | Released; macOS and Windows Desktop acceptance passed |
 | Target version | 0.2.1-rc.0 |
 | Baseline | 0.2.0 |
 | Platforms | Windows and macOS |
@@ -61,25 +61,25 @@ The v0.2.0 Host manager rejects every non-macOS platform before session creation
 
 Use a published or packed `0.2.1-rc.0` artifact, not only a linked source checkout.
 
-- [ ] DSH Desktop cold-starts with CodeCraft enabled.
-- [ ] Opening `main.py` transitions from `Python: Starting` to `Python: Ready`.
-- [ ] `service.` offers a member defined in another file.
-- [ ] An unsaved new member in another open file appears in completion.
-- [ ] A dependency installed in workspace `.venv` appears in import and member completion.
-- [ ] Repeat in a path containing spaces and non-ASCII characters.
-- [ ] Repeat on a non-system drive.
-- [ ] Invalid interpreter configuration reports a reason and recovers after correction.
-- [ ] Missing or failed Pyright leaves ordinary editing and saving functional.
-- [ ] Close tabs, switch workspaces, and quit Desktop; confirm no Pyright process remains.
-- [ ] Restart Desktop and repeat the core completion scenario.
+- [x] DSH Desktop cold-starts with CodeCraft enabled.
+- [x] Opening `main.py` transitions from `Python: Starting` to `Python: Ready`.
+- [x] `service.` offers a member defined in another file.
+- [x] An unsaved new member in another open file appears in completion.
+- [x] A dependency installed in workspace `.venv` appears in import and member completion.
+- [x] Repeat in a path containing spaces and non-ASCII characters.
+- [ ] Repeat on a non-system drive when such a drive is available.
+- [x] Invalid interpreter configuration reports a reason and recovers after correction.
+- [x] Missing or failed Pyright leaves ordinary editing and saving functional.
+- [x] Close tabs, switch workspaces, and quit Desktop; confirm no Pyright process remains.
+- [x] Restart Desktop and repeat the core completion scenario.
 
 ## macOS Regression Acceptance
 
-- [ ] DSH Desktop cold-starts with CodeCraft enabled.
-- [ ] Existing import, cross-file, unsaved-document, member, and `.venv` completion still works.
-- [ ] Status and error messages remain useful and do not expose complete private paths.
-- [ ] Save, auto-save, drafts, conflicts, brackets, and indentation do not regress.
-- [ ] Desktop exit leaves no Pyright process.
+- [x] DSH Desktop cold-starts with CodeCraft enabled.
+- [x] Existing import, cross-file, unsaved-document, member, and `.venv` completion still works.
+- [x] Status and error messages remain useful and do not expose complete private paths.
+- [x] Save, auto-save, drafts, conflicts, brackets, and indentation do not regress.
+- [x] Desktop exit leaves no Pyright process.
 
 ## Release Gates
 
@@ -97,5 +97,5 @@ Recorded on 2026-11-05 from macOS:
 - Build verification loaded the browser bundle with both macOS and Windows platform stubs.
 - `npm pack --dry-run --json` produced `dsh-codecraft@0.2.1-rc.0` with the expected package contents.
 
-This evidence does not replace the pending `windows-latest` CI result or Windows DSH Desktop acceptance above.
+Native macOS and Windows DSH Desktop acceptance was subsequently reported as passed by the maintainer.
 

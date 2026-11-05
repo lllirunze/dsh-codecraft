@@ -179,7 +179,7 @@ export class LspSession {
     const rootUri = pathToFileURL(this.workspace).href
     await this.#connection.request('initialize', {
       processId: null,
-      clientInfo: { name: 'DSH CodeCraft', version: '0.2.1-rc.0' },
+      clientInfo: { name: 'DSH CodeCraft', version: '0.2.1' },
       rootUri,
       workspaceFolders: [{ uri: rootUri, name: this.workspace.split(/[\\/]/).at(-1) ?? 'workspace' }],
       capabilities: {

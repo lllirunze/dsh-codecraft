@@ -9,15 +9,16 @@ import { javascript } from '@codemirror/lang-javascript'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { php } from '@codemirror/lang-php'
-import { python } from '@codemirror/lang-python'
 import { rust } from '@codemirror/lang-rust'
 import { sql } from '@codemirror/lang-sql'
 import { xml } from '@codemirror/lang-xml'
 import { yaml } from '@codemirror/lang-yaml'
 import type { LanguageSupport } from '@codemirror/language'
+import type { Extension } from '@codemirror/state'
 import { CODECRAFT_EDITABLE_EXTENSIONS } from '../../protocol.js'
 import type { EditorLanguageAdapter } from './EditorLanguageAdapter.js'
 import { LanguageRegistry } from './registry.js'
+import { pythonEditorLanguage } from './python/index.js'
 
 export const EDITOR_EXTENSIONS = CODECRAFT_EDITABLE_EXTENSIONS
 
@@ -25,6 +26,7 @@ export interface FileLanguage {
   id: string
   label: string
   support: LanguageSupport | null
+  editorExtensions: Extension
 }
 
 class CodeMirrorLanguageAdapter implements EditorLanguageAdapter {
@@ -33,6 +35,7 @@ class CodeMirrorLanguageAdapter implements EditorLanguageAdapter {
     readonly label: string,
     readonly extensions: readonly string[],
     readonly createSupport: () => LanguageSupport,
+    readonly createEditorExtensions: () => Extension = () => [],
   ) {
   }
 }
@@ -40,7 +43,7 @@ class CodeMirrorLanguageAdapter implements EditorLanguageAdapter {
 const registry = new LanguageRegistry<CodeMirrorLanguageAdapter>()
 
 for (const adapter of [
-  new CodeMirrorLanguageAdapter('python', 'Python', ['py', 'pyi', 'pyw'], python),
+  pythonEditorLanguage,
   new CodeMirrorLanguageAdapter('typescript', 'TypeScript', ['ts', 'mts', 'cts'], () => javascript({ typescript: true })),
   new CodeMirrorLanguageAdapter('typescript-jsx', 'TypeScript JSX', ['tsx'], () => javascript({ typescript: true, jsx: true })),
   new CodeMirrorLanguageAdapter('javascript-jsx', 'JavaScript JSX', ['jsx'], () => javascript({ jsx: true })),
@@ -59,7 +62,7 @@ for (const adapter of [
   new CodeMirrorLanguageAdapter('yaml', 'YAML', ['yaml', 'yml'], yaml),
 ]) registry.register(adapter)
 
-const PLAIN: FileLanguage = { id: 'plain', label: '纯文本', support: null }
+const PLAIN: FileLanguage = { id: 'plain', label: '纯文本', support: null, editorExtensions: [] }
 
 function resolveAdapter(name: string): CodeMirrorLanguageAdapter | undefined {
   const lower = name.toLowerCase()
@@ -73,7 +76,12 @@ export function languageForFile(name: string): FileLanguage {
   const adapter = resolveAdapter(name)
   return adapter === undefined
     ? PLAIN
-    : { id: adapter.id, label: adapter.label, support: adapter.createSupport() }
+    : {
+        id: adapter.id,
+        label: adapter.label,
+        support: adapter.createSupport(),
+        editorExtensions: adapter.createEditorExtensions(),
+      }
 }
 
 /** Exposed for structural tests and future project-aware consumers. */

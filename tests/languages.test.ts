@@ -3,6 +3,7 @@ import { EDITOR_EXTENSIONS, languageForFile, languageRegistry } from '../src/cli
 import type { EditorLanguageAdapter } from '../src/client/languages/EditorLanguageAdapter.js'
 import { LanguageRegistry } from '../src/client/languages/registry.js'
 import type { LanguageSupport } from '@codemirror/language'
+import type { Extension } from '@codemirror/state'
 
 describe('EDITOR_EXTENSIONS', () => {
   it('is lowercase, unique, and dot-free', () => {
@@ -53,12 +54,14 @@ describe('languageForFile', () => {
 class TestAdapter implements EditorLanguageAdapter {
   readonly label: string
   readonly createSupport: () => LanguageSupport
+  readonly createEditorExtensions: () => Extension
 
   constructor(readonly id: string, readonly extensions: readonly string[]) {
     this.label = id
     this.createSupport = () => {
       throw new Error('not used by registry tests')
     }
+    this.createEditorExtensions = () => []
   }
 }
 

@@ -16,6 +16,10 @@ Run `npm run check` before tagging. A GitHub Release must target the validated c
 
 For a release candidate such as `0.2.1-rc.0`, publish a GitHub Pre-release and use the npm `rc` dist-tag. A pre-release must not move npm's `latest` tag.
 
+## Changelog Structure
+
+`CHANGELOG.md` contains only complete, versioned release entries in descending version order. Do not add an `[Unreleased]` section or an empty version placeholder. Every entry must include a version, release date, and the applicable change categories, such as `Added`, `Changed`, or `Fixed`; omit empty categories.
+
 ## Release Note Format
 
 The Release title must contain only the version tag:
