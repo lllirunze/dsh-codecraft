@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Automated validation passed; macOS and Windows Desktop acceptance pending |
+| Status | Passed |
 | Target version | 0.2.1 |
 | Baseline | 0.2.1-rc.0 Windows compatibility preview |
 | Platform | macOS and Windows for Python Intelligence and editor regressions |
@@ -18,19 +18,19 @@
 - [x] Tab, Shift+Tab, generic delimiter expansion, save, auto-save, drafts, and conflicts do not regress.
 - [x] Python-specific Enter behavior is registered only for Python adapters.
 - [x] Existing Pyright import, cross-file, unsaved-document, environment, restart, and cleanup tests pass.
-- [ ] The v0.2.1-rc.0 Windows platform, path, environment, launch, and lifecycle tests remain green.
+- [x] The v0.2.1-rc.0 Windows platform, path, environment, launch, and lifecycle tests remain green.
 - [x] Existing triple-quote behavior passes; Docstring generation is excluded from the delivered scope.
 - [x] `npm run check` and `npm pack --dry-run --json` pass.
 
 ## Desktop Acceptance
 
-- [ ] Verify Python block, branch, and multiline indentation in DSH Desktop on macOS and Windows.
-- [ ] Repeat the core scenarios with 2- and 4-space settings.
-- [ ] Verify ordinary quotes and triple quotes do not duplicate input or misplace the caret.
-- [ ] Confirm semantic completion, manual save, auto-save, native tabs, and workspace switching still work.
-- [ ] Confirm Python Intelligence failure does not disable ordinary editing.
-- [ ] Quit Desktop and confirm no Pyright process remains.
-- [ ] On Windows, repeat cross-file completion, `.venv` discovery, a path containing spaces, and Pyright teardown from the rc.0 acceptance plan.
+- [x] Verify Python block, branch, and multiline indentation in DSH Desktop on macOS and Windows.
+- [x] Repeat the core scenarios with 2- and 4-space settings.
+- [x] Verify ordinary quotes and triple quotes do not duplicate input or misplace the caret.
+- [x] Confirm semantic completion, manual save, auto-save, native tabs, and workspace switching still work.
+- [x] Confirm Python Intelligence failure does not disable ordinary editing.
+- [x] Quit Desktop and confirm no Pyright process remains.
+- [x] On Windows, repeat cross-file completion, `.venv` discovery, a path containing spaces, and Pyright teardown from the rc.0 acceptance plan.
 
 ## Release Gate
 
@@ -45,5 +45,12 @@ Recorded on 2026-11-05 from macOS:
 - Existing editor, save, draft, conflict, Pyright, Windows platform-policy, environment, lifecycle, and packaging regressions remain green.
 - `npm pack --dry-run --json` produced `dsh-codecraft@0.2.1` with 48 package entries.
 
-Native Desktop acceptance remains intentionally unchecked until it is repeated with this stable build on macOS and Windows.
+## Recorded Desktop Evidence
+
+Accepted on 2026-11-05 on macOS and Windows:
+
+- Python block, branch, multiline-expression, and closing-delimiter indentation passed with both supported indentation widths.
+- Quotes, semantic completion, manual and automatic saving, native tabs, and workspace switching passed regression testing.
+- Python Intelligence failure isolation and clean Pyright teardown passed.
+- Windows cross-file completion, virtual-environment discovery, paths containing spaces, and lifecycle behavior remained compatible with the v0.2.1-rc.0 baseline.
 
