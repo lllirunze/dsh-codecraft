@@ -11,7 +11,7 @@
 
 ## Purpose
 
-v0.2.2 hardens the Python Intelligence capabilities delivered in v0.2.0 through v0.2.1 and adds safe Google Style Docstring generation. It remains a focused patch: reliability changes must address a reproduced failure, a concrete lifecycle gap found during review, or missing regression coverage, while Docstring generation is the only required new editing feature.
+v0.2.2 hardens the Python Intelligence capabilities delivered in v0.2.0 through v0.2.1, adds safe Google Style Docstring generation, and makes callable completions ready to invoke. It remains a focused patch: reliability changes must address a reproduced failure, a concrete lifecycle gap found during review, or missing regression coverage.
 
 The verified baseline provides workspace-scoped Pyright sessions, full-document synchronization, semantic completion from unsaved content, stale-revision checks, client-side request abortion, one recovery attempt for an empty member-completion result, macOS and Windows environment discovery, and Python-aware indentation.
 
@@ -44,7 +44,8 @@ Google Style Docstring generation is not an existing v0.2.1 feature. v0.2.2 intr
 | REL-06 | Failure isolation | Pyright startup, initialization, protocol, or exit failure never blocks DSH startup, ordinary editing, drafts, or saving |
 | REL-07 | Cross-platform regression | Bundled Pyright and interpreter discovery continue to work on native macOS and Windows, including paths with spaces and Unicode |
 | REL-08 | Editor regression | Python indentation, triple quotes, Tab/Shift+Tab, completion application, save, auto-save, drafts, and conflicts remain stable |
-| REL-09 | Documentation consistency | Version records and the shared intelligence-module convention match the delivered architecture and evidence |
+| REL-09 | Callable completion | Confirming a method, function, or constructor in a clear invocation context adds `()` and places the caret inside when the server did not already provide call syntax |
+| REL-10 | Documentation consistency | Version records and the shared intelligence-module convention match the delivered architecture and evidence |
 | DOC-01 | Safe trigger | In a Python function, method, or class with no Docstring, typing `"""` in the first statement position and pressing Enter generates one template |
 | DOC-02 | Google Style structure | Generated output uses Google Style placeholders for reliably known parameters, return values, and generators without inventing semantics |
 | DOC-03 | Editing integration | Generation respects two- or four-space indentation, preserves triple-quote pairing, provides ordered editable placeholders, and is one undoable transaction |
@@ -102,6 +103,12 @@ Even when cancellation races with a response, revision and ownership checks rema
 v0.2.2 retains full-text `didChange`, which is valid for the current Pyright integration. Revisions increase on document changes and never decrease within one editor generation. Reopening or replacing a document uses a new generation and a fresh `didOpen`. Save remains owned by the conflict-safe file service and does not alter the editor revision by itself.
 
 `didSave` is not added by default: the current client advertises no save notification and completion already operates on synchronized unsaved content. It may be introduced only if capability negotiation and a reproduced defect require it.
+
+### Callable completion application
+
+When Pyright classifies a completion item as a method, function, or constructor, supplies only a plain identifier, and the surrounding syntax indicates a clear invocation, CodeCraft appends `()` and places the caret between the parentheses. Clear contexts are a direct expression statement, a direct member expression, or an expression introduced by `return`, `await`, `yield`, or `raise`. This transformation occurs when the user accepts the item, not while candidates are fetched, and therefore does not change ranking or filtering.
+
+Ambiguous reference contexts deliberately retain the identifier without parentheses. These include assignment values, callback arguments, container members, annotations, import statements, definition and class headers, and decorators. Nested expressions that cannot be classified safely also remain unchanged; the user can type `(` and rely on normal bracket pairing. Server-provided snippets remain authoritative. CodeCraft also preserves additional text edits such as automatic imports, does not duplicate an existing following `(`, and leaves properties, variables, classes, modules, and other non-callable item kinds unchanged.
 
 ## Google Style Docstring Design
 
@@ -199,13 +206,19 @@ The imported proposal refers conceptually to a reusable `BaseIntelligence`. The 
 3. Generate only reliable Google Style sections with ordered placeholders.
 4. Verify two- and four-space indentation, triple-quote interaction, cursor flow, and one-step Undo.
 
-### Stage D: evidence-gated refinement
+### Stage D: callable completion application
+
+1. Add editor tests for methods, functions, constructors, caret placement, and additional text edits.
+2. Preserve server snippets and suppress parentheses in imports, definitions, decorators, callback references, assignments, arguments, containers, and before an existing call.
+3. Confirm properties, variables, and ambiguous nested expressions retain identifier-only insertion.
+
+### Stage E: evidence-gated refinement
 
 1. Reproduce any completion, environment, launch, privacy, or performance issue.
 2. Apply the smallest fix in the owning layer.
 3. Add a regression test before claiming the improvement.
 
-### Stage E: release validation
+### Stage F: release validation
 
 1. Run `npm run check` and `npm pack --dry-run --json --ignore-scripts`.
 2. Complete native DSH Desktop acceptance on macOS and Windows.
@@ -214,4 +227,4 @@ The imported proposal refers conceptually to a reusable `BaseIntelligence`. The 
 
 ## Definition of Done
 
-v0.2.2 is ready when every P0 requirement has automated evidence; Google Style Docstring generation passes its syntax, content, indentation, placeholder, and Undo contract; any included P1 fix has a reproduced failure and regression test; macOS and Windows Desktop acceptance passes; no stale completion can cross revision, tab, or workspace boundaries; recovery and process cleanup are bounded; ordinary editing and saving survive all intelligence failures; packaging validation passes; and release notes describe only verified changes.
+v0.2.2 is ready when every P0 requirement has automated evidence; Google Style Docstring generation passes its syntax, content, indentation, placeholder, and Undo contract; callable completions add exactly one pair of parentheses only in clear invocation contexts while ambiguous references remain unchanged; any included P1 fix has a reproduced failure and regression test; macOS and Windows Desktop acceptance passes; no stale completion can cross revision, tab, or workspace boundaries; recovery and process cleanup are bounded; ordinary editing and saving survive all intelligence failures; packaging validation passes; and release notes describe only verified changes.

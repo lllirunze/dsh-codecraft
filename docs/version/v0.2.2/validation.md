@@ -38,6 +38,15 @@
 - [x] Results from one workspace cannot appear in another workspace.
 - [x] Completion edits reject invalid or overlapping ranges and preserve valid snippets/additional edits.
 
+### Callable completion application
+
+- [x] Accepting a method, function, or constructor supplied as a plain identifier in a clear invocation context adds `()` and places the caret inside.
+- [x] Existing following parentheses are not duplicated.
+- [x] Server-provided snippets remain authoritative and are not wrapped again.
+- [x] Properties, variables, classes, modules, and other non-callable completion kinds retain identifier-only insertion.
+- [x] Assignment values, callback arguments, containers, imports, definition headers, class headers, decorators, and ambiguous nested expressions do not receive call parentheses.
+- [x] Additional completion edits remain compatible with callable insertion.
+
 ### Document and platform behavior
 
 - [x] `didOpen`, full-text `didChange`, replacement, replay, and `didClose` maintain URI, generation, and revision ownership.
@@ -81,6 +90,7 @@ Run the stable local build with a cold DSH Desktop start on both supported platf
 
 - [ ] Open multiple Python tabs in one workspace and confirm semantic completion remains responsive.
 - [ ] Rapidly type, delete, switch tabs, and switch workspaces without stale completion appearing.
+- [ ] Accept member methods such as `user.create_service`; confirm `user.create_service()` is inserted with the caret inside and no duplicate parentheses appear. Confirm `callback = user.handle_event` and `register(user.handle_event)` remain references.
 - [ ] Exercise two- and four-space Python indentation and triple quotes.
 - [ ] Generate function, method, async-function, generator, and class Google Style Docstrings; verify placeholders and one-step Undo.
 - [ ] Confirm manual save, auto-save, drafts, and conflict handling.
@@ -90,6 +100,7 @@ Run the stable local build with a cold DSH Desktop start on both supported platf
 ### Windows
 
 - [ ] Repeat the multi-tab, rapid-edit, tab-switch, and workspace-switch scenarios.
+- [ ] Accept method, function, and constructor completions; confirm `()` insertion, caret placement, and the callback/import/decorator exclusions.
 - [ ] Verify bundled Pyright, `.venv\\Scripts\\python.exe`, and cross-file completion.
 - [ ] Open a workspace whose path contains spaces and non-ASCII characters.
 - [ ] Exercise two- and four-space Python indentation and triple quotes.
@@ -122,7 +133,7 @@ Do not publish v0.2.2 while any applicable P0, native-platform, packaging, or do
 
 Recorded on 2026-11-07 from macOS:
 
-- `npm run check` passed strict type checking, 14 Vitest files with 152 tests, the production build, and artifact verification.
-- The suite covers guarded Docstring generation, placeholder navigation, one-step Undo, document revisions, tab generations, workspace isolation, request cancellation, bounded recovery, idle-session retirement, stable public errors, Python indentation, saving, drafts, conflicts, environment discovery, and real Pyright completion.
+- `npm run check` passed strict type checking, 14 Vitest files with 154 tests, the production build, and artifact verification.
+- The suite covers guarded Docstring generation, callable completion application, placeholder navigation, one-step Undo, document revisions, tab generations, workspace isolation, request cancellation, bounded recovery, idle-session retirement, stable public errors, Python indentation, saving, drafts, conflicts, environment discovery, and real Pyright completion.
 - `npm pack --dry-run --json --ignore-scripts` produced `dsh-codecraft@0.2.2` with 49 package entries, including the Docstring declaration output.
 - Native macOS and Windows DSH Desktop acceptance remains pending and is intentionally unchecked.

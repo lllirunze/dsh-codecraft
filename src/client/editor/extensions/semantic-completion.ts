@@ -65,6 +65,43 @@ function hasOverlap(changes: Array<{ from: number; to: number }>): boolean {
   return ordered.some((change, index) => index > 0 && change.from < (ordered[index - 1]?.to ?? 0))
 }
 
+function hasBalancedGrouping(value: string): boolean {
+  const stack: string[] = []
+  const closing: Record<string, string> = { ')': '(', ']': '[', '}': '{' }
+  for (const character of value) {
+    if (character === '(' || character === '[' || character === '{') {
+      stack.push(character)
+    } else if (character === ')' || character === ']' || character === '}') {
+      if (stack.pop() !== closing[character]) return false
+    }
+  }
+  return stack.length === 0
+}
+
+function isInvocationContext(doc: Text, from: number): boolean {
+  const line = doc.lineAt(from)
+  const prefix = doc.sliceString(line.from, from)
+  if (/^\s*(?:from\b.*\bimport|import|def|async\s+def|class)\b/.test(prefix)) return false
+  if (/^\s*@[^\s]*$/.test(prefix)) return false
+  if (/^\s*(?:(?:return|yield|await|raise)\s+)?$/.test(prefix)) return true
+  const expression = prefix.replace(/^\s*(?:(?:return|yield|await|raise)\s+)?/, '')
+  if (!/\.\s*$/.test(expression) || /[=,+\-*/%<>:&|^~;]/.test(expression)) return false
+  return hasBalancedGrouping(expression)
+}
+
+function callableCompletionText(
+  item: IntelligenceCompletionItem,
+  text: string,
+  doc: Text,
+  range: { from: number; to: number },
+): string | undefined {
+  if (item.kind !== 2 && item.kind !== 3 && item.kind !== 4) return undefined
+  if (item.insertTextFormat === 2 || !/^[_\p{ID_Start}][_\p{ID_Continue}]*$/u.test(text)) return undefined
+  if (/^\s*\(/.test(doc.sliceString(range.to))) return undefined
+  if (!isInvocationContext(doc, range.from)) return undefined
+  return `${text}()`
+}
+
 function applyItem(
   item: IntelligenceCompletionItem,
   fallbackFrom: number,
@@ -75,11 +112,13 @@ function applyItem(
       ? { from: fallbackFrom === fallbackTo ? from : fallbackFrom, to: fallbackFrom === fallbackTo ? to : fallbackTo }
       : offsets(view.state.doc, item.textEdit.range)
     if (primaryRange === undefined) return
-    const text = item.textEdit?.newText ?? item.insertText ?? item.label
+    const originalText = item.textEdit?.newText ?? item.insertText ?? item.label
     if (item.insertTextFormat === 2 && (item.additionalTextEdits?.length ?? 0) === 0) {
-      snippet(text)(view, completion, primaryRange.from, primaryRange.to)
+      snippet(originalText)(view, completion, primaryRange.from, primaryRange.to)
       return
     }
+    const callableText = callableCompletionText(item, originalText, view.state.doc, primaryRange)
+    const text = callableText ?? originalText
     const changes = [{ ...primaryRange, insert: text }]
     for (const additional of item.additionalTextEdits ?? []) {
       const editRange = offsets(view.state.doc, additional.range)
@@ -87,7 +126,16 @@ function applyItem(
       changes.push({ ...editRange, insert: additional.newText })
     }
     if (hasOverlap(changes)) return
-    view.dispatch({ changes })
+    if (callableText === undefined) {
+      view.dispatch({ changes })
+      return
+    }
+    const changeSet = view.state.changes(changes)
+    const insertedFrom = changeSet.mapPos(primaryRange.from)
+    view.dispatch({
+      changes: changeSet,
+      selection: { anchor: insertedFrom + callableText.length - 1 },
+    })
   }
 }
 

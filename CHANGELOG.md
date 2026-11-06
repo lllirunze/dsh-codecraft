@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Added syntax-guarded Google Style Docstring generation for the first statement of Python functions, methods, async functions, and classes.
 - Added ordered summary, `Args`, `Returns`, and `Yields` placeholders with two- and four-space indentation and one-step Undo.
+- Added automatic call parentheses and inside-caret placement for methods, functions, and constructors in clear invocation contexts while preserving callback and other callable references.
 - Added end-to-end completion cancellation from an abandoned browser request to the LSP `$/cancelRequest` notification.
 
 ### Fixed

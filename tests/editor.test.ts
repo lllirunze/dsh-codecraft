@@ -217,6 +217,149 @@ describe('semantic completion freshness', () => {
       snippetState.selection.main.to,
     )).toBe('value')
   })
+
+  it('adds call parentheses for callable items and leaves the cursor inside', async () => {
+    vi.stubGlobal('document', { baseURI: 'http://localhost/' })
+    const complete = async (
+      content: string,
+      item: unknown,
+      explicit = false,
+    ): Promise<EditorState> => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+        ok: true,
+        result: { revision: 1, items: [item] },
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })))
+      let state = EditorState.create({ doc: content })
+      const source = semanticCompletionSource({
+        getInput: () => ({
+          sessionId: 'session',
+          path: 'main.py',
+          tabId: 'tab:1',
+          revision: 1,
+          content,
+          enabled: true,
+        }),
+      })
+      const result = await source(new CompletionContext(state, state.doc.length, explicit))
+      const completion = result?.options[0]
+      if (result === null || completion === undefined || typeof completion.apply !== 'function') {
+        throw new Error('expected an applicable completion')
+      }
+      const view = {
+        get state() { return state },
+        dispatch: (spec: Transaction | TransactionSpec) => {
+          state = spec instanceof Transaction ? spec.state : state.update(spec).state
+        },
+      } as unknown as EditorView
+      completion.apply(view, completion, result.from, state.doc.length)
+      return state
+    }
+
+    const method = await complete('user.create_ser', {
+      label: 'create_service',
+      kind: 2,
+      textEdit: {
+        range: { start: { line: 0, character: 5 }, end: { line: 0, character: 15 } },
+        newText: 'create_service',
+      },
+    })
+    expect(method.doc.toString()).toBe('user.create_service()')
+    expect(method.selection.main.head).toBe('user.create_service('.length)
+
+    const functionCall = await complete('build_us', { label: 'build_user', kind: 3 })
+    expect(functionCall.doc.toString()).toBe('build_user()')
+    expect(functionCall.selection.main.head).toBe('build_user('.length)
+
+    const constructor = await complete('Serv', { label: 'Service', kind: 4 })
+    expect(constructor.doc.toString()).toBe('Service()')
+    expect(constructor.selection.main.head).toBe('Service('.length)
+
+    const returned = await complete('return build_us', { label: 'build_user', kind: 3 })
+    expect(returned.doc.toString()).toBe('return build_user()')
+
+    const awaited = await complete('await user.fetch_us', { label: 'fetch_user', kind: 2 })
+    expect(awaited.doc.toString()).toBe('await user.fetch_user()')
+
+    const autoImport = await complete('\ncreate_ser', {
+      label: 'create_service',
+      kind: 3,
+      textEdit: {
+        range: { start: { line: 1, character: 0 }, end: { line: 1, character: 10 } },
+        newText: 'create_service',
+      },
+      additionalTextEdits: [{
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+        newText: 'from service import create_service\n',
+      }],
+    })
+    expect(autoImport.doc.toString()).toBe('from service import create_service\n\ncreate_service()')
+    expect(autoImport.selection.main.head).toBe('from service import create_service\n\ncreate_service('.length)
+  })
+
+  it('does not add duplicate or unsafe call parentheses', async () => {
+    vi.stubGlobal('document', { baseURI: 'http://localhost/' })
+    const complete = async (content: string, item: unknown, position = content.length): Promise<string> => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+        ok: true,
+        result: { revision: 1, items: [item] },
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })))
+      let state = EditorState.create({ doc: content, selection: { anchor: position } })
+      const source = semanticCompletionSource({
+        getInput: () => ({
+          sessionId: 'session',
+          path: 'main.py',
+          tabId: 'tab:1',
+          revision: 1,
+          content,
+          enabled: true,
+        }),
+      })
+      const result = await source(new CompletionContext(state, position, true))
+      const completion = result?.options[0]
+      if (result === null || completion === undefined || typeof completion.apply !== 'function') {
+        throw new Error('expected an applicable completion')
+      }
+      const view = {
+        get state() { return state },
+        dispatch: (spec: Transaction | TransactionSpec) => {
+          state = spec instanceof Transaction ? spec.state : state.update(spec).state
+        },
+      } as unknown as EditorView
+      completion.apply(view, completion, result.from, position)
+      return state.doc.toString()
+    }
+
+    expect(await complete('user.create_service()', { label: 'create_service', kind: 2 }, 19))
+      .toBe('user.create_service()')
+    expect(await complete('from helpers import build_us', { label: 'build_user', kind: 3 }))
+      .toBe('from helpers import build_user')
+    expect(await complete('@decor', { label: 'decorator', kind: 3 }))
+      .toBe('@decorator')
+    expect(await complete('callback = handle_ev', { label: 'handle_event', kind: 3 }))
+      .toBe('callback = handle_event')
+    expect(await complete('register(handle_ev', { label: 'handle_event', kind: 3 }))
+      .toBe('register(handle_event')
+    expect(await complete('callbacks = [handle_ev', { label: 'handle_event', kind: 3 }))
+      .toBe('callbacks = [handle_event')
+    expect(await complete('callback = user.handle_ev', { label: 'handle_event', kind: 2 }))
+      .toBe('callback = user.handle_event')
+    expect(await complete('register(user.handle_ev', { label: 'handle_event', kind: 2 }))
+      .toBe('register(user.handle_event')
+    expect(await complete('user.na', { label: 'name', kind: 10 }))
+      .toBe('user.name')
+    expect(await complete('user.ca', {
+      label: 'call',
+      kind: 2,
+      insertText: 'call(${1:value})',
+      insertTextFormat: 2,
+    })).toBe('user.call(value)')
+  })
 })
 
 describe('completion keymap', () => {

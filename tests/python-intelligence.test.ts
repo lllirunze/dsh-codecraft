@@ -235,6 +235,7 @@ describe('Python Intelligence with Pyright', () => {
         AbortSignal.timeout(15_000),
       )
       expect(result.items.map(item => item.label)).toContain('create_user')
+      expect(result.items.find(item => item.label === 'create_user')).toMatchObject({ kind: 2 })
     } finally {
       await session.dispose()
     }

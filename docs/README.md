@@ -16,7 +16,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.2.0 | [Design](version/v0.2.0/design.md) | [Validation](version/v0.2.0/validation.md) | Project-aware Python completion and reusable intelligence infrastructure |
 | v0.2.1-rc.0 | [Design](version/v0.2.1-rc.0/design.md) | [Validation](version/v0.2.1-rc.0/validation.md) | Released Windows compatibility preview with native acceptance |
 | v0.2.1 | [Design](version/v0.2.1/design.md) | [Validation](version/v0.2.1/validation.md) | Python-aware indentation with macOS and Windows acceptance |
-| v0.2.2 | [Design](version/v0.2.2/design.md) | [Validation](version/v0.2.2/validation.md) | Implemented reliability and Google Style Docstrings; Desktop acceptance pending |
+| v0.2.2 | [Design](version/v0.2.2/design.md) | [Validation](version/v0.2.2/validation.md) | Implemented Python reliability, guarded Google Style Docstrings, and context-safe callable completion; Desktop acceptance pending |
 
 ## Project Guides
 
