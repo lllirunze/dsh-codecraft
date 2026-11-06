@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { deleteBracketPair, insertBracket } from '@codemirror/autocomplete'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { CompletionContext, deleteBracketPair, insertBracket } from '@codemirror/autocomplete'
 import { history, undo } from '@codemirror/commands'
 import { json } from '@codemirror/lang-json'
 import {
@@ -13,7 +13,7 @@ import { EditorView, type Command } from '@codemirror/view'
 import { differsFromSavedText } from '../src/client/document/state.js'
 import { bracketExtensions, closeBracketTokens } from '../src/client/editor/extensions/brackets.js'
 import { codeCraftCompletionKeymap } from '../src/client/editor/extensions/completion.js'
-import { offsetAt } from '../src/client/editor/extensions/semantic-completion.js'
+import { offsetAt, semanticCompletionSource } from '../src/client/editor/extensions/semantic-completion.js'
 import {
   alignedClosingDelimiter,
   indentLessByBoundary,
@@ -50,6 +50,10 @@ function runCommand(state: EditorState, command: Command): EditorState {
   return next
 }
 
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
 describe('differsFromSavedText', () => {
   it('keeps edits made while an older snapshot is being saved dirty', () => {
     const submittedSnapshot = 'const value = 2\n'
@@ -72,6 +76,146 @@ describe('LSP position conversion', () => {
     expect(offsetAt(state.doc, { line: 1, character: 2 })).toBe(8)
     expect(offsetAt(state.doc, { line: 1, character: 7 })).toBe(13)
     expect(offsetAt(state.doc, { line: 3, character: 0 })).toBeUndefined()
+  })
+})
+
+describe('semantic completion freshness', () => {
+  it('discards a Host result from an older document revision', async () => {
+    vi.stubGlobal('document', { baseURI: 'http://localhost/' })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      ok: true,
+      result: {
+        revision: 1,
+        items: [{ label: 'stale_member' }],
+      },
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })))
+    const state = EditorState.create({ doc: 'service.' })
+    const source = semanticCompletionSource({
+      getInput: () => ({
+        sessionId: 'session',
+        path: 'main.py',
+        tabId: 'tab:2',
+        revision: 2,
+        content: 'service.',
+        enabled: true,
+      }),
+    })
+    await expect(source(new CompletionContext(state, state.doc.length, false))).resolves.toBeNull()
+  })
+
+  it('accepts a result only when it matches the current revision', async () => {
+    vi.stubGlobal('document', { baseURI: 'http://localhost/' })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      ok: true,
+      result: {
+        revision: 2,
+        items: [{ label: 'current_member', kind: 2 }],
+      },
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })))
+    const state = EditorState.create({ doc: 'service.' })
+    const source = semanticCompletionSource({
+      getInput: () => ({
+        sessionId: 'session',
+        path: 'main.py',
+        tabId: 'tab:2',
+        revision: 2,
+        content: 'service.',
+        enabled: true,
+      }),
+    })
+    const result = await source(new CompletionContext(state, state.doc.length, false))
+    expect(result).not.toBeNull()
+    expect(result?.options).toMatchObject([{ label: 'current_member', type: 'function' }])
+  })
+
+  it('rejects overlapping edits while preserving valid additional edits and snippets', async () => {
+    vi.stubGlobal('document', { baseURI: 'http://localhost/' })
+    const input = {
+      sessionId: 'session',
+      path: 'main.py',
+      tabId: 'tab:2',
+      revision: 2,
+      content: 'abcde',
+      enabled: true,
+    }
+    const resolveOption = async (item: unknown): Promise<{
+      state: EditorState
+      apply: Exclude<NonNullable<import('@codemirror/autocomplete').Completion['apply']>, string>
+      completion: import('@codemirror/autocomplete').Completion
+      from: number
+    }> => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+        ok: true,
+        result: { revision: 2, items: [item] },
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })))
+      const state = EditorState.create({ doc: input.content })
+      const source = semanticCompletionSource({ getInput: () => input })
+      const result = await source(new CompletionContext(state, state.doc.length, true))
+      const completion = result?.options[0]
+      if (result === null || completion === undefined || typeof completion.apply !== 'function') {
+        throw new Error('expected an applicable completion')
+      }
+      return { state, apply: completion.apply, completion, from: result.from }
+    }
+
+    const apply = async (item: unknown): Promise<EditorState> => {
+      const resolved = await resolveOption(item)
+      let state = resolved.state
+      const view = {
+        get state() { return state },
+        dispatch: (spec: Transaction | TransactionSpec) => {
+          state = spec instanceof Transaction ? spec.state : state.update(spec).state
+        },
+      } as unknown as EditorView
+      resolved.apply(view, resolved.completion, resolved.from, state.doc.length)
+      return state
+    }
+
+    const overlapping = await apply({
+      label: 'overlap',
+      textEdit: {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 3 } },
+        newText: 'A',
+      },
+      additionalTextEdits: [{
+        range: { start: { line: 0, character: 2 }, end: { line: 0, character: 5 } },
+        newText: 'B',
+      }],
+    })
+    expect(overlapping.doc.toString()).toBe('abcde')
+
+    const additional = await apply({
+      label: 'additional',
+      textEdit: {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+        newText: 'A',
+      },
+      additionalTextEdits: [{
+        range: { start: { line: 0, character: 4 }, end: { line: 0, character: 5 } },
+        newText: 'E',
+      }],
+    })
+    expect(additional.doc.toString()).toBe('AbcdE')
+
+    const snippetState = await apply({
+      label: 'call',
+      insertText: 'call(${1:value})',
+      insertTextFormat: 2,
+    })
+    expect(snippetState.doc.toString()).toBe('call(value)')
+    expect(snippetState.sliceDoc(
+      snippetState.selection.main.from,
+      snippetState.selection.main.to,
+    )).toBe('value')
   })
 })
 

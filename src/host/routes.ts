@@ -1,7 +1,7 @@
 import { isAbsolute } from 'node:path'
 import { CodeCraftError } from './errors.js'
 import { readTextFile, saveTextFile, statFile } from './files.js'
-import type { IntelligenceManager } from './intelligence/manager.js'
+import { publicIntelligenceError, type IntelligenceManager } from './intelligence/manager.js'
 import type {
   HostContext,
   HostSessionLike,
@@ -163,6 +163,7 @@ export async function dispatch(
   ctx: HostContext,
   request: CodeCraftRequest,
   intelligence?: IntelligenceManager,
+  signal?: AbortSignal,
 ): Promise<unknown> {
   const { root } = await workspaceOf(ctx, request.sessionId)
   switch (request.action) {
@@ -170,7 +171,9 @@ export async function dispatch(
     case 'save': return saveTextFile({ root, ...request }) satisfies Promise<SaveResult>
     case 'stat': return statFile(root, request.path) satisfies Promise<StatResult>
     case 'intelligence-sync': return requireIntelligence(intelligence).sync(root, request)
-    case 'intelligence-complete': return requireIntelligence(intelligence).complete(root, request)
+      .catch(error => { throw publicIntelligenceError(error) })
+    case 'intelligence-complete': return requireIntelligence(intelligence).complete(root, request, signal)
+      .catch(error => { throw publicIntelligenceError(error) })
     case 'intelligence-close': {
       await requireIntelligence(intelligence).close(root, request.path, request.tabId)
       return { closed: true }
@@ -194,6 +197,10 @@ export function createApiHandler(
   intelligence?: IntelligenceManager,
 ): (req: RequestLike, res: ResponseLike) => Promise<void> {
   return async (req, res) => {
+    const controller = new AbortController()
+    const abort = (): void => controller.abort(new DOMException('Request aborted', 'AbortError'))
+    if (req.aborted) abort()
+    else req.once?.('aborted', abort)
     try {
       const rejection = ctx.connection.requestRejection(req)
       if (rejection !== undefined) {
@@ -229,9 +236,13 @@ export function createApiHandler(
         return
       }
       const request = requireRequest(parsed)
-      const result = await dispatch(ctx, request, intelligence)
+      const result = await dispatch(ctx, request, intelligence, controller.signal)
       sendJson(res, 200, { ok: true, result })
     } catch (error) {
+      if (controller.signal.aborted) {
+        if (!res.headersSent) res.destroy?.()
+        return
+      }
       const normalized = error instanceof CodeCraftError
         ? error
         : new CodeCraftError(
@@ -247,6 +258,9 @@ export function createApiHandler(
       } else {
         res.destroy?.(normalized)
       }
+    } finally {
+      if (req.off !== undefined) req.off('aborted', abort)
+      else req.removeListener?.('aborted', abort)
     }
   }
 }

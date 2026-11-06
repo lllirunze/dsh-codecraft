@@ -11,7 +11,11 @@ export interface RequestLike extends AsyncIterable<string | Uint8Array> {
   method?: string
   url?: string
   headers: Record<string, string | string[] | undefined>
+  aborted?: boolean
   resume?(): void
+  once?(event: 'aborted', listener: () => void): void
+  off?(event: 'aborted', listener: () => void): void
+  removeListener?(event: 'aborted', listener: () => void): void
 }
 
 /** A Node HTTP response, as handed to a `webServer` route handler. */

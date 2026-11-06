@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.2.1 adds Python syntax-aware indentation while preserving Python Intelligence on macOS and Windows.
+> **Status:** v0.2.2 adds guarded Google Style Docstrings and hardens Python Intelligence lifecycle behavior on macOS and Windows.
 
 ## Features
 
@@ -25,6 +25,8 @@
 - Automatically closes common brackets and quotes, including selection wrapping, paired deletion, and language-aware backticks or Python triple quotes.
 - Provides configurable two- or four-space indentation, generic bracket expansion on Enter, and aligned single- or multiline Tab operations.
 - Uses Python syntax context for block, branch, multiline-expression, and closing-delimiter indentation.
+- Generates Google Style Docstring placeholders after `"""` + Enter only at the first statement of a Python function, method, async function, or class.
+- Cancels stale completion work, bounds Pyright recovery, and retires idle workspace language-server sessions.
 - Offers optional auto save in DSH Settings with 10, 30, 60, or 120-second intervals; it is disabled by default.
 - Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
 - Detects external changes and refuses stale writes.
@@ -38,7 +40,7 @@
 | Component | Supported |
 | --- | --- |
 | Base editor | macOS or Windows |
-| Python Intelligence | macOS or Windows in v0.2.1 |
+| Python Intelligence | macOS or Windows in v0.2.2 |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 20 or later when building from source |
 
@@ -75,7 +77,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.2.1
+dsh plugin --profile desktop add dsh-codecraft@0.2.2
 ```
 
 Restart DSH Desktop after updating.
@@ -109,6 +111,8 @@ Restart DSH Desktop. Native file previews are restored automatically.
 Auto save is disabled by default. Open **Settings → CodeCraft** from the settings sidebar to enable it and choose a 10, 30, 60, or 120-second interval. Automatic and manual saves use the same conflict-safe write path.
 
 New indentation always uses spaces. In the same settings section, choose a width of two or four spaces; the change applies to open editors without rewriting existing file content. Python files additionally use syntax-aware Enter indentation for blocks, branches, and multiline expressions.
+
+To generate a Google Style Docstring, type `"""` as the first statement in a Python function, method, async function, or class, then press Enter inside the paired quotes. CodeCraft creates editable summary, `Args`, `Returns`, or `Yields` placeholders only when syntax context is conclusive. Triple quotes at module scope, in assignments, nested blocks, later statements, or prefixed strings remain ordinary multiline strings.
 
 Python Intelligence is enabled by default for Python files on macOS and Windows. CodeCraft uses its bundled Pyright server and first selects an explicit interpreter or workspace `.venv`/`venv`; PATH fallback prefers `python3` on macOS and `python` on Windows. Open **Settings → CodeCraft → Python Intelligence** to disable semantic completion or provide absolute interpreter and language-server paths. The status bar reports `Starting`, `Ready`, or `Unavailable`; an unavailable server never disables normal editing or saving.
 

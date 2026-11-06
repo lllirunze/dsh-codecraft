@@ -96,4 +96,29 @@ describe('Python environment discovery', () => {
     expect(argv[1]?.replaceAll('\\', '/')).toMatch(/pyright\/langserver\.index\.js$/)
     expect(argv[2]).toBe('--stdio')
   })
+
+  it('launches an explicit JavaScript server through Node without shell interpolation', async () => {
+    const resolveExecutable = vi.fn(async (command: string) => command === 'node' ? '/runtime/node' : command)
+    const argv = await resolvePyrightLaunch(resolver(resolveExecutable), {
+      ...DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+      serverPath: '/tools/custom pyright/server.js',
+    })
+    expect(argv).toEqual(['/runtime/node', '/tools/custom pyright/server.js', '--stdio'])
+    expect(resolveExecutable).toHaveBeenCalledTimes(1)
+    expect(resolveExecutable).toHaveBeenCalledWith('node')
+  })
+
+  it('validates an explicit native server as an absolute executable path', async () => {
+    const resolveExecutable = vi.fn(async (command: string) => command)
+    await expect(resolvePyrightLaunch(resolver(resolveExecutable), {
+      ...DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+      serverPath: 'relative/pyright-langserver',
+    })).rejects.toThrow('absolute')
+    const argv = await resolvePyrightLaunch(resolver(resolveExecutable), {
+      ...DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+      serverPath: '/tools/pyright-langserver',
+    })
+    expect(argv).toEqual(['/tools/pyright-langserver', '--stdio'])
+    expect(resolveExecutable).toHaveBeenCalledWith('/tools/pyright-langserver')
+  })
 })

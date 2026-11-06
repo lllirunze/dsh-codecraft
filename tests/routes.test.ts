@@ -2,7 +2,8 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { IntelligenceManager } from '../src/host/intelligence/manager.js'
 import type { HostContext, RequestLike, ResponseLike } from '../src/host/context.js'
 import { createApiHandler, dispatch } from '../src/host/routes.js'
 import { MAX_REQUEST_BYTES } from '../src/protocol.js'
@@ -24,6 +25,7 @@ class FakeResponse implements ResponseLike {
   headersSent = false
   body = ''
   readonly headers: Record<string, string | number | readonly string[]> = {}
+  destroyed = false
 
   setHeader(name: string, value: string | number | readonly string[]): void {
     this.headers[name.toLowerCase()] = value
@@ -32,6 +34,10 @@ class FakeResponse implements ResponseLike {
   end(body?: string | Uint8Array): void {
     this.body = body === undefined ? '' : typeof body === 'string' ? body : Buffer.from(body).toString('utf8')
     this.headersSent = true
+  }
+
+  destroy(): void {
+    this.destroyed = true
   }
 
   json(): any {
@@ -185,5 +191,67 @@ describe('CodeCraft API route', () => {
     await writeFile(join(root, 'a.ts'), 'a\n')
     const response = await dispatch(makeContext(root), { action: 'stat', sessionId: 's1', path: 'a.ts' })
     expect(response).toMatchObject({ exists: true })
+  })
+
+  it('propagates an abandoned HTTP completion request to the intelligence signal', async () => {
+    const root = await workspace()
+    await writeFile(join(root, 'a.py'), 'value.\n')
+    let receivedSignal: AbortSignal | undefined
+    const intelligence = {
+      complete: vi.fn(async (_root: string, _input: unknown, signal?: AbortSignal) => {
+        receivedSignal = signal
+        await new Promise<never>((_resolve, reject) => {
+          signal?.addEventListener('abort', () => reject(signal.reason), { once: true })
+        })
+      }),
+    } as unknown as IntelligenceManager
+    const req = request({
+      action: 'intelligence-complete',
+      sessionId: 's1',
+      path: 'a.py',
+      tabId: 'tab',
+      revision: 1,
+      content: 'value.',
+      position: { line: 0, character: 6 },
+    })
+    const response = new FakeResponse()
+    const pending = createApiHandler(makeContext(root), intelligence)(req, response)
+    await new Promise(resolve => setTimeout(resolve, 0))
+    const eventRequest = req as unknown as { emit(event: string): void }
+    eventRequest.emit('aborted')
+    await pending
+    expect(receivedSignal?.aborted).toBe(true)
+    expect(response.destroyed).toBe(true)
+    expect(response.body).toBe('')
+  })
+
+  it('does not expose internal Python provider paths to the browser', async () => {
+    const root = await workspace()
+    await writeFile(join(root, 'a.py'), 'value.\n')
+    const intelligence = {
+      complete: vi.fn(async () => {
+        throw new Error('language server exited at /private/user/project with TOKEN=secret')
+      }),
+    } as unknown as IntelligenceManager
+    const response = new FakeResponse()
+    await createApiHandler(makeContext(root), intelligence)(request({
+      action: 'intelligence-complete',
+      sessionId: 's1',
+      path: 'a.py',
+      tabId: 'tab',
+      revision: 1,
+      content: 'value.',
+      position: { line: 0, character: 6 },
+    }), response)
+    expect(response.statusCode).toBe(503)
+    expect(response.json()).toEqual({
+      ok: false,
+      error: {
+        code: 'intelligence-unavailable',
+        message: 'Pyright stopped unexpectedly. Try completion again after a short delay.',
+      },
+    })
+    expect(response.body).not.toContain('/private')
+    expect(response.body).not.toContain('TOKEN')
   })
 })

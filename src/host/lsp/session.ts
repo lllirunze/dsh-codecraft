@@ -9,6 +9,13 @@ import type {
 } from '../../protocol.js'
 import { LspConnection } from './connection.js'
 
+export class LspSessionRetiredError extends Error {
+  constructor() {
+    super('Python intelligence session was retired')
+    this.name = 'LspSessionRetiredError'
+  }
+}
+
 interface OpenDocument {
   target: string
   tabId: string
@@ -104,10 +111,11 @@ export class LspSession {
 
   async sync(target: string, tabId: string, revision: number, content: string): Promise<void> {
     await this.#ready
-    if (this.#disposed) throw new Error('Python intelligence session is disposed')
+    if (this.#disposed) throw new LspSessionRetiredError()
     const uri = pathToFileURL(target).href
     const current = this.#documents.get(uri)
-    if (current !== undefined && current.tabId === tabId && revision < current.revision) {
+    if (current !== undefined && current.tabId === tabId
+      && (revision < current.revision || (revision === current.revision && content !== current.content))) {
       throw new Error('stale document revision')
     }
     if (current === undefined || current.tabId !== tabId) {
@@ -129,6 +137,11 @@ export class LspSession {
   /** Capture editor-owned documents so a replacement server can reopen them. */
   documents(): readonly SyncedDocument[] {
     return [...this.#documents.values()].map(document => ({ ...document }))
+  }
+
+  /** Whether at least one current editor generation is owned by this session. */
+  hasDocuments(): boolean {
+    return this.#documents.size > 0
   }
 
   async complete(
@@ -157,11 +170,16 @@ export class LspSession {
 
   async close(target: string, tabId: string): Promise<void> {
     await this.#ready.catch(() => undefined)
+    if (this.#disposed) return
     const uri = pathToFileURL(target).href
     const current = this.#documents.get(uri)
     if (current === undefined || current.tabId !== tabId) return
     this.#documents.delete(uri)
-    this.#connection.notify('textDocument/didClose', { textDocument: { uri } })
+    try {
+      this.#connection.notify('textDocument/didClose', { textDocument: { uri } })
+    } catch {
+      // The manager still needs to retire a failed session.
+    }
   }
 
   async dispose(): Promise<void> {
@@ -179,7 +197,7 @@ export class LspSession {
     const rootUri = pathToFileURL(this.workspace).href
     await this.#connection.request('initialize', {
       processId: null,
-      clientInfo: { name: 'DSH CodeCraft', version: '0.2.1' },
+      clientInfo: { name: 'DSH CodeCraft', version: '0.2.2' },
       rootUri,
       workspaceFolders: [{ uri: rootUri, name: this.workspace.split(/[\\/]/).at(-1) ?? 'workspace' }],
       capabilities: {

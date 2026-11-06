@@ -15,8 +15,15 @@ import {
   supportsPythonIntelligence,
   unsupportedPythonPlatformMessage,
 } from '../languages/python/platform.js'
-import { LspSession } from '../lsp/session.js'
+import { LspSession, LspSessionRetiredError } from '../lsp/session.js'
 import { LspTransportError } from '../lsp/connection.js'
+
+const RECOVERY_COOLDOWN_MS = 10_000
+
+interface RecoveryBlock {
+  until: number
+  error: Error
+}
 
 function isPythonPath(path: string): boolean {
   return /\.(?:py|pyi|pyw)$/i.test(path)
@@ -48,17 +55,32 @@ function unavailableMessage(reason: IntelligenceUnavailableReason): string {
     case 'environment-limited': return 'The configured Python interpreter is unavailable. Check the CodeCraft settings.'
     case 'initialize-timeout': return 'Pyright did not initialize in time. Restart DSH Desktop and try again.'
     case 'spawn-failed': return 'Pyright could not start. Restart DSH Desktop and check the configured server path.'
-    case 'server-exited': return 'Pyright stopped unexpectedly. CodeCraft will retry on the next request.'
+    case 'server-exited': return 'Pyright stopped unexpectedly. Try completion again after a short delay.'
     case 'workspace-invalid': return 'The Python file is not available inside the active workspace.'
     case 'server-not-found': return 'Pyright or its Node.js runtime could not be resolved.'
     case 'unsupported-platform': return 'Python Intelligence is supported on macOS and Windows.'
   }
 }
 
+/** Convert internal provider failures into stable messages safe for the browser. */
+export function publicIntelligenceError(error: unknown): Error {
+  if (error instanceof CodeCraftError) return error
+  if (error instanceof Error && error.name === 'AbortError') return error
+  const reason = unavailableReason(error)
+  return new CodeCraftError(
+    ERROR_CODES.intelligenceUnavailable,
+    unavailableMessage(reason),
+    503,
+  )
+}
+
 /** Workspace-scoped owner of Python language-server sessions. */
 export class IntelligenceManager {
   readonly #sessions = new Map<string, Promise<LspSession>>()
   readonly #emptyCompletionRecovery = new WeakSet<LspSession>()
+  readonly #recoveryBlocks = new Map<string, RecoveryBlock>()
+  readonly #recoveryCooldownMs = RECOVERY_COOLDOWN_MS
+  readonly #now = Date.now
   #disposed = false
 
   constructor(
@@ -74,12 +96,23 @@ export class IntelligenceManager {
     try {
       await session.sync(target, request.tabId, request.revision, request.content)
     } catch (error) {
+      if (error instanceof LspSessionRetiredError) {
+        const replacement = await this.#session(canonicalRoot)
+        await replacement.sync(target, request.tabId, request.revision, request.content)
+        this.#recoveryBlocks.delete(canonicalRoot)
+        return {
+          status: 'ready',
+          ...(replacement.interpreterPath === undefined ? {} : { interpreterPath: replacement.interpreterPath }),
+        }
+      }
       if (error instanceof Error && error.message === 'stale document revision') {
         throw new CodeCraftError(ERROR_CODES.intelligenceStale, '智能补全请求已过期。', 409)
       }
       if (error instanceof LspTransportError) {
-        const restarted = await this.#restart(canonicalRoot, session)
-        await restarted.sync(target, request.tabId, request.revision, request.content)
+        const restarted = await this.#recover(canonicalRoot, session, error)
+        await this.#completeRecovery(canonicalRoot, async () => {
+          await restarted.sync(target, request.tabId, request.revision, request.content)
+        })
         return {
           status: 'ready',
           ...(restarted.interpreterPath === undefined ? {} : { interpreterPath: restarted.interpreterPath }),
@@ -87,6 +120,7 @@ export class IntelligenceManager {
       }
       throw error
     }
+    this.#recoveryBlocks.delete(canonicalRoot)
     return {
       status: 'ready',
       ...(session.interpreterPath === undefined ? {} : { interpreterPath: session.interpreterPath }),
@@ -100,8 +134,9 @@ export class IntelligenceManager {
     }
     const { root: canonicalRoot, target } = await resolveReadablePath(root, request.path)
     const session = await this.#session(canonicalRoot)
+    let result: IntelligenceCompletionResult
     try {
-      const result = await session.complete(
+      result = await session.complete(
         target,
         request.tabId,
         request.revision,
@@ -109,29 +144,10 @@ export class IntelligenceManager {
         request.position,
         signal,
       )
-      if (result.items.length === 0
-        && followsMemberAccess(request.content, request.position.line, request.position.character)
-        && !this.#emptyCompletionRecovery.has(session)) {
-        this.#emptyCompletionRecovery.add(session)
-        const restarted = await this.#restart(canonicalRoot, session)
-        this.#emptyCompletionRecovery.add(restarted)
-        return restarted.complete(
-          target,
-          request.tabId,
-          request.revision,
-          request.content,
-          request.position,
-          signal,
-        )
-      }
-      return result
     } catch (error) {
-      if (error instanceof Error && error.message === 'stale document revision') {
-        throw new CodeCraftError(ERROR_CODES.intelligenceStale, '智能补全请求已过期。', 409)
-      }
-      if (error instanceof LspTransportError) {
-        const restarted = await this.#restart(canonicalRoot, session)
-        return restarted.complete(
+      if (error instanceof LspSessionRetiredError) {
+        const replacement = await this.#session(canonicalRoot)
+        result = await replacement.complete(
           target,
           request.tabId,
           request.revision,
@@ -139,9 +155,41 @@ export class IntelligenceManager {
           request.position,
           signal,
         )
+        this.#recoveryBlocks.delete(canonicalRoot)
+        return result
+      } else if (error instanceof Error && error.message === 'stale document revision') {
+        throw new CodeCraftError(ERROR_CODES.intelligenceStale, '智能补全请求已过期。', 409)
+      } else if (error instanceof LspTransportError) {
+        const restarted = await this.#recover(canonicalRoot, session, error)
+        return this.#completeRecovery(canonicalRoot, () => restarted.complete(
+          target,
+          request.tabId,
+          request.revision,
+          request.content,
+          request.position,
+          signal,
+        ))
       }
       throw error
     }
+    this.#recoveryBlocks.delete(canonicalRoot)
+    if (result.items.length === 0
+      && followsMemberAccess(request.content, request.position.line, request.position.character)
+      && !this.#emptyCompletionRecovery.has(session)) {
+      this.#emptyCompletionRecovery.add(session)
+      this.#blockRecovery(canonicalRoot, new LspTransportError('Pyright returned no member completions'))
+      const restarted = await this.#restart(canonicalRoot, session)
+      this.#emptyCompletionRecovery.add(restarted)
+      return this.#completeRecovery(canonicalRoot, () => restarted.complete(
+        target,
+        request.tabId,
+        request.revision,
+        request.content,
+        request.position,
+        signal,
+      ))
+    }
+    return result
   }
 
   async close(root: string, path: string, tabId: string): Promise<void> {
@@ -149,7 +197,9 @@ export class IntelligenceManager {
     const { root: canonicalRoot, target } = await resolveReadablePath(root, path)
     const pending = this.#sessions.get(canonicalRoot)
     if (pending === undefined) return
-    await (await pending).close(target, tabId)
+    const session = await pending
+    await session.close(target, tabId)
+    await this.#retireIfIdle(canonicalRoot, pending, session)
   }
 
   async status(root: string, path: string): Promise<IntelligenceStatusResult> {
@@ -164,10 +214,15 @@ export class IntelligenceManager {
     if (!isPythonPath(path)) return { status: 'disabled' }
     try {
       const { root: canonicalRoot } = await resolveReadablePath(root, path)
-      const session = await this.#session(canonicalRoot)
-      return {
-        status: 'ready',
-        ...(session.interpreterPath === undefined ? {} : { interpreterPath: session.interpreterPath }),
+      const pending = this.#session(canonicalRoot)
+      const session = await pending
+      try {
+        return {
+          status: 'ready',
+          ...(session.interpreterPath === undefined ? {} : { interpreterPath: session.interpreterPath }),
+        }
+      } finally {
+        await this.#retireIfIdle(canonicalRoot, pending, session)
       }
     } catch (error) {
       const reason = unavailableReason(error)
@@ -180,6 +235,7 @@ export class IntelligenceManager {
     this.#disposed = true
     const sessions = [...this.#sessions.values()]
     this.#sessions.clear()
+    this.#recoveryBlocks.clear()
     await Promise.allSettled(sessions.map(async session => (await session).dispose()))
   }
 
@@ -196,13 +252,16 @@ export class IntelligenceManager {
     if (!isPythonPath(path)) throw new CodeCraftError(ERROR_CODES.intelligenceDisabled, '该文件不使用 Python 智能服务。', 409)
   }
 
-  #session(root: string): Promise<LspSession> {
+  #session(root: string, bypassRecoveryBlock = false): Promise<LspSession> {
     const existing = this.#sessions.get(root)
     if (existing !== undefined) return existing
+    const blocked = this.#activeRecoveryBlock(root)
+    if (blocked !== undefined && !bypassRecoveryBlock) return Promise.reject(blocked.error)
     const created = this.#createSession(root)
     this.#sessions.set(root, created)
-    void created.catch(() => {
+    void created.catch((error: unknown) => {
       if (this.#sessions.get(root) === created) this.#sessions.delete(root)
+      this.#blockRecovery(root, error instanceof Error ? error : new Error(String(error)))
     })
     return created
   }
@@ -229,7 +288,7 @@ export class IntelligenceManager {
       this.#sessions.delete(root)
     }
     await failed.dispose().catch(() => undefined)
-    const restarted = await this.#session(root)
+    const restarted = await this.#session(root, true)
     for (const document of documents) {
       await restarted.sync(
         document.target,
@@ -239,5 +298,45 @@ export class IntelligenceManager {
       )
     }
     return restarted
+  }
+
+  async #recover(root: string, failed: LspSession, error: LspTransportError): Promise<LspSession> {
+    const blocked = this.#activeRecoveryBlock(root)
+    if (blocked !== undefined) throw blocked.error
+    this.#blockRecovery(root, error)
+    return this.#restart(root, failed)
+  }
+
+  async #completeRecovery<T>(root: string, operation: () => Promise<T>): Promise<T> {
+    try {
+      const result = await operation()
+      this.#recoveryBlocks.delete(root)
+      return result
+    } catch (error) {
+      if (error instanceof LspTransportError) this.#blockRecovery(root, error)
+      else this.#recoveryBlocks.delete(root)
+      throw error
+    }
+  }
+
+  #blockRecovery(root: string, error: Error): void {
+    this.#recoveryBlocks.set(root, {
+      until: this.#now() + this.#recoveryCooldownMs,
+      error,
+    })
+  }
+
+  #activeRecoveryBlock(root: string): RecoveryBlock | undefined {
+    const block = this.#recoveryBlocks.get(root)
+    if (block === undefined) return undefined
+    if (block.until > this.#now()) return block
+    this.#recoveryBlocks.delete(root)
+    return undefined
+  }
+
+  async #retireIfIdle(root: string, pending: Promise<LspSession>, session: LspSession): Promise<void> {
+    if (session.hasDocuments() || this.#sessions.get(root) !== pending) return
+    this.#sessions.delete(root)
+    await session.dispose().catch(() => undefined)
   }
 }

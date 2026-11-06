@@ -4,6 +4,26 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.2] - 2026-11-07
+
+### Added
+
+- Added syntax-guarded Google Style Docstring generation for the first statement of Python functions, methods, async functions, and classes.
+- Added ordered summary, `Args`, `Returns`, and `Yields` placeholders with two- and four-space indentation and one-step Undo.
+- Added end-to-end completion cancellation from an abandoned browser request to the LSP `$/cancelRequest` notification.
+
+### Fixed
+
+- Retired idle workspace Pyright sessions after the final tracked Python document closes.
+- Bounded repeated startup and transport recovery with a cooldown instead of repeatedly spawning failed language servers.
+- Rejected changed content at equal or older revisions and preserved the current tab generation when an older tab closes.
+- Prevented stale completion responses from crossing document revisions and prevented internal paths or environment details from reaching browser errors.
+
+### Notes
+
+- Triple quotes outside a direct first-statement function or class body retain normal multiline-string behavior.
+- Signature help, diagnostics, additional Docstring styles, and Linux Python Intelligence remain outside this release.
+
 ## [0.2.1] - 2026-11-05
 
 ### Added
