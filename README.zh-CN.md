@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.3.0 在 macOS 和 Windows 上增加了无需 JDK 的轻量离线 Java 编辑辅助。
+> **当前状态：** v0.3.1 在 macOS 和 Windows 上为 Python 增加了安全的 Pyright Hover、定义与引用导航以及原生 Tab 导航历史。
 
 ## 功能
 
@@ -23,6 +23,9 @@
 - 在 macOS 和 Windows 上提供项目级 Python 补全，包括 import、跨文件符号、推断成员和所选环境中的依赖。
 - 在明确的 Python 调用位置接受方法、函数或构造器补全时自动加入括号，同时保留回调等可调用对象引用。
 - 将未保存的 Python 内容同步到工作区级 Pyright，并通过 DSH 托管子进程服务管理其生命周期。
+- 鼠标悬停在 Python 标识符上时，显示 Pyright 返回的签名、类型、Docstring 和来源位置。
+- 在 macOS 使用 `Command+点击`、Windows 使用 `Ctrl+点击` 从使用位置跳转到定义，并在声明位置打开按文件分组的引用结果。
+- 在 DSH 原生文件 Tab 中打开跨文件导航目标，并提供精确范围的后退与前进历史。
 - 自动闭合常用括号与引号，并支持包裹选区、成对删除以及按语言启用反引号或 Python 三引号。
 - 支持 2 格或 4 格空格缩进、回车展开通用括号，以及按整数边界执行单行或多行 Tab 操作。
 - 根据 Python 语法上下文处理代码块、分支、多行表达式和结束括号的缩进。
@@ -82,7 +85,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.3.0
+dsh plugin --profile desktop add dsh-codecraft@0.3.1
 ```
 
 更新后重启 DSH Desktop。
@@ -122,6 +125,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 在 macOS 和 Windows 的 Python 文件中，Python 智能编程默认开启。CodeCraft 使用随附的 Pyright，优先选择明确设置的解释器或工作区 `.venv`/`venv`；PATH 回退在 macOS 上优先使用 `python3`，在 Windows 上优先使用 `python`。可以在 **设置 → CodeCraft → Python 智能编程** 中关闭语义补全，或指定解释器和语言服务器的绝对路径。状态栏会显示“启动中”“就绪”或“不可用”；智能服务不可用时不会影响普通编辑和保存。
 
 语义补全会在输入时自动打开，包括输入 `service.` 这类成员访问点之后。当 Pyright 只提供可调用名称，并且当前位置是明确的调用表达式时，接受方法、函数或构造器补全会插入 `()` 并把光标留在括号内。赋值右侧、回调参数、容器、import、装饰器、已有 snippet 或括号都保持不变。CodeCraft 不绑定 macOS 的 `Option` 组合键，因为它们可能产生输入法组合字符；如果操作系统没有占用 `Ctrl+Space`，仍可使用它手动打开补全。
+
+将鼠标悬停在 Python 标识符上，可以查看 Pyright 提供的信息。在 macOS 使用 `Command+点击`、Windows 使用 `Ctrl+点击` 可从使用位置跳转到定义；在声明位置使用相同操作会打开按文件分组的引用列表。跨文件目标会在 DSH 原生 Tab 中打开。编辑器状态栏中的左右箭头或 `Command/Ctrl+Alt+左/右方向键` 可在成功的导航历史中移动。
 
 `.java` 文件会自动启用 Java 支持。补全内容包括 Java 关键字、常用标准库类型、`psvm` 和 `sout` 等代码片段，以及当前文档中的标识符。在完整的方法或构造器声明上方输入 `/**` 并按 Enter，可生成 CodeCraft Structured Javadoc。这些功能均在本地运行，不需要 JDK、JDT LS、Java 进程、额外下载或网络连接。Java 补全属于词法辅助，不会解析 import、依赖、推断成员或跨文件符号。
 

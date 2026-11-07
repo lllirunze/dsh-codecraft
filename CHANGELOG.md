@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] - 2026-11-08
+
+### Added
+
+- Added safe Pyright Hover cards with signatures, types, Docstrings, and source locations for Python symbols.
+- Added `Command+Click` on macOS and `Ctrl+Click` on Windows for semantic definition and reference navigation.
+- Added grouped cross-file result lists, exact native-tab reveal, and Back/Forward navigation history.
+
+### Changed
+
+- Extended the workspace-scoped Pyright session with cancellable definition and reference requests for synchronized unsaved content.
+- Filtered stale, malformed, changed, inaccessible, and outside-workspace navigation targets before reveal.
+
 ## [0.3.0] - 2026-11-07
 
 ### Added

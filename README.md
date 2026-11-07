@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.3.0 adds lightweight, offline Java editing assistance on macOS and Windows without requiring a JDK.
+> **Status:** v0.3.1 adds safe Pyright Hover, definition and reference navigation, and native-tab history for Python on macOS and Windows.
 
 ## Features
 
@@ -23,6 +23,9 @@
 - Provides project-aware Python completion for imports, cross-file symbols, inferred members, and packages from the selected environment on macOS and Windows.
 - Adds call parentheses and places the caret inside for clear Python invocation completions while preserving callback and other callable references.
 - Synchronizes unsaved Python content with a workspace-scoped Pyright language server managed through DSH's subprocess service.
+- Shows Pyright signatures, types, Docstrings, and source locations when hovering over Python identifiers.
+- Navigates from Python uses to definitions with `Command+Click` on macOS or `Ctrl+Click` on Windows, and shows grouped references when invoked on a declaration.
+- Opens cross-file navigation targets in DSH native tabs and provides exact-range Back and Forward history.
 - Automatically closes common brackets and quotes, including selection wrapping, paired deletion, and language-aware backticks or Python triple quotes.
 - Provides configurable two- or four-space indentation, generic bracket expansion on Enter, and aligned single- or multiline Tab operations.
 - Uses Python syntax context for block, branch, multiline-expression, and closing-delimiter indentation.
@@ -82,7 +85,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.3.0
+dsh plugin --profile desktop add dsh-codecraft@0.3.1
 ```
 
 Restart DSH Desktop after updating.
@@ -122,6 +125,8 @@ To generate a Google Style Docstring, type `"""` as the first statement in a Pyt
 Python Intelligence is enabled by default for Python files on macOS and Windows. CodeCraft uses its bundled Pyright server and first selects an explicit interpreter or workspace `.venv`/`venv`; PATH fallback prefers `python3` on macOS and `python` on Windows. Open **Settings → CodeCraft → Python Intelligence** to disable semantic completion or provide absolute interpreter and language-server paths. The status bar reports `Starting`, `Ready`, or `Unavailable`; an unavailable server never disables normal editing or saving.
 
 Semantic completion opens automatically while typing, including after member-access dots such as `service.`. Accepting a method, function, or constructor in a clear invocation context inserts `()` and leaves the caret inside when Pyright supplies a plain callable name. Assignment values, callback arguments, containers, imports, decorators, existing snippets, and existing parentheses remain unchanged. CodeCraft does not bind macOS `Option` combinations because they may produce composed input characters. `Ctrl+Space` remains available where the operating system does not reserve it.
+
+Hover over a Python identifier to see information supplied by Pyright. Use `Command+Click` on macOS or `Ctrl+Click` on Windows to navigate from a use to its definition; use the same gesture on a declaration to open its grouped reference list. Cross-file targets open in DSH native tabs. The arrow controls in the editor status bar, or `Command/Ctrl+Alt+Left/Right`, move through successful navigation history.
 
 Java support activates automatically for `.java` files. Completion includes Java keywords, common standard-library type names, snippets such as `psvm` and `sout`, and identifiers found in the current document. Type `/**` above a complete method or constructor and press Enter to generate CodeCraft Structured Javadoc. These features run locally without a JDK, JDT LS, a Java process, downloads, or network access. Java completion is lexical rather than project-aware: it does not resolve imports, dependencies, inferred members, or cross-file symbols.
 

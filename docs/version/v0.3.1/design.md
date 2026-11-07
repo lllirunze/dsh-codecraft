@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed, native Desktop acceptance pending |
+| Status | Implemented and validated; release prepared |
 | Target version | 0.3.1 |
 | Baseline | 0.3.0 |
 | Release type | Patch feature release |
