@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.3.1 adds safe Pyright Hover, definition and reference navigation, and native-tab history for Python on macOS and Windows.
+> **Status:** v0.3.2 republishes the validated Python navigation update with corrected package version metadata.
 
 ## Features
 
@@ -85,7 +85,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.3.1
+dsh plugin --profile desktop add dsh-codecraft@0.3.2
 ```
 
 Restart DSH Desktop after updating.

@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.3.1 在 macOS 和 Windows 上为 Python 增加了安全的 Pyright Hover、定义与引用导航以及原生 Tab 导航历史。
+> **当前状态：** v0.3.2 使用正确的包版本元数据重新发布已经验证的 Python 导航更新。
 
 ## 功能
 
@@ -85,7 +85,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.3.1
+dsh plugin --profile desktop add dsh-codecraft@0.3.2
 ```
 
 更新后重启 DSH Desktop。

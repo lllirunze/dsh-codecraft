@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.2] - 2026-11-08
+
+### Fixed
+
+- Corrected the package version metadata after the v0.3.1 release was published from a commit that still identified itself as v0.3.0.
+- Republished the validated v0.3.1 implementation without functional changes.
+
 ## [0.3.1] - 2026-11-08
 
 ### Added

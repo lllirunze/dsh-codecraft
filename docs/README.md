@@ -19,6 +19,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.2.2 | [Design](version/v0.2.2/design.md) | [Validation](version/v0.2.2/validation.md) | Implemented Python reliability, guarded Google Style Docstrings, and context-safe callable completion; Desktop acceptance pending |
 | v0.3.0 | [Design](version/v0.3.0/design.md) | [Validation](version/v0.3.0/validation.md) | Lightweight offline Java editing, local completion, snippets, and Structured Javadoc |
 | v0.3.1 | [Design](version/v0.3.1/design.md) | [Validation](version/v0.3.1/validation.md) | Validated Python Hover, semantic definition and reference navigation, native-tab reveal, and navigation history |
+| v0.3.2 | [Design](version/v0.3.2/design.md) | [Validation](version/v0.3.2/validation.md) | Package metadata correction with no functional changes |
 
 ## Project Guides
 
