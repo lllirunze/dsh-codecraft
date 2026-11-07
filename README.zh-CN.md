@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.2.2 增加了严格限定位置的 Google Style Docstring，并强化了 macOS 和 Windows 上的 Python 智能编程生命周期。
+> **当前状态：** v0.3.0 在 macOS 和 Windows 上增加了无需 JDK 的轻量离线 Java 编辑辅助。
 
 ## 功能
 
@@ -27,6 +27,9 @@
 - 支持 2 格或 4 格空格缩进、回车展开通用括号，以及按整数边界执行单行或多行 Tab 操作。
 - 根据 Python 语法上下文处理代码块、分支、多行表达式和结束括号的缩进。
 - 仅在 Python 函数、方法、异步函数或类的首个语句位置，通过 `"""` + Enter 生成 Google Style Docstring 占位模板。
+- 无需语言服务器即可提供本地 Java 关键字、常用类型、代码片段和当前文档标识符补全。
+- 根据 Java 文档中已有的方法或构造器声明生成 CodeCraft Structured Javadoc。
+- 完全离线支持 Java 括号、缩进、行注释、折叠以及常用声明和控制流代码片段。
 - 取消过期补全请求、限制 Pyright 恢复次数，并在工作区没有 Python 文档后清理语言服务器会话。
 - 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
 - macOS 使用 `Cmd+S`、Windows 使用 `Ctrl+S` 保存，并显示未保存、保存中、已保存、失败和只读状态。
@@ -41,7 +44,8 @@
 | 组件 | 支持范围 |
 | --- | --- |
 | 基础编辑器 | macOS 或 Windows |
-| Python 智能编程 | v0.2.2 支持 macOS 或 Windows |
+| Python 智能编程 | macOS 或 Windows |
+| Java 编辑 | v0.3.0 支持 macOS 或 Windows；无需 JDK |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 从源码构建时需要 20 或更高版本 |
 
@@ -78,7 +82,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.2.2
+dsh plugin --profile desktop add dsh-codecraft@0.3.0
 ```
 
 更新后重启 DSH Desktop。
@@ -119,6 +123,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 语义补全会在输入时自动打开，包括输入 `service.` 这类成员访问点之后。当 Pyright 只提供可调用名称，并且当前位置是明确的调用表达式时，接受方法、函数或构造器补全会插入 `()` 并把光标留在括号内。赋值右侧、回调参数、容器、import、装饰器、已有 snippet 或括号都保持不变。CodeCraft 不绑定 macOS 的 `Option` 组合键，因为它们可能产生输入法组合字符；如果操作系统没有占用 `Ctrl+Space`，仍可使用它手动打开补全。
 
+`.java` 文件会自动启用 Java 支持。补全内容包括 Java 关键字、常用标准库类型、`psvm` 和 `sout` 等代码片段，以及当前文档中的标识符。在完整的方法或构造器声明上方输入 `/**` 并按 Enter，可生成 CodeCraft Structured Javadoc。这些功能均在本地运行，不需要 JDK、JDT LS、Java 进程、额外下载或网络连接。Java 补全属于词法辅助，不会解析 import、依赖、推断成员或跨文件符号。
+
 ### 快捷键
 
 | macOS | Windows | 功能 |
@@ -141,6 +147,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 - CodeCraft 只支持不超过 2 MiB 的 UTF-8 源码和文本文件。
 - 符号链接只能只读打开。
 - 暂未提供 Python 悬浮说明、参数提示、诊断、跨文件自动编辑和跳转定义。
+- 暂未提供 Java 语义补全、诊断、导航、重构和构建集成。
 - Linux 尚未完成验证，目前不在支持范围内。
 - 暂无多窗口草稿同步。
 

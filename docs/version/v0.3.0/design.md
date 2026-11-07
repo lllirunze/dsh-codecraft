@@ -6,7 +6,7 @@
 | --- | --- |
 | Target version | 0.3.0 |
 | Baseline | 0.2.2 |
-| Status | Implemented; automated validation passed, Desktop acceptance pending |
+| Status | Implemented and validated; release prepared |
 | Platforms | Current DSH Desktop platforms |
 | Runtime model | Browser-local, offline, no Java process |
 

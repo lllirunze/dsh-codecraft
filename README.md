@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.2.2 adds guarded Google Style Docstrings and hardens Python Intelligence lifecycle behavior on macOS and Windows.
+> **Status:** v0.3.0 adds lightweight, offline Java editing assistance on macOS and Windows without requiring a JDK.
 
 ## Features
 
@@ -27,6 +27,9 @@
 - Provides configurable two- or four-space indentation, generic bracket expansion on Enter, and aligned single- or multiline Tab operations.
 - Uses Python syntax context for block, branch, multiline-expression, and closing-delimiter indentation.
 - Generates Google Style Docstring placeholders after `"""` + Enter only at the first statement of a Python function, method, async function, or class.
+- Provides local Java keyword, common-type, snippet, and current-document completion without a language server.
+- Generates Structured Javadoc for Java methods and constructors from declarations already present in the document.
+- Supports Java brackets, indentation, line comments, folding, and common declaration or control-flow snippets entirely offline.
 - Cancels stale completion work, bounds Pyright recovery, and retires idle workspace language-server sessions.
 - Offers optional auto save in DSH Settings with 10, 30, 60, or 120-second intervals; it is disabled by default.
 - Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
@@ -41,7 +44,8 @@
 | Component | Supported |
 | --- | --- |
 | Base editor | macOS or Windows |
-| Python Intelligence | macOS or Windows in v0.2.2 |
+| Python Intelligence | macOS or Windows |
+| Java editing | macOS or Windows in v0.3.0; no JDK required |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 20 or later when building from source |
 
@@ -78,7 +82,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.2.2
+dsh plugin --profile desktop add dsh-codecraft@0.3.0
 ```
 
 Restart DSH Desktop after updating.
@@ -119,6 +123,8 @@ Python Intelligence is enabled by default for Python files on macOS and Windows.
 
 Semantic completion opens automatically while typing, including after member-access dots such as `service.`. Accepting a method, function, or constructor in a clear invocation context inserts `()` and leaves the caret inside when Pyright supplies a plain callable name. Assignment values, callback arguments, containers, imports, decorators, existing snippets, and existing parentheses remain unchanged. CodeCraft does not bind macOS `Option` combinations because they may produce composed input characters. `Ctrl+Space` remains available where the operating system does not reserve it.
 
+Java support activates automatically for `.java` files. Completion includes Java keywords, common standard-library type names, snippets such as `psvm` and `sout`, and identifiers found in the current document. Type `/**` above a complete method or constructor and press Enter to generate CodeCraft Structured Javadoc. These features run locally without a JDK, JDT LS, a Java process, downloads, or network access. Java completion is lexical rather than project-aware: it does not resolve imports, dependencies, inferred members, or cross-file symbols.
+
 ### Keyboard shortcuts
 
 | macOS | Windows | Action |
@@ -141,6 +147,7 @@ Semantic completion opens automatically while typing, including after member-acc
 - CodeCraft supports UTF-8 source and text files up to 2 MiB.
 - Symbolic links are read-only.
 - Python hover, signature help, diagnostics, automatic cross-file edits, and go-to-definition are not included yet.
+- Java semantic completion, diagnostics, navigation, refactoring, and build integration are not included.
 - Linux has not been validated and is not currently supported.
 - There is no cross-window draft synchronization.
 

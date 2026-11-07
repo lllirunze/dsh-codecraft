@@ -4,7 +4,7 @@
 | --- | --- |
 | Target version | 0.3.0 |
 | Baseline | 0.2.2 |
-| Status | Automated checks passed; Desktop acceptance pending |
+| Status | Automated and Desktop acceptance passed; release metadata prepared |
 | Design | [design.md](design.md) |
 
 ## Evidence Rules
@@ -37,33 +37,34 @@
 
 ## macOS Desktop Acceptance
 
-- [ ] Build and link the source plugin, fully quit DSH Desktop, and cold start it.
-- [ ] Open an empty `.java` file and a representative class without installing or configuring a JDK.
-- [ ] Confirm Java highlighting, brackets, quotes, nested indentation, comments, folding, Undo, Redo, and saving.
-- [ ] Confirm `pub`, `Arr`, `psvm`, `sout`, `foreach`, and a current-file identifier produce the expected local candidates.
-- [ ] Confirm completion does not appear inside comments and quoted text.
-- [ ] Type `/**` above a method and press Enter; verify name, parameter types, return type, and declared exceptions.
-- [ ] Verify constructor, `void`, generic, array, varargs, annotation, multiline, and incomplete-declaration Javadoc cases.
-- [ ] Disable networking and repeat opening, completion, snippets, and Javadoc.
-- [ ] Confirm no Java process starts and no runtime archive or cache directory is created.
-- [ ] Regress Python Intelligence and ordinary non-Java editing.
+- [x] Build and link the source plugin, fully quit DSH Desktop, and cold start it.
+- [x] Open an empty `.java` file and a representative class without installing or configuring a JDK.
+- [x] Confirm Java highlighting, brackets, quotes, nested indentation, comments, folding, Undo, Redo, and saving.
+- [x] Confirm `pub`, `Arr`, `psvm`, `sout`, `foreach`, and a current-file identifier produce the expected local candidates.
+- [x] Confirm completion does not appear inside comments and quoted text.
+- [x] Type `/**` above a method and press Enter; verify name, parameter types, return type, and declared exceptions.
+- [x] Verify constructor, `void`, generic, array, varargs, annotation, multiline, and incomplete-declaration Javadoc cases.
+- [x] Disable networking and repeat opening, completion, snippets, and Javadoc.
+- [x] Confirm no Java process starts and no runtime archive or cache directory is created.
+- [x] Regress Python Intelligence and ordinary non-Java editing.
 
 ## Windows Desktop Acceptance
 
-- [ ] Install the same source revision and cold start DSH Desktop.
-- [ ] Repeat the macOS functional matrix without installing or configuring a JDK.
-- [ ] Verify CRLF preservation, Windows paths, save shortcuts, comments, folding, snippets, and Javadoc.
-- [ ] Disable networking and confirm all Java features remain available.
-- [ ] Confirm Task Manager shows no CodeCraft-started Java process.
-- [ ] Regress Python Intelligence and ordinary non-Java editing.
+- [x] Install the same source revision and cold start DSH Desktop.
+- [x] Repeat the macOS functional matrix without installing or configuring a JDK.
+- [x] Verify CRLF preservation, Windows paths, save shortcuts, comments, folding, snippets, and Javadoc.
+- [x] Disable networking and confirm all Java features remain available.
+- [x] Confirm Task Manager shows no CodeCraft-started Java process.
+- [x] Regress Python Intelligence and ordinary non-Java editing.
 
 ## Packaging and Documentation
 
 - [x] `npm pack --dry-run` contains the Java client module and no JDT LS, JRE, runtime-package manifest, or imported root requirements document.
-- [x] package size remains consistent with a lightweight client feature (438,664-byte archive at implementation time).
+- [x] package size remains consistent with a lightweight client feature (439,585-byte release-preparation archive).
 - [x] docs describe Java support as local lexical assistance and list semantic/project features as out of scope.
-- [ ] README and changelog are updated only when v0.3.0 is prepared for release.
-- [ ] package version, lockfile, changelog, tag, and GitHub Release are aligned only after native acceptance.
+- [x] README and changelog are updated for the validated v0.3.0 release.
+- [x] package version, lockfile, and changelog are aligned to 0.3.0 after native acceptance.
+- [x] Release metadata is prepared for tag and GitHub Release title v0.3.0; both must target the validated commit.
 
 ## Release Gate
 

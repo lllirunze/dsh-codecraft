@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] - 2026-11-07
+
+### Added
+
+- Added offline Java keyword, common-type, snippet, and current-document completion.
+- Added CodeCraft Structured Javadoc generation for methods and constructors, including parameters, return types, and declared exceptions.
+- Added Java editing support for brackets, indentation, comments, folding, and common declaration and control-flow snippets.
+
+### Changed
+
+- Implemented Java assistance entirely in the browser without JDT LS, a JDK, a Java process, runtime downloads, or network access.
+- Kept Java completion deliberately lexical and current-document scoped so unavailable semantic services never affect editing or saving.
+
+### Notes
+
+- Cross-file symbols, import resolution, inferred members, diagnostics, navigation, refactoring, and build integration are outside this release.
+
 ## [0.2.2] - 2026-11-07
 
 ### Added
