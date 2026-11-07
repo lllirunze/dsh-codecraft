@@ -1,8 +1,18 @@
+# Dependencies
 node_modules/
+
+# Build and test output
 lib/
 coverage/
-.DS_Store
 *.tsbuildinfo
+
+# Local development data
 .tmp-dsh-home/
 .pnpm-store/
 .npm-cache/
+
+# Local planning documents
+docs/planning/
+
+# Operating system files
+.DS_Store

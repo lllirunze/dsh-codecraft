@@ -31,6 +31,7 @@ export interface LspLaunchOptions {
   argv: readonly string[]
   cwd: string
   pythonPath?: string
+  workspaceSettings?: unknown
 }
 
 /** One JSON-RPC connection over a DSH-managed language-server process. */
@@ -38,13 +39,15 @@ export class LspConnection {
   readonly #handle: ManagedSubprocessHandle
   readonly #pending = new Map<number, PendingRequest>()
   readonly #pythonPath: string | undefined
+  readonly #workspaceSettings: unknown
   #nextId = 1
   #failed: Error | undefined
   #disposing = false
 
-  private constructor(handle: ManagedSubprocessHandle, pythonPath: string | undefined) {
+  private constructor(handle: ManagedSubprocessHandle, pythonPath: string | undefined, workspaceSettings: unknown) {
     this.#handle = handle
     this.#pythonPath = pythonPath
+    this.#workspaceSettings = workspaceSettings
     const stdout = handle.stdout
     const stdin = handle.stdin
     if (stdout === undefined || stdin === undefined) throw new Error('language server did not expose piped stdio')
@@ -82,7 +85,7 @@ export class LspConnection {
       },
       graceMs: 2000,
     })
-    return new LspConnection(handle, options.pythonPath)
+    return new LspConnection(handle, options.pythonPath, options.workspaceSettings)
   }
 
   notify(method: string, params?: unknown): void {
@@ -174,6 +177,13 @@ export class LspConnection {
         const section = isRecord(item) && typeof item.section === 'string' ? item.section : ''
         if (section === 'python') return this.#pythonPath === undefined ? {} : { pythonPath: this.#pythonPath }
         if (section === 'python.analysis') return { autoSearchPaths: true, useLibraryCodeForTypes: true }
+        if (section !== '' && isRecord(this.#workspaceSettings)) {
+          let current: unknown = this.#workspaceSettings
+          for (const key of section.split('.')) {
+            current = isRecord(current) ? current[key] : undefined
+          }
+          if (current !== undefined) return current
+        }
         return {}
       })
     } else if (method === 'workspace/workspaceFolders') {

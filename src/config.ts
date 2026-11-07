@@ -5,6 +5,7 @@ import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,
   DEFAULT_INDENTATION_SETTINGS,
+  DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   type CodeCraftSettings,
 } from './settings/schema.js'
@@ -34,6 +35,14 @@ const PythonIntelligenceSchema = z.object({
   serverPath: z.string().default(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS.serverPath),
 })
 
+const JavaIntelligenceSchema = z.object({
+  enabled: z.boolean().default(DEFAULT_JAVA_INTELLIGENCE_SETTINGS.enabled),
+  completion: z.boolean().default(DEFAULT_JAVA_INTELLIGENCE_SETTINGS.completion),
+  serverRuntimePath: z.string().default(DEFAULT_JAVA_INTELLIGENCE_SETTINGS.serverRuntimePath),
+  projectRuntimePath: z.string().default(DEFAULT_JAVA_INTELLIGENCE_SETTINGS.projectRuntimePath),
+  serverPath: z.string().default(DEFAULT_JAVA_INTELLIGENCE_SETTINGS.serverPath),
+})
+
 /**
  * The editor group is volatile so accepted settings writes take effect without
  * remounting the Host plugin. The profile still persists the chosen values.
@@ -45,4 +54,6 @@ export const Config = z.object({
   }).default(DEFAULT_EDITOR_SETTINGS).volatile(),
   pythonIntelligence: PythonIntelligenceSchema
     .default(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS),
+  javaIntelligence: JavaIntelligenceSchema
+    .default(DEFAULT_JAVA_INTELLIGENCE_SETTINGS),
 }) as unknown as z<CodeCraftSettings>

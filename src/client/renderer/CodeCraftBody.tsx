@@ -128,6 +128,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     editorSettings.getSnapshot,
     editorSettings.getSnapshot,
   ).pythonIntelligence
+  const javaIntelligenceSettings = useSyncExternalStore(
+    editorSettings.subscribe,
+    editorSettings.getSnapshot,
+    editorSettings.getSnapshot,
+  ).javaIntelligence
   const { tab } = props.useTabInfo()
   const request = props.content.kind === 'renderer' ? props.content : undefined
   const useResource = props.useResource ?? (() => ({ status: 'none' as const }))
@@ -155,6 +160,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   indentationSettingsRef.current = indentationSettings
   const pythonIntelligenceSettingsRef = useRef(pythonIntelligenceSettings)
   pythonIntelligenceSettingsRef.current = pythonIntelligenceSettings
+  const javaIntelligenceSettingsRef = useRef(javaIntelligenceSettings)
+  javaIntelligenceSettingsRef.current = javaIntelligenceSettings
   const savedTextRef = useRef('')
   const baseVersionRef = useRef('')
   const newlineRef = useRef<'lf' | 'crlf'>('lf')
@@ -194,6 +201,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [copied, setCopied] = useState(false)
   const [intelligenceStatus, setIntelligenceStatus] = useState<IntelligenceStatusKind>('disabled')
   const [intelligenceMessage, setIntelligenceMessage] = useState<string | undefined>(undefined)
+  const [intelligenceLanguage, setIntelligenceLanguage] = useState<'python' | 'java'>('python')
 
   useEffect(() => {
     mountedRef.current = true
@@ -221,6 +229,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     pythonIntelligenceSettings.completion,
     pythonIntelligenceSettings.interpreterPath,
     pythonIntelligenceSettings.serverPath,
+    javaIntelligenceSettings.enabled,
+    javaIntelligenceSettings.completion,
+    javaIntelligenceSettings.serverRuntimePath,
+    javaIntelligenceSettings.projectRuntimePath,
+    javaIntelligenceSettings.serverPath,
   ])
 
   useEffect(() => {
@@ -301,10 +314,14 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const parsed = parsedRef.current
     const view = viewRef.current
     const documentId = intelligenceDocumentIdRef.current
-    const enabled = pythonIntelligenceSettingsRef.current.enabled
-      && pythonIntelligenceSettingsRef.current.completion
-      && parsed !== null
-      && /\.(?:py|pyi|pyw)$/i.test(parsed.path)
+    const python = parsed !== null && /\.(?:py|pyi|pyw)$/i.test(parsed.path)
+    const java = parsed !== null && /\.java$/i.test(parsed.path)
+    const enabled = (python
+      && pythonIntelligenceSettingsRef.current.enabled
+      && pythonIntelligenceSettingsRef.current.completion)
+      || (java
+        && javaIntelligenceSettingsRef.current.enabled
+        && javaIntelligenceSettingsRef.current.completion)
     if (!enabled || parsed === null || view === null || documentId === undefined) {
       if (mountedRef.current) setIntelligenceStatus('disabled')
       return
@@ -312,6 +329,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (mountedRef.current) {
       setIntelligenceStatus('starting')
       setIntelligenceMessage(undefined)
+      setIntelligenceLanguage(java ? 'java' : 'python')
     }
     try {
       const result = await syncIntelligence({
@@ -359,7 +377,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (host === null) return false
     if (viewRef.current !== null) return true
     const language = languageForFile(fileNameOf(parsedRef.current?.path ?? ''))
-    const completionSource = language.id === 'python'
+    const completionSource = language.id === 'python' || language.id === 'java'
       ? semanticCompletionSource({
           getInput: () => {
             const parsed = parsedRef.current
@@ -372,8 +390,9 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
               tabId: documentId,
               revision: intelligenceRevisionRef.current,
               content: view.state.doc.toString(),
-              enabled: pythonIntelligenceSettingsRef.current.enabled
-                && pythonIntelligenceSettingsRef.current.completion,
+              enabled: language.id === 'python'
+                ? pythonIntelligenceSettingsRef.current.enabled && pythonIntelligenceSettingsRef.current.completion
+                : javaIntelligenceSettingsRef.current.enabled && javaIntelligenceSettingsRef.current.completion,
             }
           },
           onReady: () => {
@@ -429,10 +448,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     setReadOnly(initial.readOnly)
     setFileWritable(!initial.readOnly)
     setLanguageLabel(language.label)
-    setIntelligenceStatus(language.id === 'python' && pythonIntelligenceSettingsRef.current.enabled
-      ? 'starting'
-      : 'disabled')
-    if (language.id === 'python') queueMicrotask(() => { void syncIntelligenceDocument() })
+    const semanticLanguage = language.id === 'python' || language.id === 'java' ? language.id : undefined
+    const semanticEnabled = semanticLanguage === 'python'
+      ? pythonIntelligenceSettingsRef.current.enabled
+      : semanticLanguage === 'java' && javaIntelligenceSettingsRef.current.enabled
+    if (semanticLanguage !== undefined) setIntelligenceLanguage(semanticLanguage)
+    setIntelligenceStatus(semanticEnabled ? 'starting' : 'disabled')
+    if (semanticLanguage !== undefined) queueMicrotask(() => { void syncIntelligenceDocument() })
     setPhase('editing')
     return true
   }, [onUpdate, syncIntelligenceDocument, tab.id])
@@ -993,7 +1015,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
             data-state={intelligenceStatus === 'error' || intelligenceStatus === 'unavailable' ? 'error' : undefined}
             title={intelligenceMessage}
           >
-            {t(`status.intelligence.${intelligenceStatus}`)}
+            {t(`status.intelligence.${intelligenceLanguage}.${intelligenceStatus}`)}
           </span>
         )}
         {pending && <span className={`${ROOT_CLASS}-status-item`}>{t('status.loading')}</span>}

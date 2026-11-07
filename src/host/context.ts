@@ -61,6 +61,7 @@ export interface ManagedSubprocessHandle {
   readonly stdout: import('node:stream').Readable | undefined
   readonly stderr: import('node:stream').Readable | undefined
   readonly collected: {
+    readonly stdout?: { readFrom(offset: number): { text: string } }
     readonly stderr?: { readFrom(offset: number): { text: string } }
   }
   readonly done: Promise<{ exitCode: number | null; signal: NodeJS.Signals | null }>

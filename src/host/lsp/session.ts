@@ -11,9 +11,17 @@ import { LspConnection } from './connection.js'
 
 export class LspSessionRetiredError extends Error {
   constructor() {
-    super('Python intelligence session was retired')
+    super('Intelligence session was retired')
     this.name = 'LspSessionRetiredError'
   }
+}
+
+export interface LspSessionOptions {
+  languageId?: string
+  initializationOptions?: unknown
+  workspaceSettings?: unknown
+  clientVersion?: string
+  initializeTimeoutMs?: number
 }
 
 interface OpenDocument {
@@ -83,7 +91,7 @@ function completionItems(value: unknown): IntelligenceCompletionItem[] {
   return values.map(completionItem).filter(item => item !== undefined).slice(0, 500)
 }
 
-/** Long-lived interactive LSP session shared by Python tabs in one workspace. */
+/** Long-lived interactive LSP session shared by one language in one workspace. */
 export class LspSession {
   readonly #connection: LspConnection
   readonly #documents = new Map<string, OpenDocument>()
@@ -95,11 +103,13 @@ export class LspSession {
     readonly workspace: string,
     argv: readonly string[],
     readonly interpreterPath: string | undefined,
+    readonly options: LspSessionOptions = {},
   ) {
     this.#connection = LspConnection.start(subprocess, {
       argv,
       cwd: workspace,
       ...(interpreterPath === undefined ? {} : { pythonPath: interpreterPath }),
+      workspaceSettings: options.workspaceSettings,
     })
     this.#ready = this.#initialize()
   }
@@ -123,7 +133,7 @@ export class LspSession {
         this.#connection.notify('textDocument/didClose', { textDocument: { uri } })
       }
       this.#connection.notify('textDocument/didOpen', {
-        textDocument: { uri, languageId: 'python', version: revision, text: content },
+        textDocument: { uri, languageId: this.options.languageId ?? 'python', version: revision, text: content },
       })
     } else if (current.revision !== revision || current.content !== content) {
       this.#connection.notify('textDocument/didChange', {
@@ -197,7 +207,7 @@ export class LspSession {
     const rootUri = pathToFileURL(this.workspace).href
     await this.#connection.request('initialize', {
       processId: null,
-      clientInfo: { name: 'DSH CodeCraft', version: '0.2.2' },
+      clientInfo: { name: 'DSH CodeCraft', version: this.options.clientVersion ?? '0.3.0' },
       rootUri,
       workspaceFolders: [{ uri: rootUri, name: this.workspace.split(/[\\/]/).at(-1) ?? 'workspace' }],
       capabilities: {
@@ -217,9 +227,11 @@ export class LspSession {
           },
         },
       },
-      initializationOptions: {},
-    }, AbortSignal.timeout(15_000))
+      initializationOptions: this.options.initializationOptions ?? {},
+    }, AbortSignal.timeout(this.options.initializeTimeoutMs ?? 15_000))
     this.#connection.notify('initialized', {})
-    this.#connection.notify('workspace/didChangeConfiguration', { settings: null })
+    this.#connection.notify('workspace/didChangeConfiguration', {
+      settings: this.options.workspaceSettings ?? null,
+    })
   }
 }

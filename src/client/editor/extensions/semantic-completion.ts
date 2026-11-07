@@ -139,7 +139,7 @@ function applyItem(
   }
 }
 
-/** Build the asynchronous CodeMirror source backed by the Host Python provider. */
+/** Build the asynchronous CodeMirror source backed by the active Host language provider. */
 export function semanticCompletionSource(options: SemanticCompletionOptions): CompletionSource {
   return async (context: CompletionContext): Promise<CompletionResult | null> => {
     const input = options.getInput()

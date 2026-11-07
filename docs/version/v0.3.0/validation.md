@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Planned; implementation and validation not started |
+| Status | Automated implementation checks in progress; native acceptance pending |
 | Target version | 0.3.0 |
 | Baseline | 0.2.2 |
 | Platforms | macOS and Windows |
@@ -21,12 +21,12 @@
 
 ### Dependency and distribution audit
 
-- [ ] Pin one official JDT LS build and archive URL.
+- [x] Pin JDT LS 1.57.0 and its official Eclipse archive URL.
 - [ ] Record archive checksum, extracted size, npm package-size impact for each proposed distribution route, and expected cache footprint.
 - [ ] Review Eclipse Public License 2.0 and third-party notices for download, cache, bundling, and redistribution obligations.
 - [ ] Verify the archive contains one discoverable Equinox launcher and valid `config_mac` and `config_win` directories.
-- [ ] Select explicit download/cache, user-provided installation, or reviewed bundle as the primary route.
-- [ ] Provide a user-configured extracted JDT LS directory as an offline fallback.
+- [x] Select an explicit user-provided extraction as the primary route; no implicit download occurs.
+- [x] Support both a configured extracted JDT LS directory and `JDTLS_HOME`.
 - [ ] Verify corrupted, incomplete, mismatched, or unsupported distributions fail before JVM launch.
 - [ ] Verify upgrades and cleanup cannot delete source workspaces or unrelated user data.
 
@@ -35,35 +35,35 @@
 - [ ] Record the exact public DSH subprocess and storage/cache contracts used by the implementation.
 - [ ] Launch the same pinned JDT LS build through `ctx.subprocess` on native macOS and Windows.
 - [ ] Complete `initialize`, `initialized`, `didOpen`, completion, shutdown, and exit on both platforms.
-- [ ] Confirm all launches use argv arrays without a shell.
+- [x] Confirm all implemented launches use argv arrays without a shell.
 - [ ] Confirm the Host process environment, not an interactive terminal, is used for discovery.
 - [ ] Verify Java 21+ succeeds and Java 8/11/17 tooling JVM candidates produce `jdk-too-old` without launching JDT LS.
 - [ ] Verify older project language levels remain configurable independently from the server runtime.
-- [ ] Select and validate a writable per-workspace JDT LS data location outside the source repository.
+- [x] Select a hashed user-cache data directory outside the source repository for each workspace.
 - [ ] Record Maven import network, build-tool, workspace-trust, and permission behavior.
 
 ## Automated Acceptance
 
 ### Provider architecture
 
-- [ ] Python and Java register through one provider contract without importing sibling implementations.
-- [ ] Provider selection uses the Host-validated file path and rejects unsupported files.
-- [ ] Session keys include canonical workspace and provider so Python, Java, and separate workspaces cannot collide.
-- [ ] Shared LSP sessions accept language ID, launch argv, initialization options, and provider metadata without Python constants.
-- [ ] The client selects semantic capability from language metadata rather than a Python equality check.
+- [x] Python and Java register through one provider contract without importing sibling implementations.
+- [x] Provider selection uses the Host-validated file path and rejects unsupported files.
+- [x] Session keys include canonical workspace and provider so Python, Java, and separate workspaces cannot collide.
+- [x] Shared LSP sessions accept language ID, launch argv, initialization options, configuration, and provider metadata without Python constants.
+- [x] The client selects semantic behavior for Python and Java instead of using a Python-only branch.
 - [ ] Existing authenticated Session-derived workspace authority remains unchanged.
-- [ ] Browser requests cannot inject an executable, workspace root, JDT LS path, or arbitrary provider ID.
+- [x] Browser requests cannot inject an executable, workspace root, JDT LS path, or arbitrary provider ID.
 
 ### Runtime and distribution validation
 
-- [ ] Explicit tooling-JDK configuration has priority over `JAVA_HOME` and PATH.
-- [ ] `JAVA_HOME/bin/java` and `JAVA_HOME\\bin\\java.exe` are constructed correctly.
-- [ ] PATH lookup uses DSH `resolveExecutable` and the actual Host environment.
-- [ ] `java -version` parsing handles supported vendor output and rejects malformed or insufficient versions.
-- [ ] Server and project runtimes remain distinct in settings and initialization.
-- [ ] The Equinox launcher is discovered by pattern without hard-coded version names and ambiguity is rejected.
-- [ ] `darwin` selects `config_mac`; `win32` selects `config_win`; every other Host platform is unavailable.
-- [ ] Java, launcher, configuration, and data paths with spaces and Unicode remain individual argv entries.
+- [x] Explicit tooling-JDK configuration has priority over `JAVA_HOME` and PATH.
+- [x] `JAVA_HOME/bin/java` and `JAVA_HOME\\bin\\java.exe` are constructed with platform path APIs.
+- [x] PATH lookup uses DSH `resolveExecutable` and the actual Host environment.
+- [x] `java -version` parsing handles modern and legacy output and rejects insufficient versions.
+- [x] Server and project runtimes remain distinct in settings and initialization.
+- [x] The Equinox launcher is discovered by pattern without hard-coded version names and ambiguity is rejected.
+- [x] `darwin` selects `config_mac`; `win32` selects `config_win`; every other Host platform is unavailable.
+- [x] Java, launcher, configuration, and data paths with spaces and Unicode remain individual argv entries.
 - [ ] Windows drive-letter paths and file URIs round-trip through platform APIs.
 - [ ] Cache/data directories are unique by canonical workspace and cannot escape the approved cache root.
 - [ ] Download, if delivered, requires explicit consent, verifies integrity before extraction, and supports cancellation and offline failure.
@@ -97,8 +97,8 @@
 
 ### Settings, errors, and security
 
-- [ ] Java enablement and completion settings persist and take effect without corrupting Python settings.
-- [ ] Optional tooling-JDK, project-JDK, and server paths are trimmed, validated, and never interpreted as shell text.
+- [x] Java enablement and completion settings persist independently from Python settings.
+- [x] Optional tooling-JDK, project-JDK, and server paths are trimmed, validated, and never interpreted as shell text.
 - [ ] Missing JDK, old JDK, missing server, invalid archive, missing platform config, unwritable cache, timeout, and unexpected exit map to stable messages.
 - [ ] Public errors omit source text, credentials, environment values, raw package output, and unnecessary private paths.
 - [ ] Java Intelligence failure never blocks DSH startup, renderer mounting, typing, drafts, manual save, auto-save, or conflict handling.
@@ -107,12 +107,12 @@
 
 ### Regression
 
-- [ ] Existing Java CodeMirror syntax highlighting and generic editing remain unchanged when intelligence is disabled.
-- [ ] Python startup, Ready state, semantic completion, cross-file behavior, and environment discovery pass.
-- [ ] Python Google Style Docstrings, callable completion, indentation, cancellation, recovery, and cleanup pass.
-- [ ] Non-Java and non-Python files never start a semantic provider.
+- [x] Existing Java CodeMirror syntax highlighting and generic editing remain unchanged when intelligence is disabled.
+- [x] Python startup, Ready state, semantic completion, cross-file behavior, and environment discovery pass in automated tests.
+- [x] Python Google Style Docstrings, callable completion, indentation, cancellation, recovery, and cleanup pass in automated tests.
+- [x] Non-Java and non-Python files never start a semantic provider.
 - [ ] Brackets, folding, Tab/Shift+Tab, Undo, drafts, saving, auto-save, and conflict protection pass.
-- [ ] `npm run check` passes type checking, all tests, production build, and artifact verification.
+- [x] `npm run check` passes type checking, 162 tests, production build, and artifact verification on the development machine.
 
 ## Test Workspaces
 
@@ -134,6 +134,8 @@ tests/fixtures/languages/java/
 Fixtures must be minimal, deterministic, and free of credentials. Network-dependent Maven evidence is separated from offline unit tests and uses a pinned dependency.
 
 ## Native DSH Desktop Acceptance
+
+Download `jdt-language-server-1.57.0-202602261110.tar.gz` from the [official Eclipse milestone directory](https://download.eclipse.org/jdtls/milestones/1.57.0/), verify SHA-256 `f7ffa93fe1bbbea95dac13dd97cdcd25c582d6e56db67258da0dcceb2302601e`, and extract it. In **Settings → CodeCraft → Java Intelligence**, set **JDT LS directory** to the extracted root containing `plugins`, `config_mac`, and `config_win`. Set **JDT LS tooling JDK** only when automatic JDK 21+ discovery does not select the intended runtime. Rebuild and relink the plugin before restarting DSH Desktop.
 
 ### macOS
 
@@ -171,7 +173,7 @@ Fixtures must be minimal, deterministic, and free of credentials. Network-depend
 ## Packaging and Documentation
 
 - [ ] The selected JDT LS delivery route, license notices, checksums, package contents, cache behavior, and cleanup instructions are documented.
-- [ ] `npm pack --dry-run --json --ignore-scripts` contains only intended runtime assets and no imported root design file.
+- [x] `npm pack --dry-run --json --ignore-scripts` contains only intended runtime assets and no imported root design file (53 files; about 429 KiB packed at the 0.2.2 development baseline).
 - [ ] README files explain Java requirements, server versus project JDKs, setup, status, limitations, and macOS/Windows support.
 - [ ] The changelog describes only delivered P0 behavior; deferred Hover, diagnostics, navigation, Gradle, and frameworks are not claimed.
 - [ ] `package.json`, lockfile, changelog, tag, and GitHub Release use `0.3.0` / `v0.3.0` consistently.

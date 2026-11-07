@@ -48,7 +48,12 @@ export const inject = ['webServer', 'connection', 'sessions', 'subprocess']
  */
 export function apply(ctx: HostContext, config: CodeCraftSettings): void {
   const settings = resolveCodeCraftSettings(config)
-  const intelligence = new IntelligenceManager(ctx.subprocess, settings.pythonIntelligence)
+  const intelligence = new IntelligenceManager(
+    ctx.subprocess,
+    settings.pythonIntelligence,
+    process.platform,
+    settings.javaIntelligence,
+  )
   ctx.effect(
     () => {
       const unregister = ctx.webServer.register({

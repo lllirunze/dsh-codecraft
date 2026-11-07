@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Design analyzed; implementation not started |
+| Status | Implemented for automated validation; native macOS and Windows acceptance pending |
 | Target version | 0.3.0 |
 | Baseline | 0.2.2 |
 | Release theme | Reliable Java semantic completion and a reusable multi-language provider boundary |
@@ -30,13 +30,17 @@ The implementation therefore needs a small provider contract and parameterized L
 
 ## Feasibility Gate
 
-Implementation starts with a release-blocking Stage 0. No Java UI may claim availability until all items below are proven on the exact dependency and DSH versions selected for release.
+Implementation uses Eclipse JDT LS 1.57.0 as the pinned validation target. The official archive is `jdt-language-server-1.57.0-202602261110.tar.gz`, with SHA-256 `f7ffa93fe1bbbea95dac13dd97cdcd25c582d6e56db67258da0dcceb2302601e`.
+
+The selected distribution route is an explicit user-provided extraction. CodeCraft neither downloads JDT LS while opening a file nor runs third-party post-install scripts. The user downloads the official archive, verifies its checksum, extracts it to a user-controlled tools directory, and selects that directory under **Settings → CodeCraft → Java Intelligence**. `JDTLS_HOME` is the offline/managed-environment fallback. Offline use continues after extraction. To upgrade, quit DSH, extract the new reviewed build to a separate directory, update the setting, and cold-start DSH; old user-owned distributions are removed manually only after they are no longer selected. This keeps the npm package small, makes network consent explicit, and avoids modifying unrelated editor configuration. A future managed installer requires a separate consent, integrity, storage, cancellation, and cleanup design.
+
+Native acceptance remains a release-blocking Stage 0. Java UI may claim `Ready` only after the following items are proven on the exact dependency and DSH versions selected for release.
 
 1. Pin one JDT LS build and record its official source, archive checksum, layout, license obligations, and extracted/package size.
 2. Prove a JDK 21+ JVM can be launched through DSH `ctx.subprocess` with piped stdio on native macOS and Windows.
 3. Complete `initialize`, `didOpen`, and a real completion request using the same JDT LS archive on both platforms.
 4. Verify a public, writable, user-level cache/storage location for JDT LS assets and per-workspace `-data`; never write generated state into the source repository.
-5. Select one supported distribution route and document user consent, offline behavior, integrity checking, upgrades, and cleanup.
+5. Validate the selected user-provided distribution route, including integrity instructions, offline behavior, upgrades, and cleanup.
 6. Verify Maven import behavior and any network or external-task activity against DSH workspace trust and permission boundaries.
 
 The supported distribution route must be decided before feature implementation. Explicit, integrity-checked download into DSH-owned cache is preferred if a public storage and consent flow exists. A user-configured extracted JDT LS directory is the required offline fallback. Bundling is allowed only after package-size and Eclipse Public License 2.0 review. CodeCraft must not silently download a large server on first file open, assume `jdtls` is on `PATH`, or run an unverified script.
