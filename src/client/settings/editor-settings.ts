@@ -1,14 +1,11 @@
 import {
   DEFAULT_EDITOR_SETTINGS,
-  DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveEditorSettings,
-  resolveJavaIntelligenceSettings,
   resolvePythonIntelligenceSettings,
   type AutoSaveInterval,
   type EditorSettings,
   type IndentSize,
-  type JavaIntelligenceSettings,
   type PythonIntelligenceSettings,
 } from '../../settings/schema.js'
 
@@ -33,7 +30,6 @@ export interface ConfigForm {
 export interface EditorSettingsSnapshot {
   settings: EditorSettings
   pythonIntelligence: PythonIntelligenceSettings
-  javaIntelligence: JavaIntelligenceSettings
   status: ConfigFormSnapshot['status']
   writable: boolean
   saving: boolean
@@ -43,7 +39,6 @@ export interface EditorSettingsSnapshot {
 const DEFAULT_SNAPSHOT: EditorSettingsSnapshot = {
   settings: DEFAULT_EDITOR_SETTINGS,
   pythonIntelligence: DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
-  javaIntelligence: DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
   status: 'loading',
   writable: false,
   saving: false,
@@ -105,26 +100,6 @@ export class EditorSettingsStore {
     return this.#write(['pythonIntelligence', 'serverPath'], serverPath.trim())
   }
 
-  async setJavaIntelligenceEnabled(enabled: boolean): Promise<boolean> {
-    return this.#write(['javaIntelligence', 'enabled'], enabled)
-  }
-
-  async setJavaSemanticCompletionEnabled(completion: boolean): Promise<boolean> {
-    return this.#write(['javaIntelligence', 'completion'], completion)
-  }
-
-  async setJavaServerRuntimePath(serverRuntimePath: string): Promise<boolean> {
-    return this.#write(['javaIntelligence', 'serverRuntimePath'], serverRuntimePath.trim())
-  }
-
-  async setJavaProjectRuntimePath(projectRuntimePath: string): Promise<boolean> {
-    return this.#write(['javaIntelligence', 'projectRuntimePath'], projectRuntimePath.trim())
-  }
-
-  async setJdtLsPath(serverPath: string): Promise<boolean> {
-    return this.#write(['javaIntelligence', 'serverPath'], serverPath.trim())
-  }
-
   async #write(path: string[], value: boolean | number | string): Promise<boolean> {
     const form = this.#form
     if (form === undefined || this.#snapshot.saving || !this.#snapshot.writable) return false
@@ -149,7 +124,6 @@ export class EditorSettingsStore {
     this.#replace({
       settings: resolveEditorSettings(formSnapshot?.value),
       pythonIntelligence: resolvePythonIntelligenceSettings(formSnapshot?.value),
-      javaIntelligence: resolveJavaIntelligenceSettings(formSnapshot?.value),
       status: formSnapshot?.status ?? 'loading',
       writable: formSnapshot?.writable ?? false,
       saving: false,

@@ -28,18 +28,9 @@ export interface PythonIntelligenceSettings {
   serverPath: string
 }
 
-export interface JavaIntelligenceSettings {
-  enabled: boolean
-  completion: boolean
-  serverRuntimePath: string
-  projectRuntimePath: string
-  serverPath: string
-}
-
 export interface CodeCraftSettings {
   editor: EditorSettings
   pythonIntelligence: PythonIntelligenceSettings
-  javaIntelligence: JavaIntelligenceSettings
 }
 
 export const DEFAULT_AUTO_SAVE_SETTINGS: AutoSaveSettings = {
@@ -64,43 +55,9 @@ export const DEFAULT_PYTHON_INTELLIGENCE_SETTINGS: PythonIntelligenceSettings = 
   serverPath: '',
 }
 
-export const DEFAULT_JAVA_INTELLIGENCE_SETTINGS: JavaIntelligenceSettings = {
-  enabled: true,
-  completion: true,
-  serverRuntimePath: '',
-  projectRuntimePath: '',
-  serverPath: '',
-}
-
 export const DEFAULT_CODECRAFT_SETTINGS: CodeCraftSettings = {
   editor: DEFAULT_EDITOR_SETTINGS,
   pythonIntelligence: DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
-  javaIntelligence: DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
-}
-
-/** Resolve Java intelligence settings without accepting non-string paths. */
-export function resolveJavaIntelligenceSettings(value: unknown): JavaIntelligenceSettings {
-  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
-  const intelligence = typeof root.javaIntelligence === 'object' && root.javaIntelligence !== null
-    ? root.javaIntelligence as Record<string, unknown>
-    : {}
-  return {
-    enabled: typeof intelligence.enabled === 'boolean'
-      ? intelligence.enabled
-      : DEFAULT_JAVA_INTELLIGENCE_SETTINGS.enabled,
-    completion: typeof intelligence.completion === 'boolean'
-      ? intelligence.completion
-      : DEFAULT_JAVA_INTELLIGENCE_SETTINGS.completion,
-    serverRuntimePath: typeof intelligence.serverRuntimePath === 'string'
-      ? intelligence.serverRuntimePath.trim()
-      : DEFAULT_JAVA_INTELLIGENCE_SETTINGS.serverRuntimePath,
-    projectRuntimePath: typeof intelligence.projectRuntimePath === 'string'
-      ? intelligence.projectRuntimePath.trim()
-      : DEFAULT_JAVA_INTELLIGENCE_SETTINGS.projectRuntimePath,
-    serverPath: typeof intelligence.serverPath === 'string'
-      ? intelligence.serverPath.trim()
-      : DEFAULT_JAVA_INTELLIGENCE_SETTINGS.serverPath,
-  }
 }
 
 export function isAutoSaveInterval(value: unknown): value is AutoSaveInterval {
@@ -182,6 +139,5 @@ export function resolveCodeCraftSettings(value: unknown): CodeCraftSettings {
   return {
     editor: resolveEditorSettings(value),
     pythonIntelligence: resolvePythonIntelligenceSettings(value),
-    javaIntelligence: resolveJavaIntelligenceSettings(value),
   }
 }

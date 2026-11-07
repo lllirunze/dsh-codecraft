@@ -182,17 +182,12 @@ export type IntelligenceUnavailableReason =
   | 'workspace-invalid'
   | 'environment-limited'
   | 'server-exited'
-  | 'jdk-too-old'
-  | 'jdtls-not-found'
-  | 'distribution-invalid'
-  | 'platform-config-missing'
-  | 'cache-unwritable'
 
 export interface IntelligenceStatusResult {
   status: IntelligenceStatusKind
   message?: string
   interpreterPath?: string
-  languageId?: 'python' | 'java'
+  languageId?: 'python'
   reason?: IntelligenceUnavailableReason
 }
 

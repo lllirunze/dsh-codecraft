@@ -5,11 +5,9 @@ import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,
   DEFAULT_INDENTATION_SETTINGS,
-  DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveAutoSaveSettings,
   resolveIndentationSettings,
-  resolveJavaIntelligenceSettings,
   resolvePythonIntelligenceSettings,
 } from '../src/settings/schema.js'
 
@@ -103,27 +101,6 @@ describe('resolvePythonIntelligenceSettings', () => {
   })
 })
 
-describe('resolveJavaIntelligenceSettings', () => {
-  it('uses safe defaults and trims explicit paths', () => {
-    expect(resolveJavaIntelligenceSettings(undefined)).toEqual(DEFAULT_JAVA_INTELLIGENCE_SETTINGS)
-    expect(resolveJavaIntelligenceSettings({
-      javaIntelligence: {
-        enabled: false,
-        completion: false,
-        serverRuntimePath: ' /jdk-21 ',
-        projectRuntimePath: ' /jdk-17 ',
-        serverPath: ' /tools/jdtls ',
-      },
-    })).toEqual({
-      enabled: false,
-      completion: false,
-      serverRuntimePath: '/jdk-21',
-      projectRuntimePath: '/jdk-17',
-      serverPath: '/tools/jdtls',
-    })
-  })
-})
-
 describe('EditorSettingsStore', () => {
   it('tracks accepted Host settings and writes nested fields immediately', async () => {
     let listener = (): void => {}
@@ -150,7 +127,6 @@ describe('EditorSettingsStore', () => {
       indentation: { useSpaces: true, indentSize: 4 },
     })
     expect(store.getSnapshot().pythonIntelligence).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
-    expect(store.getSnapshot().javaIntelligence).toEqual(DEFAULT_JAVA_INTELLIGENCE_SETTINGS)
     await expect(store.setInterval(120)).resolves.toBe(true)
     expect(mutate).toHaveBeenCalledWith([{
       op: 'set',
@@ -174,12 +150,6 @@ describe('EditorSettingsStore', () => {
       op: 'set',
       path: ['pythonIntelligence', 'interpreterPath'],
       value: '/workspace/.venv/bin/python',
-    }])
-    await expect(store.setJdtLsPath(' /tools/jdtls ')).resolves.toBe(true)
-    expect(mutate).toHaveBeenLastCalledWith([{
-      op: 'set',
-      path: ['javaIntelligence', 'serverPath'],
-      value: '/tools/jdtls',
     }])
     listener()
     unbind()

@@ -2,7 +2,7 @@ import type { IntelligenceUnavailableReason } from '../../protocol.js'
 import type { ManagedSubprocessService } from '../context.js'
 import type { LspSession } from '../lsp/session.js'
 
-export type IntelligenceLanguageId = 'python' | 'java'
+export type IntelligenceLanguageId = 'python'
 
 export interface IntelligenceProvider {
   id: IntelligenceLanguageId

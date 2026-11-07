@@ -4,7 +4,6 @@ import { cpp } from '@codemirror/lang-cpp'
 import { css } from '@codemirror/lang-css'
 import { go } from '@codemirror/lang-go'
 import { html } from '@codemirror/lang-html'
-import { java } from '@codemirror/lang-java'
 import { javascript } from '@codemirror/lang-javascript'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
@@ -18,6 +17,7 @@ import type { Extension } from '@codemirror/state'
 import { CODECRAFT_EDITABLE_EXTENSIONS } from '../../protocol.js'
 import type { EditorLanguageAdapter } from './EditorLanguageAdapter.js'
 import { LanguageRegistry } from './registry.js'
+import { javaEditorLanguage } from './java/index.js'
 import { pythonEditorLanguage } from './python/index.js'
 
 export const EDITOR_EXTENSIONS = CODECRAFT_EDITABLE_EXTENSIONS
@@ -44,6 +44,7 @@ const registry = new LanguageRegistry<CodeMirrorLanguageAdapter>()
 
 for (const adapter of [
   pythonEditorLanguage,
+  javaEditorLanguage,
   new CodeMirrorLanguageAdapter('typescript', 'TypeScript', ['ts', 'mts', 'cts'], () => javascript({ typescript: true })),
   new CodeMirrorLanguageAdapter('typescript-jsx', 'TypeScript JSX', ['tsx'], () => javascript({ typescript: true, jsx: true })),
   new CodeMirrorLanguageAdapter('javascript-jsx', 'JavaScript JSX', ['jsx'], () => javascript({ jsx: true })),
@@ -52,7 +53,6 @@ for (const adapter of [
   new CodeMirrorLanguageAdapter('markdown', 'Markdown', ['md', 'markdown'], markdown),
   new CodeMirrorLanguageAdapter('html', 'HTML', ['html', 'htm'], html),
   new CodeMirrorLanguageAdapter('css', 'CSS', ['css', 'scss', 'less'], css),
-  new CodeMirrorLanguageAdapter('java', 'Java', ['java'], java),
   new CodeMirrorLanguageAdapter('cpp', 'C/C++', ['c', 'h', 'cc', 'cpp', 'cxx', 'hpp', 'hh', 'hxx'], cpp),
   new CodeMirrorLanguageAdapter('go', 'Go', ['go'], go),
   new CodeMirrorLanguageAdapter('rust', 'Rust', ['rs'], rust),

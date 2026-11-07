@@ -17,7 +17,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.2.1-rc.0 | [Design](version/v0.2.1-rc.0/design.md) | [Validation](version/v0.2.1-rc.0/validation.md) | Released Windows compatibility preview with native acceptance |
 | v0.2.1 | [Design](version/v0.2.1/design.md) | [Validation](version/v0.2.1/validation.md) | Python-aware indentation with macOS and Windows acceptance |
 | v0.2.2 | [Design](version/v0.2.2/design.md) | [Validation](version/v0.2.2/validation.md) | Implemented Python reliability, guarded Google Style Docstrings, and context-safe callable completion; Desktop acceptance pending |
-| v0.3.0 | [Design](version/v0.3.0/design.md) | [Validation](version/v0.3.0/validation.md) | Implemented Java provider and JDT LS integration; native macOS and Windows acceptance pending |
+| v0.3.0 | [Design](version/v0.3.0/design.md) | [Validation](version/v0.3.0/validation.md) | Lightweight offline Java editing, local completion, snippets, and Structured Javadoc |
 
 ## Project Guides
 

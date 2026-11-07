@@ -52,7 +52,6 @@ export function apply(ctx: HostContext, config: CodeCraftSettings): void {
     ctx.subprocess,
     settings.pythonIntelligence,
     process.platform,
-    settings.javaIntelligence,
   )
   ctx.effect(
     () => {

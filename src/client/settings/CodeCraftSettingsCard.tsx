@@ -162,58 +162,6 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
           </div>
         </div>
       </section>
-      <section className="dsh-codecraft-settings-group">
-        <div className="dsh-codecraft-settings-group-title">{t('settings.group.javaIntelligence')}</div>
-        <div className="dsh-codecraft-settings-card">
-          <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.java.enabled.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.java.enabled.hint')}</div>
-            </div>
-            <Switch
-              checked={snapshot.javaIntelligence.enabled}
-              label={t('settings.java.enabled.label')}
-              disabled={disabled}
-              onChange={(enabled: boolean) => { void editorSettings.setJavaIntelligenceEnabled(enabled) }}
-            />
-          </div>
-          <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.java.completion.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.java.completion.hint')}</div>
-            </div>
-            <Switch
-              checked={snapshot.javaIntelligence.completion}
-              label={t('settings.java.completion.label')}
-              disabled={disabled || !snapshot.javaIntelligence.enabled}
-              onChange={(enabled: boolean) => { void editorSettings.setJavaSemanticCompletionEnabled(enabled) }}
-            />
-          </div>
-          {([
-            ['runtime', 'serverRuntimePath', editorSettings.setJavaServerRuntimePath.bind(editorSettings)],
-            ['projectRuntime', 'projectRuntimePath', editorSettings.setJavaProjectRuntimePath.bind(editorSettings)],
-            ['server', 'serverPath', editorSettings.setJdtLsPath.bind(editorSettings)],
-          ] as const).map(([name, field, setter]) => (
-            <div className="dsh-codecraft-settings-row" key={name}>
-              <label htmlFor={`dsh-codecraft-java-${name}`}>
-                <span className="dsh-codecraft-settings-label">{t(`settings.java.${name}.label`)}</span>
-                <span className="dsh-codecraft-settings-hint">{t(`settings.java.${name}.hint`)}</span>
-              </label>
-              <input
-                key={snapshot.javaIntelligence[field]}
-                id={`dsh-codecraft-java-${name}`}
-                className="dsh-codecraft-settings-input"
-                defaultValue={snapshot.javaIntelligence[field]}
-                placeholder={t('settings.java.path.auto')}
-                disabled={disabled}
-                onBlur={(event) => {
-                  if (event.target.value.trim() !== snapshot.javaIntelligence[field]) void setter(event.target.value)
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
       {snapshot.status === 'unavailable' && <div className="dsh-codecraft-settings-error">{t('settings.unavailable')}</div>}
       {!snapshot.writable && snapshot.status === 'ready' && <div className="dsh-codecraft-settings-error">{t('settings.readOnly')}</div>}
       {snapshot.error && <div className="dsh-codecraft-settings-error" role="alert">{t('settings.saveFailed')}</div>}

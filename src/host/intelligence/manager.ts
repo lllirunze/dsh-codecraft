@@ -6,16 +6,10 @@ import type {
   IntelligenceUnavailableReason,
 } from '../../protocol.js'
 import { ERROR_CODES } from '../../protocol.js'
-import {
-  DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
-  type JavaIntelligenceSettings,
-  type PythonIntelligenceSettings,
-} from '../../settings/schema.js'
+import type { PythonIntelligenceSettings } from '../../settings/schema.js'
 import type { ManagedSubprocessService } from '../context.js'
 import { CodeCraftError } from '../errors.js'
 import { resolveReadablePath } from '../files.js'
-import { JavaEnvironmentError } from '../languages/java/environment.js'
-import { javaIntelligenceProvider } from '../languages/java/provider.js'
 import { pythonIntelligenceProvider } from '../languages/python/provider.js'
 import { LspTransportError } from '../lsp/connection.js'
 import { LspSession, LspSessionRetiredError } from '../lsp/session.js'
@@ -36,7 +30,7 @@ export function followsMemberAccess(content: string, line: number, character: nu
 }
 
 function unavailableReason(error: unknown): IntelligenceUnavailableReason {
-  if (error instanceof JavaEnvironmentError || error instanceof IntelligenceProviderError) return error.reason
+  if (error instanceof IntelligenceProviderError) return error.reason
   const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase()
   if (message.includes('interpreter')) return 'environment-limited'
   if (message.includes('timeout') || (error instanceof Error && error.name === 'TimeoutError')) return 'initialize-timeout'
@@ -71,11 +65,6 @@ function unavailableMessage(reason: IntelligenceUnavailableReason, provider?: In
     case 'workspace-invalid': return 'The file is not available inside the active workspace.'
     case 'server-not-found': return `${language} language server could not be resolved.`
     case 'unsupported-platform': return `${language} is supported on macOS and Windows.`
-    case 'jdk-too-old': return 'JDT LS requires a tooling JDK 21 or newer.'
-    case 'jdtls-not-found': return 'Set the extracted JDT LS directory in CodeCraft settings or JDTLS_HOME.'
-    case 'distribution-invalid': return 'The selected JDT LS directory is not a valid distribution.'
-    case 'platform-config-missing': return 'The JDT LS distribution does not contain this platform configuration.'
-    case 'cache-unwritable': return 'The Java language-server cache is not writable.'
   }
 }
 
@@ -93,16 +82,15 @@ export class IntelligenceManager {
   readonly #emptyCompletionRecovery = new WeakSet<LspSession>()
   readonly #semanticReady = new WeakSet<LspSession>()
   readonly #recoveryBlocks = new Map<string, RecoveryBlock>()
-  readonly #providers: readonly IntelligenceProvider[]
+  readonly #providers: IntelligenceProvider[]
   #disposed = false
 
   constructor(
     readonly subprocess: ManagedSubprocessService,
     pythonSettings: PythonIntelligenceSettings,
     readonly platform: NodeJS.Platform = process.platform,
-    javaSettings: JavaIntelligenceSettings = DEFAULT_JAVA_INTELLIGENCE_SETTINGS,
   ) {
-    this.#providers = [pythonIntelligenceProvider(pythonSettings), javaIntelligenceProvider(javaSettings)]
+    this.#providers = [pythonIntelligenceProvider(pythonSettings)]
   }
 
   async sync(root: string, request: IntelligenceSyncRequest): Promise<IntelligenceStatusResult> {
@@ -247,7 +235,7 @@ export class IntelligenceManager {
 
   #ready(provider: IntelligenceProvider, session: LspSession): IntelligenceStatusResult {
     return {
-      status: provider.id === 'java' && !this.#semanticReady.has(session) ? 'starting' : 'ready',
+      status: 'ready',
       ...(session.interpreterPath === undefined ? {} : { interpreterPath: session.interpreterPath }),
     }
   }
