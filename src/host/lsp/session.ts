@@ -3,6 +3,8 @@ import type { ManagedSubprocessService } from '../context.js'
 import type {
   IntelligenceCompletionItem,
   IntelligenceCompletionResult,
+  IntelligenceHoverResult,
+  IntelligenceMarkup,
   IntelligencePosition,
   IntelligenceRange,
   IntelligenceTextEdit,
@@ -36,6 +38,13 @@ export interface SyncedDocument {
   tabId: string
   revision: number
   content: string
+}
+
+export type LspNavigationCapability = 'hover' | 'definition' | 'references'
+
+export interface LspLocation {
+  uri: string
+  range: IntelligenceRange
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -91,11 +100,60 @@ function completionItems(value: unknown): IntelligenceCompletionItem[] {
   return values.map(completionItem).filter(item => item !== undefined).slice(0, 500)
 }
 
+function markup(value: unknown): IntelligenceMarkup | undefined {
+  if (typeof value === 'string') return value === '' ? undefined : { kind: 'plaintext', value }
+  if (isRecord(value) && typeof value.value === 'string'
+    && (value.kind === 'plaintext' || value.kind === 'markdown')) {
+    return value.value === '' ? undefined : { kind: value.kind, value: value.value }
+  }
+  if (!Array.isArray(value)) return undefined
+  const parts: string[] = []
+  for (const part of value) {
+    if (typeof part === 'string') parts.push(part)
+    else if (isRecord(part) && typeof part.value === 'string') {
+      parts.push(typeof part.language === 'string'
+        ? `\`\`\`${part.language}\n${part.value}\n\`\`\``
+        : part.value)
+    }
+  }
+  return parts.length === 0 ? undefined : { kind: 'markdown', value: parts.join('\n\n') }
+}
+
+function hoverResult(value: unknown, revision: number): IntelligenceHoverResult {
+  if (!isRecord(value)) return { revision }
+  const contents = markup(value.contents)
+  const hoverRange = range(value.range)
+  return {
+    revision,
+    ...(contents === undefined ? {} : { contents }),
+    ...(hoverRange === undefined ? {} : { range: hoverRange }),
+  }
+}
+
+function location(value: unknown): LspLocation | undefined {
+  if (!isRecord(value)) return undefined
+  if (typeof value.uri === 'string') {
+    const locationRange = range(value.range)
+    return locationRange === undefined ? undefined : { uri: value.uri, range: locationRange }
+  }
+  if (typeof value.targetUri === 'string') {
+    const targetRange = range(value.targetSelectionRange) ?? range(value.targetRange)
+    return targetRange === undefined ? undefined : { uri: value.targetUri, range: targetRange }
+  }
+  return undefined
+}
+
+function locations(value: unknown): LspLocation[] {
+  const values = Array.isArray(value) ? value : value === null || value === undefined ? [] : [value]
+  return values.map(location).filter(item => item !== undefined).slice(0, 1000)
+}
+
 /** Long-lived interactive LSP session shared by one language in one workspace. */
 export class LspSession {
   readonly #connection: LspConnection
   readonly #documents = new Map<string, OpenDocument>()
   #ready: Promise<void>
+  #capabilities = new Set<LspNavigationCapability>()
   #disposed = false
 
   constructor(
@@ -154,6 +212,66 @@ export class LspSession {
     return this.#documents.size > 0
   }
 
+  supports(capability: LspNavigationCapability): boolean {
+    return this.#capabilities.has(capability)
+  }
+
+  contentFor(target: string): string | undefined {
+    return this.#documents.get(pathToFileURL(target).href)?.content
+  }
+
+  async hover(
+    target: string,
+    tabId: string,
+    revision: number,
+    content: string,
+    cursor: IntelligencePosition,
+    signal?: AbortSignal,
+  ): Promise<IntelligenceHoverResult> {
+    await this.sync(target, tabId, revision, content)
+    if (!this.supports('hover')) return { revision }
+    const result = await this.#request('textDocument/hover', target, cursor, signal)
+    this.#assertCurrent(target, tabId, revision)
+    return hoverResult(result, revision)
+  }
+
+  async definition(
+    target: string,
+    tabId: string,
+    revision: number,
+    content: string,
+    cursor: IntelligencePosition,
+    signal?: AbortSignal,
+  ): Promise<LspLocation[]> {
+    await this.sync(target, tabId, revision, content)
+    if (!this.supports('definition')) return []
+    const result = await this.#request('textDocument/definition', target, cursor, signal)
+    this.#assertCurrent(target, tabId, revision)
+    return locations(result)
+  }
+
+  async references(
+    target: string,
+    tabId: string,
+    revision: number,
+    content: string,
+    cursor: IntelligencePosition,
+    signal?: AbortSignal,
+  ): Promise<LspLocation[]> {
+    await this.sync(target, tabId, revision, content)
+    if (!this.supports('references')) return []
+    const uri = pathToFileURL(target).href
+    const timeout = AbortSignal.timeout(10_000)
+    const requestSignal = signal === undefined ? timeout : AbortSignal.any([signal, timeout])
+    const result = await this.#connection.request<unknown>('textDocument/references', {
+      textDocument: { uri },
+      position: cursor,
+      context: { includeDeclaration: false },
+    }, requestSignal)
+    this.#assertCurrent(target, tabId, revision)
+    return locations(result)
+  }
+
   async complete(
     target: string,
     tabId: string,
@@ -176,6 +294,27 @@ export class LspSession {
       throw new Error('stale document revision')
     }
     return { revision, items: completionItems(result) }
+  }
+
+  async #request(
+    method: 'textDocument/hover' | 'textDocument/definition',
+    target: string,
+    cursor: IntelligencePosition,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    const timeout = AbortSignal.timeout(10_000)
+    const requestSignal = signal === undefined ? timeout : AbortSignal.any([signal, timeout])
+    return this.#connection.request(method, {
+      textDocument: { uri: pathToFileURL(target).href },
+      position: cursor,
+    }, requestSignal)
+  }
+
+  #assertCurrent(target: string, tabId: string, revision: number): void {
+    const current = this.#documents.get(pathToFileURL(target).href)
+    if (current === undefined || current.tabId !== tabId || current.revision !== revision) {
+      throw new Error('stale document revision')
+    }
   }
 
   async close(target: string, tabId: string): Promise<void> {
@@ -205,7 +344,7 @@ export class LspSession {
 
   async #initialize(): Promise<void> {
     const rootUri = pathToFileURL(this.workspace).href
-    await this.#connection.request('initialize', {
+    const initialized = await this.#connection.request<unknown>('initialize', {
       processId: null,
       clientInfo: { name: 'DSH CodeCraft', version: this.options.clientVersion ?? '0.3.0' },
       rootUri,
@@ -225,10 +364,19 @@ export class LspSession {
               insertReplaceSupport: false,
             },
           },
+          hover: { dynamicRegistration: false, contentFormat: ['markdown', 'plaintext'] },
+          definition: { dynamicRegistration: false, linkSupport: true },
+          references: { dynamicRegistration: false },
         },
       },
       initializationOptions: this.options.initializationOptions ?? {},
     }, AbortSignal.timeout(this.options.initializeTimeoutMs ?? 15_000))
+    if (isRecord(initialized) && isRecord(initialized.capabilities)) {
+      const capabilities = initialized.capabilities
+      if (capabilities.hoverProvider === true || isRecord(capabilities.hoverProvider)) this.#capabilities.add('hover')
+      if (capabilities.definitionProvider === true || isRecord(capabilities.definitionProvider)) this.#capabilities.add('definition')
+      if (capabilities.referencesProvider === true || isRecord(capabilities.referencesProvider)) this.#capabilities.add('references')
+    }
     this.#connection.notify('initialized', {})
     this.#connection.notify('workspace/didChangeConfiguration', {
       settings: this.options.workspaceSettings ?? null,

@@ -12,7 +12,10 @@ import {
   CODECRAFT_ROUTE,
   type CodeCraftEnvelope,
   type IntelligenceCompletionResult,
+  type IntelligenceDefinitionResult,
+  type IntelligenceHoverResult,
   type IntelligencePosition,
+  type IntelligenceReferencesResult,
   type IntelligenceStatusResult,
   type ReadResult,
   type SaveResult,
@@ -124,6 +127,27 @@ export function completeIntelligence(
   signal?: AbortSignal,
 ): Promise<IntelligenceCompletionResult> {
   return callApi<IntelligenceCompletionResult>({ action: 'intelligence-complete', ...input }, signal)
+}
+
+export function hoverIntelligence(
+  input: IntelligenceDocumentInput & { position: IntelligencePosition },
+  signal?: AbortSignal,
+): Promise<IntelligenceHoverResult> {
+  return callApi<IntelligenceHoverResult>({ action: 'intelligence-hover', ...input }, signal)
+}
+
+export function definitionIntelligence(
+  input: IntelligenceDocumentInput & { position: IntelligencePosition },
+  signal?: AbortSignal,
+): Promise<IntelligenceDefinitionResult> {
+  return callApi<IntelligenceDefinitionResult>({ action: 'intelligence-definition', ...input }, signal)
+}
+
+export function referencesIntelligence(
+  input: IntelligenceDocumentInput & { position: IntelligencePosition },
+  signal?: AbortSignal,
+): Promise<IntelligenceReferencesResult> {
+  return callApi<IntelligenceReferencesResult>({ action: 'intelligence-references', ...input }, signal)
 }
 
 export function closeIntelligence(

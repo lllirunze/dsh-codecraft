@@ -225,6 +225,50 @@ describe('CodeCraft API route', () => {
     expect(response.body).toBe('')
   })
 
+  it('dispatches Hover, definition, and references through the authenticated intelligence manager', async () => {
+    const root = await workspace()
+    await writeFile(join(root, 'a.py'), 'value = 1\n')
+    const hover = vi.fn(async () => ({ revision: 1, contents: { kind: 'plaintext', value: 'int' } }))
+    const definition = vi.fn(async () => ({ revision: 1, sourcePath: 'a.py', locations: [] }))
+    const references = vi.fn(async () => ({ revision: 1, sourcePath: 'a.py', locations: [] }))
+    const intelligence = { hover, definition, references } as unknown as IntelligenceManager
+    const common = {
+      sessionId: 's1',
+      path: 'a.py',
+      tabId: 'tab',
+      revision: 1,
+      content: 'value = 1\n',
+      position: { line: 0, character: 1 },
+    }
+
+    await expect(dispatch(makeContext(root), { action: 'intelligence-hover', ...common }, intelligence))
+      .resolves.toMatchObject({ revision: 1 })
+    await expect(dispatch(makeContext(root), { action: 'intelligence-definition', ...common }, intelligence))
+      .resolves.toMatchObject({ sourcePath: 'a.py' })
+    await expect(dispatch(makeContext(root), { action: 'intelligence-references', ...common }, intelligence))
+      .resolves.toMatchObject({ locations: [] })
+    expect(hover).toHaveBeenCalledOnce()
+    expect(definition).toHaveBeenCalledOnce()
+    expect(references).toHaveBeenCalledOnce()
+  })
+
+  it('rejects malformed positions for every navigation action', async () => {
+    const root = await workspace()
+    const common = {
+      sessionId: 's1',
+      path: 'a.py',
+      tabId: 'tab',
+      revision: 1,
+      content: 'value = 1\n',
+      position: { line: 0, character: -1 },
+    }
+    for (const action of ['intelligence-hover', 'intelligence-definition', 'intelligence-references'] as const) {
+      const response = await call(makeContext(root), { action, ...common })
+      expect(response.statusCode).toBe(400)
+      expect(response.json()).toMatchObject({ ok: false, error: { code: 'bad-request' } })
+    }
+  })
+
   it('does not expose internal Python provider paths to the browser', async () => {
     const root = await workspace()
     await writeFile(join(root, 'a.py'), 'value.\n')

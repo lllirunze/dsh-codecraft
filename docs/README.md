@@ -18,6 +18,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.2.1 | [Design](version/v0.2.1/design.md) | [Validation](version/v0.2.1/validation.md) | Python-aware indentation with macOS and Windows acceptance |
 | v0.2.2 | [Design](version/v0.2.2/design.md) | [Validation](version/v0.2.2/validation.md) | Implemented Python reliability, guarded Google Style Docstrings, and context-safe callable completion; Desktop acceptance pending |
 | v0.3.0 | [Design](version/v0.3.0/design.md) | [Validation](version/v0.3.0/validation.md) | Lightweight offline Java editing, local completion, snippets, and Structured Javadoc |
+| v0.3.1 | [Design](version/v0.3.1/design.md) | [Validation](version/v0.3.1/validation.md) | Implemented Python Hover, semantic definition and reference navigation, native-tab reveal, and navigation history; native Desktop acceptance pending |
 
 ## Project Guides
 
@@ -25,6 +26,7 @@ Long-lived engineering conventions and operational guidance live in [`guide/`](g
 
 | Document | Purpose |
 | --- | --- |
+| [External language tools](guide/external-language-tools.md) | Decision gates, distribution safety, lifecycle, and platform rules for optional language servers and toolchains |
 | [Intelligence module conventions](guide/intelligence-module-conventions.md) | Layout, dependencies, naming, lifecycle, and testing rules for language, framework, and ecosystem modules |
 | [Plugin compatibility](guide/plugin-compatibility.md) | Known conflicts and configuration workarounds for other DSH plugins |
 | [Release guidelines](guide/releasing.md) | Required versioning checks and GitHub Release note format |

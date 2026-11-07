@@ -1,18 +1,33 @@
+import { readFile, stat } from 'node:fs/promises'
+import { relative, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type {
   IntelligenceCompletionRequest,
   IntelligenceCompletionResult,
+  IntelligenceDefinitionRequest,
+  IntelligenceDefinitionResult,
+  IntelligenceHoverRequest,
+  IntelligenceHoverResult,
+  IntelligenceLocation,
+  IntelligenceReferencesRequest,
+  IntelligenceReferencesResult,
   IntelligenceStatusResult,
   IntelligenceSyncRequest,
   IntelligenceUnavailableReason,
 } from '../../protocol.js'
-import { ERROR_CODES } from '../../protocol.js'
+import { ERROR_CODES, MAX_EDITABLE_BYTES } from '../../protocol.js'
 import type { PythonIntelligenceSettings } from '../../settings/schema.js'
 import type { ManagedSubprocessService } from '../context.js'
 import { CodeCraftError } from '../errors.js'
 import { resolveReadablePath } from '../files.js'
 import { pythonIntelligenceProvider } from '../languages/python/provider.js'
 import { LspTransportError } from '../lsp/connection.js'
-import { LspSession, LspSessionRetiredError } from '../lsp/session.js'
+import {
+  LspSession,
+  LspSessionRetiredError,
+  type LspLocation,
+  type LspNavigationCapability,
+} from '../lsp/session.js'
 import type { IntelligenceProvider } from './provider.js'
 import { IntelligenceProviderError } from './provider.js'
 
@@ -21,6 +36,15 @@ const RECOVERY_COOLDOWN_MS = 10_000
 interface RecoveryBlock {
   until: number
   error: Error
+}
+
+type NavigationRequest = IntelligenceHoverRequest | IntelligenceDefinitionRequest | IntelligenceReferencesRequest
+
+interface NavigationQueryResult<T> {
+  root: string
+  target: string
+  session: LspSession
+  value: T
 }
 
 export function followsMemberAccess(content: string, line: number, character: number): boolean {
@@ -172,6 +196,55 @@ export class IntelligenceManager {
     return result
   }
 
+  async hover(root: string, request: IntelligenceHoverRequest, signal?: AbortSignal): Promise<IntelligenceHoverResult> {
+    const query = await this.#navigationQuery(root, request, 'hover', async (session, target) => {
+      const result = await session.hover(
+        target, request.tabId, request.revision, request.content, request.position, signal,
+      )
+      const definitions = session.supports('definition')
+        ? await session.definition(
+            target, request.tabId, request.revision, request.content, request.position, signal,
+          )
+        : []
+      return { result, definitions }
+    })
+    const sources = await this.#locations(query.root, query.session, query.value.definitions, true)
+    return {
+      ...query.value.result,
+      ...(sources[0] === undefined ? {} : { source: sources[0] }),
+    }
+  }
+
+  async definition(
+    root: string,
+    request: IntelligenceDefinitionRequest,
+    signal?: AbortSignal,
+  ): Promise<IntelligenceDefinitionResult> {
+    const query = await this.#navigationQuery(root, request, 'definition', (session, target) => session.definition(
+      target, request.tabId, request.revision, request.content, request.position, signal,
+    ))
+    return {
+      revision: request.revision,
+      sourcePath: relative(query.root, query.target).split(sep).join('/'),
+      locations: await this.#locations(query.root, query.session, query.value, true),
+    }
+  }
+
+  async references(
+    root: string,
+    request: IntelligenceReferencesRequest,
+    signal?: AbortSignal,
+  ): Promise<IntelligenceReferencesResult> {
+    const query = await this.#navigationQuery(root, request, 'references', (session, target) => session.references(
+      target, request.tabId, request.revision, request.content, request.position, signal,
+    ))
+    return {
+      revision: request.revision,
+      sourcePath: relative(query.root, query.target).split(sep).join('/'),
+      locations: await this.#locations(query.root, query.session, query.value, true),
+    }
+  }
+
   async close(root: string, path: string, tabId: string): Promise<void> {
     const provider = this.#provider(path)
     if (provider === undefined) return
@@ -238,6 +311,109 @@ export class IntelligenceManager {
       status: 'ready',
       ...(session.interpreterPath === undefined ? {} : { interpreterPath: session.interpreterPath }),
     }
+  }
+
+  async #navigationQuery<T>(
+    root: string,
+    request: NavigationRequest,
+    capability: LspNavigationCapability,
+    operation: (session: LspSession, target: string) => Promise<T>,
+  ): Promise<NavigationQueryResult<T>> {
+    const provider = this.#assertAvailable(request.path)
+    const resolved = await resolveReadablePath(root, request.path)
+    const key = this.#key(provider, resolved.root)
+    let session = await this.#session(provider, resolved.root)
+    const run = async (): Promise<T> => {
+      await session.ready()
+      if (!session.supports(capability)) {
+        throw new CodeCraftError(
+          ERROR_CODES.intelligenceUnsupported,
+          `Python ${capability} is not supported by the active language server.`,
+          409,
+        )
+      }
+      return operation(session, resolved.target)
+    }
+    try {
+      const value = await run()
+      this.#recoveryBlocks.delete(key)
+      return { root: resolved.root, target: resolved.target, session, value }
+    } catch (error) {
+      if (error instanceof LspSessionRetiredError) {
+        session = await this.#session(provider, resolved.root)
+        const value = await run()
+        this.#recoveryBlocks.delete(key)
+        return { root: resolved.root, target: resolved.target, session, value }
+      }
+      if (error instanceof Error && error.message === 'stale document revision') {
+        throw new CodeCraftError(ERROR_CODES.intelligenceStale, 'The intelligence request is stale.', 409)
+      }
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        throw new CodeCraftError(
+          ERROR_CODES.intelligenceUnavailable,
+          `Python ${capability} timed out. Try again.`,
+          504,
+        )
+      }
+      if (error instanceof LspTransportError) {
+        session = await this.#recover(provider, resolved.root, session, error)
+        const value = await this.#completeRecovery(key, run)
+        return { root: resolved.root, target: resolved.target, session, value }
+      }
+      throw error
+    }
+  }
+
+  async #locations(
+    root: string,
+    session: LspSession,
+    values: readonly LspLocation[],
+    includeExcerpt: boolean,
+  ): Promise<IntelligenceLocation[]> {
+    const results: IntelligenceLocation[] = []
+    const seen = new Set<string>()
+    for (const value of values) {
+      try {
+        const url = new URL(value.uri)
+        if (url.protocol !== 'file:') continue
+        const resolved = await resolveReadablePath(root, fileURLToPath(url))
+        const path = relative(root, resolved.target).split(sep).join('/')
+        if (path === '' || path.startsWith('../')) continue
+        const key = `${path}\0${value.range.start.line}:${value.range.start.character}:${value.range.end.line}:${value.range.end.character}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        let excerpt: string | undefined
+        if (includeExcerpt) {
+          try {
+            excerpt = await this.#excerpt(session, resolved.target, value.range.start.line)
+          } catch {
+            excerpt = undefined
+          }
+        }
+        results.push({
+          path,
+          range: value.range,
+          ...(excerpt === undefined ? {} : { excerpt }),
+        })
+      } catch {
+        // A malformed, missing, or outside-workspace target is not navigable.
+      }
+    }
+    return results.sort((left, right) => left.path.localeCompare(right.path)
+      || left.range.start.line - right.range.start.line
+      || left.range.start.character - right.range.start.character)
+  }
+
+  async #excerpt(session: LspSession, target: string, lineNumber: number): Promise<string | undefined> {
+    let content = session.contentFor(target)
+    if (content === undefined) {
+      const info = await stat(target)
+      if (!info.isFile() || info.size > MAX_EDITABLE_BYTES) return undefined
+      content = await readFile(target, 'utf8')
+    }
+    const line = content.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').split('\n')[lineNumber]
+    if (line === undefined) return undefined
+    return line.length > 500 ? `${line.slice(0, 497)}...` : line
   }
 
   #key(provider: IntelligenceProvider, root: string): string {

@@ -70,12 +70,21 @@ export interface ConfigFormsService {
   whileServed(namespaces: string[], register: (served: Set<string>) => () => void): () => void
 }
 
+export interface SidebarRightService {
+  openResource(address: string, options?: {
+    params?: Record<string, unknown>
+    revealIfOpened?: boolean
+    preferNewPane?: boolean
+  }): void
+}
+
 /** The Cordis browser context this plugin consumes. */
 export interface ClientContext {
   documentPreviews: DocumentPreviewsService
   slots: SlotsService
   locale: LocaleService
   configForms: ConfigFormsService
+  sidebarRight: SidebarRightService
   effect(callback: () => (() => void) | void, label?: string): void
 }
 
@@ -88,7 +97,15 @@ export interface TabInfo {
   signal: AbortSignal
   navigation: {
     revision: number
-    params?: { line?: number } & Record<string, unknown>
+    params?: {
+      line?: number
+      character?: number
+      endLine?: number
+      endCharacter?: number
+      codecraftNavigationId?: string
+      codecraftNavigationPath?: string
+      codecraftNavigationExcerpt?: string
+    } & Record<string, unknown>
   }
 }
 

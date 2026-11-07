@@ -79,6 +79,23 @@ body[data-ds-dark-theme] .dsh-codecraft {
 }
 .dsh-codecraft-status-spacer { flex: 1 1 auto; }
 .dsh-codecraft-status-item { flex: none; }
+.dsh-codecraft-navigation-history {
+  flex: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  line-height: 20px;
+}
+.dsh-codecraft-navigation-history:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+}
+.dsh-codecraft-navigation-history:disabled { opacity: .3; cursor: default; }
 .dsh-codecraft-status-item[data-state="dirty"] { color: var(--dsw-alias-state-warn-primary, #b76e00); }
 .dsh-codecraft-status-item[data-state="error"] { color: var(--dsw-alias-state-error-primary, #d1242f); }
 .dsh-codecraft-status-item[data-state="saved"] { color: var(--dsw-alias-state-success-primary, #1a7f37); }
@@ -117,6 +134,73 @@ body[data-ds-dark-theme] .dsh-codecraft {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.dsh-codecraft-navigation {
+  flex: none;
+  max-height: min(42%, 360px);
+  display: flex;
+  flex-direction: column;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .12));
+  background: var(--dsw-alias-bg-layer-1, #ffffff);
+  font-size: 12px;
+}
+.dsh-codecraft-navigation-header {
+  flex: none;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 8px 3px 12px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .08));
+}
+.dsh-codecraft-navigation-message {
+  padding: 12px;
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .62));
+}
+.dsh-codecraft-navigation-list { overflow: auto; }
+.dsh-codecraft-navigation-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 5px 12px;
+  background: var(--dsw-alias-bg-layer-2, #f7f7f8);
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .62));
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.dsh-codecraft-navigation-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 12px;
+  border: 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .06));
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dsh-codecraft-navigation-item:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .05));
+}
+.dsh-codecraft-navigation-location {
+  color: var(--dsw-alias-state-business-primary, #4078f2);
+  overflow-wrap: anywhere;
+}
+.dsh-codecraft-navigation-excerpt {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .66));
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+.dsh-codecraft-navigation-excerpt mark {
+  border-radius: 2px;
+  background: var(--dsw-alias-state-business-tertiary, rgba(64, 120, 242, .18));
+  color: inherit;
 }
 .dsh-codecraft-button {
   appearance: none;
@@ -342,6 +426,28 @@ body[data-ds-dark-theme] .dsh-codecraft {
   border-radius: 8px;
   box-shadow: var(--dsw-elevation-prominent, 0 8px 24px rgba(0, 0, 0, .14));
   font-size: 12px;
+}
+.dsh-codecraft-hover {
+  max-width: min(620px, 72vw);
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dsh-codecraft-hover > div + div,
+.dsh-codecraft-hover > pre + div,
+.dsh-codecraft-hover > div + pre { margin-top: 7px; }
+.dsh-codecraft-hover pre {
+  margin: 0;
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+  white-space: pre-wrap;
+}
+.dsh-codecraft-hover-source {
+  padding-top: 6px;
+  border-top: 0.5px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .08));
+  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .48));
 }
 .dsh-codecraft .cm-tooltip-autocomplete > ul > li[aria-selected] {
   background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));

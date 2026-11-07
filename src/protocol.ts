@@ -118,6 +118,21 @@ export interface IntelligenceCompletionRequest extends IntelligenceDocumentReque
   position: IntelligencePosition
 }
 
+export interface IntelligenceHoverRequest extends IntelligenceDocumentRequest {
+  action: 'intelligence-hover'
+  position: IntelligencePosition
+}
+
+export interface IntelligenceDefinitionRequest extends IntelligenceDocumentRequest {
+  action: 'intelligence-definition'
+  position: IntelligencePosition
+}
+
+export interface IntelligenceReferencesRequest extends IntelligenceDocumentRequest {
+  action: 'intelligence-references'
+  position: IntelligencePosition
+}
+
 export interface IntelligenceCloseRequest {
   action: 'intelligence-close'
   sessionId: string
@@ -137,6 +152,9 @@ export type CodeCraftRequest =
   | StatRequest
   | IntelligenceSyncRequest
   | IntelligenceCompletionRequest
+  | IntelligenceHoverRequest
+  | IntelligenceDefinitionRequest
+  | IntelligenceReferencesRequest
   | IntelligenceCloseRequest
   | IntelligenceStatusRequest
 
@@ -170,6 +188,37 @@ export interface IntelligenceCompletionItem {
 export interface IntelligenceCompletionResult {
   revision: number
   items: IntelligenceCompletionItem[]
+}
+
+export interface IntelligenceMarkup {
+  kind: 'plaintext' | 'markdown'
+  value: string
+}
+
+/** One workspace-authorized LSP target using a Session-relative path. */
+export interface IntelligenceLocation {
+  path: string
+  range: IntelligenceRange
+  excerpt?: string
+}
+
+export interface IntelligenceHoverResult {
+  revision: number
+  contents?: IntelligenceMarkup
+  range?: IntelligenceRange
+  source?: IntelligenceLocation
+}
+
+export interface IntelligenceDefinitionResult {
+  revision: number
+  sourcePath: string
+  locations: IntelligenceLocation[]
+}
+
+export interface IntelligenceReferencesResult {
+  revision: number
+  sourcePath: string
+  locations: IntelligenceLocation[]
 }
 
 export type IntelligenceStatusKind = 'disabled' | 'starting' | 'ready' | 'unavailable' | 'error'
@@ -233,6 +282,7 @@ export const ERROR_CODES = {
   internal: 'internal',
   intelligenceDisabled: 'intelligence-disabled',
   intelligenceUnavailable: 'intelligence-unavailable',
+  intelligenceUnsupported: 'intelligence-unsupported',
   intelligenceStale: 'intelligence-stale',
 } as const
 

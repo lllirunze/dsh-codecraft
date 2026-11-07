@@ -16,9 +16,10 @@ import { EDITOR_EXTENSIONS } from '../languages/index.js'
 import { drafts } from '../drafts.js'
 import { en, zh } from '../locales.js'
 import { CODECRAFT_CSS } from '../theme.js'
+import { navigationCoordinator } from '../navigation/coordinator.js'
 
 /** Browser services required before mounting. */
-export const inject = ['documentPreviews', 'slots', 'locale', 'configForms']
+export const inject = ['documentPreviews', 'slots', 'locale', 'configForms', 'sidebarRight']
 
 /** Locale namespace bound to both the viewer label and the body copy. */
 const LOCALE_NAMESPACE = 'sidebarCodeCraft'
@@ -34,6 +35,10 @@ const SETTINGS_ENTRY_ID = 'codecraft'
  * @param ctx - browser context carrying the preview registry, slots, and copy.
  */
 export function apply(ctx: ClientContext): void {
+  ctx.effect(
+    () => navigationCoordinator.bind(ctx.sidebarRight),
+    'dsh-codecraft: native navigation',
+  )
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.dshCodecraft = '0.1.4'

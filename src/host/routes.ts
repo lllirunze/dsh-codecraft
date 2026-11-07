@@ -86,7 +86,11 @@ function requireRequest(value: unknown): CodeCraftRequest {
     }
     return { action, sessionId, path, tabId }
   }
-  if (action === 'intelligence-sync' || action === 'intelligence-complete') {
+  if (action === 'intelligence-sync'
+    || action === 'intelligence-complete'
+    || action === 'intelligence-hover'
+    || action === 'intelligence-definition'
+    || action === 'intelligence-references') {
     const { tabId, revision, content } = value
     if (typeof tabId !== 'string' || tabId === '' || tabId.length > 512) {
       throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求缺少有效的 tabId。', 400)
@@ -106,7 +110,7 @@ function requireRequest(value: unknown): CodeCraftRequest {
       || !Number.isInteger(requestPosition.character)
       || Number(requestPosition.line) < 0
       || Number(requestPosition.character) < 0) {
-      throw new CodeCraftError(ERROR_CODES.badRequest, '智能补全位置无效。', 400)
+      throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求位置无效。', 400)
     }
     return {
       action,
@@ -173,6 +177,12 @@ export async function dispatch(
     case 'intelligence-sync': return requireIntelligence(intelligence).sync(root, request)
       .catch(error => { throw publicIntelligenceError(error) })
     case 'intelligence-complete': return requireIntelligence(intelligence).complete(root, request, signal)
+      .catch(error => { throw publicIntelligenceError(error) })
+    case 'intelligence-hover': return requireIntelligence(intelligence).hover(root, request, signal)
+      .catch(error => { throw publicIntelligenceError(error) })
+    case 'intelligence-definition': return requireIntelligence(intelligence).definition(root, request, signal)
+      .catch(error => { throw publicIntelligenceError(error) })
+    case 'intelligence-references': return requireIntelligence(intelligence).references(root, request, signal)
       .catch(error => { throw publicIntelligenceError(error) })
     case 'intelligence-close': {
       await requireIntelligence(intelligence).close(root, request.path, request.tabId)

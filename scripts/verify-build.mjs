@@ -132,7 +132,7 @@ function verifyClientRegistration(code, platform) {
   })
   assert(typeof plugin.apply === 'function', 'client bundle does not export apply()')
   assert(
-    Array.isArray(plugin.inject) && ['documentPreviews', 'slots', 'locale', 'configForms'].every(name => plugin.inject.includes(name)),
+    Array.isArray(plugin.inject) && ['documentPreviews', 'slots', 'locale', 'configForms', 'sidebarRight'].every(name => plugin.inject.includes(name)),
     'client bundle is missing required service injections',
   )
 
@@ -162,6 +162,7 @@ function verifyClientRegistration(code, platform) {
           : () => {}
       },
     },
+    sidebarRight: { openResource() {} },
     effect: callback => { callback() },
   }
   plugin.apply(context)

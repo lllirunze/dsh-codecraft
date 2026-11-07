@@ -29,6 +29,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import type { IndentationSettings } from '../../settings/schema.js'
+import type { IntelligenceRange } from '../../protocol.js'
 import type { FileLanguage } from '../languages/index.js'
 import type { CompletionSource } from '@codemirror/autocomplete'
 import { editorThemeExtensions } from '../theme.js'
@@ -45,6 +46,7 @@ export interface EditorOptions {
   indentationCompartment: Compartment
   onUpdate: (update: ViewUpdate) => void
   completionSource?: CompletionSource
+  extraExtensions?: Extension
 }
 
 /** Editable/read-only extensions, kept reconfigurable without rebuilding the view. */
@@ -96,6 +98,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     options.readOnlyCompartment.of(readOnlyExtensions(options.readOnly)),
     options.language.support ?? [],
     options.language.editorExtensions,
+    options.extraExtensions ?? [],
     ...editorThemeExtensions(),
   ]
 }
@@ -162,4 +165,23 @@ export function revealLine(view: EditorView, lineNumber: number): void {
     selection: { anchor: line.from },
     effects: EditorView.scrollIntoView(line.from, { y: 'center' }),
   })
+}
+
+/** Reveal one zero-based UTF-16 LSP range and select its exact span. */
+export function revealRange(view: EditorView, range: IntelligenceRange): boolean {
+  const locate = (lineNumber: number, character: number): number | undefined => {
+    if (!Number.isInteger(lineNumber) || !Number.isInteger(character)
+      || lineNumber < 0 || lineNumber >= view.state.doc.lines || character < 0) return undefined
+    const line = view.state.doc.line(lineNumber + 1)
+    return character > line.length ? undefined : line.from + character
+  }
+  const from = locate(range.start.line, range.start.character)
+  const to = locate(range.end.line, range.end.character)
+  if (from === undefined || to === undefined || from > to) return false
+  view.dispatch({
+    selection: { anchor: from, head: to },
+    effects: EditorView.scrollIntoView(from, { y: 'center' }),
+  })
+  view.focus()
+  return true
 }

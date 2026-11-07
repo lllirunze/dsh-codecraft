@@ -21,7 +21,9 @@ import { EditorView, type ViewUpdate } from '@codemirror/view'
 import {
   ApiCallError,
   closeIntelligence,
+  definitionIntelligence,
   readFile,
+  referencesIntelligence,
   saveFile,
   statFile,
   syncIntelligence,
@@ -33,11 +35,17 @@ import {
   buildEditorExtensions,
   cursorPosition,
   revealLine,
+  revealRange,
   setEditorIndentation,
   setEditorReadOnly,
 } from '../editor/index.js'
 import { semanticCompletionSource } from '../editor/extensions/semantic-completion.js'
 import { languageForFile } from '../languages/index.js'
+import {
+  pythonNavigationExtensions,
+  type PythonNavigationClick,
+} from '../languages/python/features/navigation.js'
+import { navigationCoordinator, type NavigationPoint } from '../navigation/coordinator.js'
 import { ROOT_CLASS } from '../theme.js'
 import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
 import { assessDiskChange } from '../document/conflicts.js'
@@ -47,6 +55,7 @@ import { differsFromSavedText, initialDocumentState } from '../document/state.js
 import { editorSettings } from '../settings/editor-settings.js'
 import type {
   IntelligenceStatusKind,
+  IntelligenceLocation,
   TextFileSnapshot,
   UnsupportedFileSnapshot,
 } from '../../protocol.js'
@@ -82,6 +91,50 @@ interface BannerAction {
   label: string
   variant?: 'primary' | 'quiet'
   onClick: () => void
+}
+
+interface NavigationPanel {
+  kind: 'loading' | 'locations' | 'message'
+  titleKey: string
+  source?: NavigationPoint
+  locations?: IntelligenceLocation[]
+  message?: string
+}
+
+function containsPosition(location: IntelligenceLocation, path: string, position: { line: number, character: number }): boolean {
+  if (location.path.replaceAll('\\', '/') !== path.replaceAll('\\', '/')) return false
+  const { start, end } = location.range
+  if (position.line < start.line || position.line > end.line) return false
+  if (position.line === start.line && position.character < start.character) return false
+  if (position.line === end.line && position.character > end.character) return false
+  return true
+}
+
+function groupedLocations(locations: readonly IntelligenceLocation[]): Array<{
+  path: string
+  locations: IntelligenceLocation[]
+}> {
+  const groups = new Map<string, IntelligenceLocation[]>()
+  for (const location of locations) {
+    const group = groups.get(location.path)
+    if (group === undefined) groups.set(location.path, [location])
+    else group.push(location)
+  }
+  return [...groups].map(([path, entries]) => ({ path, locations: entries }))
+}
+
+function excerptParts(location: IntelligenceLocation): { before: string, match: string, after: string } | undefined {
+  const excerpt = location.excerpt
+  if (excerpt === undefined) return undefined
+  const start = Math.min(Math.max(0, location.range.start.character), excerpt.length)
+  const end = location.range.end.line === location.range.start.line
+    ? Math.min(Math.max(start, location.range.end.character), excerpt.length)
+    : excerpt.length
+  return {
+    before: excerpt.slice(0, start),
+    match: excerpt.slice(start, end),
+    after: excerpt.slice(end),
+  }
 }
 
 function messageOf(error: unknown): string {
@@ -137,6 +190,15 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   tRef.current = t
 
   const address = props.resourceAddress
+  useSyncExternalStore(
+    navigationCoordinator.subscribe,
+    navigationCoordinator.version,
+    navigationCoordinator.version,
+  )
+  const navigationAddress = parseSessionFileAddress(address)
+  const navigationHistory = navigationAddress === undefined
+    ? { canBack: false, canForward: false }
+    : navigationCoordinator.snapshot(navigationAddress.sessionId)
   const addressRef = useRef(address)
   addressRef.current = address
   const propsRef = useRef(props)
@@ -177,6 +239,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const intelligenceGenerationRef = useRef(0)
   const intelligenceDocumentIdRef = useRef<string | undefined>(undefined)
   const syncIntelligenceDocumentRef = useRef<() => Promise<void>>(async () => {})
+  const handlePythonNavigateRef = useRef<(click: PythonNavigationClick) => void>(() => {})
+  const navigationAbortRef = useRef<AbortController | undefined>(undefined)
 
   const [phase, setPhase] = useState<Phase>('loading')
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -194,6 +258,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [copied, setCopied] = useState(false)
   const [intelligenceStatus, setIntelligenceStatus] = useState<IntelligenceStatusKind>('disabled')
   const [intelligenceMessage, setIntelligenceMessage] = useState<string | undefined>(undefined)
+  const [navigationPanel, setNavigationPanel] = useState<NavigationPanel | null>(null)
 
   useEffect(() => {
     mountedRef.current = true
@@ -201,6 +266,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       mountedRef.current = false
     }
   }, [])
+
+  useEffect(() => {
+    if (tab.visible) return
+    navigationAbortRef.current?.abort()
+    navigationAbortRef.current = undefined
+    setNavigationPanel(null)
+  }, [tab.visible])
 
   useEffect(() => {
     readOnlyRef.current = readOnly
@@ -304,7 +376,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const python = parsed !== null && /\.(?:py|pyi|pyw)$/i.test(parsed.path)
     const enabled = python
       && pythonIntelligenceSettingsRef.current.enabled
-      && pythonIntelligenceSettingsRef.current.completion
     if (!enabled || parsed === null || view === null || documentId === undefined) {
       if (mountedRef.current) setIntelligenceStatus('disabled')
       return
@@ -335,6 +406,9 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
 
   const onUpdate = useCallback((update: ViewUpdate) => {
     if (update.docChanged) {
+      navigationAbortRef.current?.abort()
+      navigationAbortRef.current = undefined
+      setNavigationPanel(null)
       syncDirty(update.view)
       scheduleDraft()
       intelligenceRevisionRef.current += 1
@@ -353,6 +427,118 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       })
     }
   }, [scheduleDraft, syncDirty, syncIntelligenceDocument])
+
+  const navigateToLocation = useCallback(async (
+    source: NavigationPoint,
+    location: IntelligenceLocation,
+  ): Promise<void> => {
+    setNavigationPanel(null)
+    const opened = await navigationCoordinator.navigate(source, {
+      sessionId: source.sessionId,
+      path: location.path,
+      range: location.range,
+      ...(location.excerpt === undefined ? {} : { excerpt: location.excerpt }),
+    })
+    if (!opened && mountedRef.current) {
+      setNavigationPanel({
+        kind: 'message',
+        titleKey: 'navigation.title',
+        message: tRef.current('navigation.openFailed'),
+      })
+    }
+  }, [])
+
+  const handlePythonNavigate = useCallback((click: PythonNavigationClick): void => {
+    const parsed = parsedRef.current
+    const view = viewRef.current
+    const documentId = intelligenceDocumentIdRef.current
+    if (parsed === null || view === null || documentId === undefined
+      || !pythonIntelligenceSettingsRef.current.enabled) return
+    navigationAbortRef.current?.abort()
+    const controller = new AbortController()
+    navigationAbortRef.current = controller
+    const revision = intelligenceRevisionRef.current
+    const input = {
+      sessionId: parsed.sessionId,
+      path: parsed.path,
+      tabId: documentId,
+      revision,
+      content: view.state.doc.toString(),
+      position: click.position,
+    }
+    const fresh = (): boolean => !controller.signal.aborted
+      && intelligenceDocumentIdRef.current === documentId
+      && intelligenceRevisionRef.current === revision
+    setNavigationPanel({ kind: 'loading', titleKey: 'navigation.loading' })
+    void (async () => {
+      try {
+        const definitions = await definitionIntelligence(input, controller.signal)
+        if (!fresh() || definitions.revision !== revision) return
+        setIntelligenceStatus('ready')
+        setIntelligenceMessage(undefined)
+        const source: NavigationPoint = {
+          sessionId: parsed.sessionId,
+          path: definitions.sourcePath,
+          range: click.range,
+          excerpt: input.content.split('\n')[click.position.line],
+        }
+        const declaration = definitions.locations.find(location => (
+          containsPosition(location, definitions.sourcePath, click.position)
+        ))
+        if (declaration !== undefined) {
+          const references = await referencesIntelligence(input, controller.signal)
+          if (!fresh() || references.revision !== revision) return
+          const locations = references.locations.filter(location => !(
+            location.path === references.sourcePath
+            && location.range.start.line === declaration.range.start.line
+            && location.range.start.character === declaration.range.start.character
+          ))
+          setNavigationPanel(locations.length === 0
+            ? {
+                kind: 'message',
+                titleKey: 'navigation.references',
+                message: tRef.current('navigation.noReferences'),
+              }
+            : {
+                kind: 'locations',
+                titleKey: 'navigation.references',
+                source,
+                locations,
+              })
+          return
+        }
+        if (definitions.locations.length === 0) {
+          setNavigationPanel({
+            kind: 'message',
+            titleKey: 'navigation.definitions',
+            message: tRef.current('navigation.noDefinition'),
+          })
+          return
+        }
+        if (definitions.locations.length === 1) {
+          const target = definitions.locations[0]
+          if (target !== undefined) await navigateToLocation(source, target)
+          return
+        }
+        setNavigationPanel({
+          kind: 'locations',
+          titleKey: 'navigation.definitions',
+          source,
+          locations: definitions.locations,
+        })
+      } catch (failure) {
+        if (!fresh()) return
+        setIntelligenceStatus('unavailable')
+        setIntelligenceMessage(messageOf(failure))
+        setNavigationPanel({
+          kind: 'message',
+          titleKey: 'navigation.title',
+          message: messageOf(failure),
+        })
+      }
+    })()
+  }, [navigateToLocation])
+  handlePythonNavigateRef.current = handlePythonNavigate
 
   const createEditor = useCallback((initial: InitialEditor): boolean => {
     const host = hostRef.current
@@ -390,6 +576,37 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
           },
         })
       : undefined
+    const navigationExtensions = language.id === 'python'
+      ? pythonNavigationExtensions({
+          getInput: () => {
+            const parsed = parsedRef.current
+            const view = viewRef.current
+            const documentId = intelligenceDocumentIdRef.current
+            if (parsed === null || view === null || documentId === undefined) return undefined
+            return {
+              sessionId: parsed.sessionId,
+              path: parsed.path,
+              tabId: documentId,
+              revision: intelligenceRevisionRef.current,
+              content: view.state.doc.toString(),
+              enabled: pythonIntelligenceSettingsRef.current.enabled,
+            }
+          },
+          onNavigate: click => handlePythonNavigateRef.current(click),
+          onReady: () => {
+            if (mountedRef.current) {
+              setIntelligenceStatus('ready')
+              setIntelligenceMessage(undefined)
+            }
+          },
+          onError: message => {
+            if (mountedRef.current) {
+              setIntelligenceStatus('unavailable')
+              setIntelligenceMessage(message)
+            }
+          },
+        })
+      : undefined
     const state = EditorState.create({
       doc: initial.text,
       extensions: buildEditorExtensions({
@@ -400,6 +617,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         indentationCompartment: indentationCompartmentRef.current,
         onUpdate,
         ...(completionSource === undefined ? {} : { completionSource }),
+        ...(navigationExtensions === undefined ? {} : { extraExtensions: navigationExtensions }),
       }),
     })
     const view = new EditorView({ state, parent: host })
@@ -769,6 +987,35 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   }, [tab.visible, doSave])
 
   useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!tab.visible || !event.altKey || event.shiftKey) return
+      const root = rootRef.current
+      const target = event.target
+      if (root === null || !(target instanceof Node) || !root.contains(target)) return
+      const mac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+      if (mac ? !event.metaKey || event.ctrlKey : !event.ctrlKey || event.metaKey) return
+      const parsed = parsedRef.current
+      if (parsed === null || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return
+      event.preventDefault()
+      event.stopPropagation()
+      const action = event.key === 'ArrowLeft'
+        ? navigationCoordinator.back(parsed.sessionId)
+        : navigationCoordinator.forward(parsed.sessionId)
+      void action.then(opened => {
+        if (!opened && mountedRef.current) {
+          setNavigationPanel({
+            kind: 'message',
+            titleKey: 'navigation.title',
+            message: tRef.current('navigation.openFailed'),
+          })
+        }
+      })
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [tab.visible])
+
+  useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent): void => {
       flushDraft()
       if (!dirtyRef.current && !drafts.has(addressRef.current)) return
@@ -820,8 +1067,48 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const view = viewRef.current
     const line = tab.navigation.params?.line
     if (view === null || typeof line !== 'number' || !Number.isFinite(line) || line < 1) return
-    revealLine(view, line)
-  }, [phase, tab.navigation.revision, tab.navigation.params?.line])
+    const params = tab.navigation.params
+    const hasRange = typeof params?.character === 'number'
+      && typeof params.endLine === 'number'
+      && typeof params.endCharacter === 'number'
+    const expectedExcerpt = params?.codecraftNavigationExcerpt
+    const currentLine = view.state.doc.line(Math.min(Math.max(1, Math.floor(line)), view.state.doc.lines)).text
+    const excerptIsTruncated = typeof expectedExcerpt === 'string'
+      && expectedExcerpt.length === 500
+      && expectedExcerpt.endsWith('...')
+    if (typeof expectedExcerpt === 'string' && !excerptIsTruncated && currentLine !== expectedExcerpt) {
+      if (typeof params?.codecraftNavigationId === 'string'
+        && typeof params.codecraftNavigationPath === 'string') {
+        navigationCoordinator.acknowledge(params.codecraftNavigationId, params.codecraftNavigationPath, false)
+      }
+      setNavigationPanel({
+        kind: 'message',
+        titleKey: 'navigation.title',
+        message: tRef.current('navigation.targetChanged'),
+      })
+      return
+    }
+    const revealed = hasRange
+      ? revealRange(view, {
+          start: { line: line - 1, character: params.character as number },
+          end: { line: params.endLine as number, character: params.endCharacter as number },
+        })
+      : (revealLine(view, line), true)
+    if (revealed
+      && typeof params?.codecraftNavigationId === 'string'
+      && typeof params.codecraftNavigationPath === 'string') {
+      navigationCoordinator.acknowledge(params.codecraftNavigationId, params.codecraftNavigationPath)
+    } else if (!revealed
+      && typeof params?.codecraftNavigationId === 'string'
+      && typeof params.codecraftNavigationPath === 'string') {
+      navigationCoordinator.acknowledge(params.codecraftNavigationId, params.codecraftNavigationPath, false)
+      setNavigationPanel({
+        kind: 'message',
+        titleKey: 'navigation.title',
+        message: tRef.current('navigation.targetChanged'),
+      })
+    }
+  }, [phase, tab.navigation.revision, tab.navigation.params])
 
   useEffect(() => () => {
     if (cursorFrameRef.current !== 0) window.cancelAnimationFrame(cursorFrameRef.current)
@@ -829,6 +1116,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
     if (copyTimerRef.current !== undefined) window.clearTimeout(copyTimerRef.current)
     if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
+    navigationAbortRef.current?.abort()
     destroyEditor()
   }, [destroyEditor])
 
@@ -931,6 +1219,57 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
           </div>
         </div>
       )}
+      {navigationPanel !== null && (
+        <div className={`${ROOT_CLASS}-navigation`} role="dialog" aria-label={t(navigationPanel.titleKey)}>
+          <div className={`${ROOT_CLASS}-navigation-header`}>
+            <strong>{t(navigationPanel.titleKey)}</strong>
+            <button
+              type="button"
+              className={`${ROOT_CLASS}-button`}
+              data-variant="quiet"
+              aria-label={t('navigation.close')}
+              onClick={() => setNavigationPanel(null)}
+            >
+              ×
+            </button>
+          </div>
+          {navigationPanel.kind === 'loading' && (
+            <div className={`${ROOT_CLASS}-navigation-message`}>{t('navigation.loadingDetail')}</div>
+          )}
+          {navigationPanel.kind === 'message' && (
+            <div className={`${ROOT_CLASS}-navigation-message`}>{navigationPanel.message}</div>
+          )}
+          {navigationPanel.kind === 'locations' && navigationPanel.source !== undefined && (
+            <div className={`${ROOT_CLASS}-navigation-list`}>
+              {groupedLocations(navigationPanel.locations ?? []).map(group => (
+                <div key={group.path} className={`${ROOT_CLASS}-navigation-group`}>
+                  <div className={`${ROOT_CLASS}-navigation-group-title`}>{group.path}</div>
+                  {group.locations.map(location => {
+                    const excerpt = excerptParts(location)
+                    return (
+                      <button
+                        key={`${location.range.start.line}:${location.range.start.character}:${location.range.end.line}:${location.range.end.character}`}
+                        type="button"
+                        className={`${ROOT_CLASS}-navigation-item`}
+                        onClick={() => { void navigateToLocation(navigationPanel.source as NavigationPoint, location) }}
+                      >
+                        <span className={`${ROOT_CLASS}-navigation-location`}>
+                          {location.range.start.line + 1}:{location.range.start.character + 1}
+                        </span>
+                        {excerpt !== undefined && (
+                          <code className={`${ROOT_CLASS}-navigation-excerpt`}>
+                            {excerpt.before}<mark>{excerpt.match}</mark>{excerpt.after}
+                          </code>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className={`${ROOT_CLASS}-editor`} data-phase={phase}>
         <div ref={hostRef} style={{ display: phase === 'editing' ? undefined : 'none' }} />
         {phase !== 'editing' && (
@@ -973,6 +1312,30 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         )}
       </div>
       <footer className={`${ROOT_CLASS}-status`} aria-live="polite">
+        {phase === 'editing' && navigationAddress !== undefined && (
+          <button
+            type="button"
+            className={`${ROOT_CLASS}-navigation-history`}
+            disabled={!navigationHistory.canBack}
+            title={t('navigation.backHint')}
+            aria-label={t('navigation.back')}
+            onClick={() => { void navigationCoordinator.back(navigationAddress.sessionId) }}
+          >
+            ←
+          </button>
+        )}
+        {phase === 'editing' && navigationAddress !== undefined && (
+          <button
+            type="button"
+            className={`${ROOT_CLASS}-navigation-history`}
+            disabled={!navigationHistory.canForward}
+            title={t('navigation.forwardHint')}
+            aria-label={t('navigation.forward')}
+            onClick={() => { void navigationCoordinator.forward(navigationAddress.sessionId) }}
+          >
+            →
+          </button>
+        )}
         {phase === 'editing' && <span className={`${ROOT_CLASS}-status-item`}>{languageLabel}</span>}
         {phase === 'editing' && (
           <span className={`${ROOT_CLASS}-status-item`}>

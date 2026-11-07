@@ -241,6 +241,83 @@ describe('Python Intelligence with Pyright', () => {
     }
   }, 20_000)
 
+  it('returns real Hover, definition, and project reference locations through the manager', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'codecraft navigation-测试-'))
+    cleanups.push(workspace)
+    const service = [
+      'class UserService:',
+      '    def validate_user(self, username: str) -> bool:',
+      '        """Validate a user."""',
+      '        return bool(username)',
+      '',
+    ].join('\n')
+    const main = [
+      'from service import UserService',
+      'service = UserService()',
+      'allowed = service.validate_user("Alice")',
+      '',
+    ].join('\n')
+    await writeFile(join(workspace, 'service.py'), service)
+    await writeFile(join(workspace, 'main.py'), main)
+    const manager = new IntelligenceManager(
+      localTestSubprocess(),
+      DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+      'darwin',
+    )
+    try {
+      const common = {
+        sessionId: 'session',
+        path: 'main.py',
+        tabId: 'main-tab',
+        revision: 1,
+        content: main,
+        position: { line: 2, character: 20 },
+      }
+      const hover = await manager.hover(workspace, { action: 'intelligence-hover', ...common })
+      expect(hover.contents?.value).toContain('validate_user')
+      expect(hover.source?.path).toBe('service.py')
+
+      const definition = await manager.definition(workspace, { action: 'intelligence-definition', ...common })
+      expect(definition).toMatchObject({
+        revision: 1,
+        sourcePath: 'main.py',
+        locations: [{ path: 'service.py', range: { start: { line: 1 } } }],
+      })
+
+      const references = await manager.references(workspace, {
+        action: 'intelligence-references',
+        sessionId: 'session',
+        path: 'service.py',
+        tabId: 'service-tab',
+        revision: 1,
+        content: service,
+        position: { line: 1, character: 8 },
+      })
+      expect(references.locations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: 'main.py', excerpt: expect.stringContaining('validate_user') }),
+      ]))
+      const declarationDefinition = await manager.definition(workspace, {
+        action: 'intelligence-definition',
+        sessionId: 'session',
+        path: 'service.py',
+        tabId: 'service-tab',
+        revision: 1,
+        content: service,
+        position: { line: 1, character: 8 },
+      })
+      expect(declarationDefinition.locations).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          path: 'service.py',
+          range: expect.objectContaining({
+            start: { line: 1, character: 8 },
+          }),
+        }),
+      ]))
+    } finally {
+      await manager.dispose()
+    }
+  }, 20_000)
+
   it.runIf(process.platform === 'darwin' || process.platform === 'win32')(
     'initializes the provider manager and reports Ready on the native platform',
     async () => {
@@ -457,6 +534,28 @@ describe('Python Intelligence with Pyright', () => {
     controller.abort(new DOMException('Superseded', 'AbortError'))
     try {
       await expect(completion).rejects.toMatchObject({ name: 'AbortError' })
+      expect(fake.spawnCount).toBe(1)
+    } finally {
+      await manager.dispose()
+    }
+  })
+
+  it('reports a missing navigation capability without sending an unsupported request', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'codecraft capability-测试-'))
+    cleanups.push(workspace)
+    await writeFile(join(workspace, 'main.py'), 'value = 1\n')
+    const fake = fakeLspSubprocess('hang-completion')
+    const manager = new IntelligenceManager(fake.service, DEFAULT_PYTHON_INTELLIGENCE_SETTINGS, 'darwin')
+    try {
+      await expect(manager.definition(workspace, {
+        action: 'intelligence-definition',
+        sessionId: 'session',
+        path: 'main.py',
+        tabId: 'tab',
+        revision: 1,
+        content: 'value = 1\n',
+        position: { line: 0, character: 0 },
+      })).rejects.toMatchObject({ code: 'intelligence-unsupported', status: 409 })
       expect(fake.spawnCount).toBe(1)
     } finally {
       await manager.dispose()

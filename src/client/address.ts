@@ -26,6 +26,17 @@ function decodeSegment(segment: string): string | undefined {
   }
 }
 
+function encodeSegment(segment: string): string {
+  return encodeURIComponent(segment).replace(/%3A/gi, ':')
+}
+
+/** Build the native DSH resource identity for one Session-owned file. */
+export function sessionFileAddress(sessionId: string, path: string): string {
+  const normalized = path.replaceAll('\\', '/').replace(/^(?:\.\/)+/, '')
+  const encodedPath = normalized.split('/').map(encodeSegment).join('/')
+  return `${FILE_ADDRESS_PREFIX}session/${encodeSegment(sessionId)}/${encodedPath}`
+}
+
 /**
  * Read a `file` address's Session scope.
  * @param address - a candidate `dsh-resource://` address.
