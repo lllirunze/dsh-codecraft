@@ -1,0 +1,4 @@
+interface:
+  display_name: "Version Documentation"
+  short_description: "Create version design and validation records"
+  default_prompt: "Use $version-documentation to turn the target planning requirements into normalized design and validation records."
