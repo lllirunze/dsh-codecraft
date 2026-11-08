@@ -5,9 +5,11 @@ import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,
   DEFAULT_INDENTATION_SETTINGS,
+  DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveAutoSaveSettings,
   resolveIndentationSettings,
+  resolveJavaEditingAssistanceSettings,
   resolvePythonIntelligenceSettings,
 } from '../src/settings/schema.js'
 
@@ -101,6 +103,25 @@ describe('resolvePythonIntelligenceSettings', () => {
   })
 })
 
+describe('resolveJavaEditingAssistanceSettings', () => {
+  it('defaults missing and malformed values to enabled', () => {
+    expect(resolveJavaEditingAssistanceSettings(undefined))
+      .toEqual(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS)
+    expect(resolveJavaEditingAssistanceSettings({
+      javaEditingAssistance: { enabled: 'false' },
+    })).toEqual(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS)
+  })
+
+  it('accepts explicit Boolean values', () => {
+    expect(resolveJavaEditingAssistanceSettings({
+      javaEditingAssistance: { enabled: false },
+    })).toEqual({ enabled: false })
+    expect(resolveJavaEditingAssistanceSettings({
+      javaEditingAssistance: { enabled: true },
+    })).toEqual({ enabled: true })
+  })
+})
+
 describe('EditorSettingsStore', () => {
   it('tracks accepted Host settings and writes nested fields immediately', async () => {
     let listener = (): void => {}
@@ -114,6 +135,7 @@ describe('EditorSettingsStore', () => {
             autoSave: { enabled: true, intervalSeconds: 60 },
             indentation: { useSpaces: true, indentSize: 4 },
           },
+          javaEditingAssistance: { enabled: false },
         },
       }),
       subscribe: next => { listener = next; return () => {} },
@@ -127,6 +149,7 @@ describe('EditorSettingsStore', () => {
       indentation: { useSpaces: true, indentSize: 4 },
     })
     expect(store.getSnapshot().pythonIntelligence).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
+    expect(store.getSnapshot().javaEditingAssistance).toEqual({ enabled: false })
     await expect(store.setInterval(120)).resolves.toBe(true)
     expect(mutate).toHaveBeenCalledWith([{
       op: 'set',
@@ -145,6 +168,12 @@ describe('EditorSettingsStore', () => {
       path: ['pythonIntelligence', 'enabled'],
       value: false,
     }])
+    await expect(store.setJavaEditingAssistanceEnabled(true)).resolves.toBe(true)
+    expect(mutate).toHaveBeenLastCalledWith([{
+      op: 'set',
+      path: ['javaEditingAssistance', 'enabled'],
+      value: true,
+    }])
     await expect(store.setPythonInterpreterPath(' /workspace/.venv/bin/python ')).resolves.toBe(true)
     expect(mutate).toHaveBeenLastCalledWith([{
       op: 'set',
@@ -154,5 +183,31 @@ describe('EditorSettingsStore', () => {
     listener()
     unbind()
     expect(store.getSnapshot().settings).toEqual(DEFAULT_EDITOR_SETTINGS)
+    expect(store.getSnapshot().javaEditingAssistance)
+      .toEqual(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS)
+  })
+
+  it('keeps the accepted Java value and reports a rejected write', async () => {
+    const mutations = [
+      vi.fn(async () => false),
+      vi.fn(async () => { throw new Error('write failed') }),
+    ]
+    for (const mutate of mutations) {
+      const form: ConfigForm = {
+        getSnapshot: () => ({
+          status: 'ready',
+          writable: true,
+          value: { javaEditingAssistance: { enabled: true } },
+        }),
+        subscribe: () => () => {},
+        mutate,
+      }
+      const store = new EditorSettingsStore()
+      store.bind(form)
+
+      await expect(store.setJavaEditingAssistanceEnabled(false)).resolves.toBe(false)
+      expect(store.getSnapshot().javaEditingAssistance.enabled).toBe(true)
+      expect(store.getSnapshot().error).toBe(true)
+    }
   })
 })

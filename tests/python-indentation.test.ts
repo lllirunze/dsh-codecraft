@@ -55,6 +55,8 @@ describe('Python syntax-aware indentation', () => {
           readOnly: false,
           readOnlyCompartment: new Compartment(),
           indentationCompartment: new Compartment(),
+          languageCompartment: new Compartment(),
+          javaEditingAssistanceEnabled: true,
           onUpdate: () => undefined,
         }),
       })

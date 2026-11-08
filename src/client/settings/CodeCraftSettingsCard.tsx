@@ -162,6 +162,23 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
           </div>
         </div>
       </section>
+      <section className="dsh-codecraft-settings-group">
+        <div className="dsh-codecraft-settings-group-title">{t('settings.group.javaEditingAssistance')}</div>
+        <div className="dsh-codecraft-settings-card">
+          <div className="dsh-codecraft-settings-row">
+            <div>
+              <div className="dsh-codecraft-settings-label">{t('settings.java.enabled.label')}</div>
+              <div className="dsh-codecraft-settings-hint">{t('settings.java.enabled.hint')}</div>
+            </div>
+            <Switch
+              checked={snapshot.javaEditingAssistance.enabled}
+              label={t('settings.java.enabled.label')}
+              disabled={disabled}
+              onChange={(enabled: boolean) => { void editorSettings.setJavaEditingAssistanceEnabled(enabled) }}
+            />
+          </div>
+        </div>
+      </section>
       {snapshot.status === 'unavailable' && <div className="dsh-codecraft-settings-error">{t('settings.unavailable')}</div>}
       {!snapshot.writable && snapshot.status === 'ready' && <div className="dsh-codecraft-settings-error">{t('settings.readOnly')}</div>}
       {snapshot.error && <div className="dsh-codecraft-settings-error" role="alert">{t('settings.saveFailed')}</div>}

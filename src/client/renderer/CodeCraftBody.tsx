@@ -37,6 +37,7 @@ import {
   revealLine,
   revealRange,
   setEditorIndentation,
+  setJavaEditingAssistance,
   setEditorReadOnly,
 } from '../editor/index.js'
 import { semanticCompletionSource } from '../editor/extensions/semantic-completion.js'
@@ -169,18 +170,16 @@ function unsupportedNotice(
 }
 
 export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
-  const settings = useSyncExternalStore(
+  const settingsSnapshot = useSyncExternalStore(
     editorSettings.subscribe,
     editorSettings.getSnapshot,
     editorSettings.getSnapshot,
-  ).settings
+  )
+  const settings = settingsSnapshot.settings
   const autoSaveSettings = settings.autoSave
   const indentationSettings = settings.indentation
-  const pythonIntelligenceSettings = useSyncExternalStore(
-    editorSettings.subscribe,
-    editorSettings.getSnapshot,
-    editorSettings.getSnapshot,
-  ).pythonIntelligence
+  const pythonIntelligenceSettings = settingsSnapshot.pythonIntelligence
+  const javaEditingAssistance = settingsSnapshot.javaEditingAssistance
   const { tab } = props.useTabInfo()
   const request = props.content.kind === 'renderer' ? props.content : undefined
   const useResource = props.useResource ?? (() => ({ status: 'none' as const }))
@@ -213,10 +212,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const viewRef = useRef<EditorView | null>(null)
   const readOnlyCompartmentRef = useRef(new Compartment())
   const indentationCompartmentRef = useRef(new Compartment())
+  const languageCompartmentRef = useRef(new Compartment())
   const indentationSettingsRef = useRef(indentationSettings)
   indentationSettingsRef.current = indentationSettings
   const pythonIntelligenceSettingsRef = useRef(pythonIntelligenceSettings)
   pythonIntelligenceSettingsRef.current = pythonIntelligenceSettings
+  const javaEditingAssistanceRef = useRef(javaEditingAssistance)
+  javaEditingAssistanceRef.current = javaEditingAssistance
   const savedTextRef = useRef('')
   const baseVersionRef = useRef('')
   const newlineRef = useRef<'lf' | 'crlf'>('lf')
@@ -285,6 +287,19 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       setEditorIndentation(view, indentationCompartmentRef.current, indentationSettings)
     }
   }, [indentationSettings.indentSize])
+
+  useEffect(() => {
+    const view = viewRef.current
+    const parsed = parsedRef.current
+    if (view === null || parsed === null) return
+    const language = languageForFile(fileNameOf(parsed.path))
+    setJavaEditingAssistance(
+      view,
+      languageCompartmentRef.current,
+      language,
+      javaEditingAssistance.enabled,
+    )
+  }, [javaEditingAssistance.enabled])
 
   useEffect(() => {
     if (viewRef.current !== null) void syncIntelligenceDocumentRef.current()
@@ -615,6 +630,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         readOnly: initial.readOnly,
         readOnlyCompartment: readOnlyCompartmentRef.current,
         indentationCompartment: indentationCompartmentRef.current,
+        languageCompartment: languageCompartmentRef.current,
+        javaEditingAssistanceEnabled: javaEditingAssistanceRef.current.enabled,
         onUpdate,
         ...(completionSource === undefined ? {} : { completionSource }),
         ...(navigationExtensions === undefined ? {} : { extraExtensions: navigationExtensions }),

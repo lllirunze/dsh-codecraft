@@ -44,6 +44,8 @@ export interface EditorOptions {
   readOnly: boolean
   readOnlyCompartment: Compartment
   indentationCompartment: Compartment
+  languageCompartment: Compartment
+  javaEditingAssistanceEnabled: boolean
   onUpdate: (update: ViewUpdate) => void
   completionSource?: CompletionSource
   extraExtensions?: Extension
@@ -68,6 +70,28 @@ export function setEditorIndentation(
   settings: IndentationSettings,
 ): void {
   view.dispatch({ effects: compartment.reconfigure(indentationExtensions(settings)) })
+}
+
+/** Extensions controlled by the Java assistance setting; other languages remain enabled. */
+export function languageExtensions(
+  language: FileLanguage,
+  javaEditingAssistanceEnabled: boolean,
+): Extension {
+  if (language.id === 'java' && !javaEditingAssistanceEnabled) return []
+  return [language.support ?? [], language.editorExtensions]
+}
+
+/** Apply the accepted Java feature gate without rebuilding an open editor. */
+export function setJavaEditingAssistance(
+  view: EditorView,
+  compartment: Compartment,
+  language: FileLanguage,
+  enabled: boolean,
+): void {
+  if (language.id !== 'java') return
+  view.dispatch({
+    effects: compartment.reconfigure(languageExtensions(language, enabled)),
+  })
 }
 
 /** Build the full extension set for one editor instance. */
@@ -96,8 +120,10 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     ]),
     EditorView.updateListener.of(options.onUpdate),
     options.readOnlyCompartment.of(readOnlyExtensions(options.readOnly)),
-    options.language.support ?? [],
-    options.language.editorExtensions,
+    options.languageCompartment.of(languageExtensions(
+      options.language,
+      options.javaEditingAssistanceEnabled,
+    )),
     options.extraExtensions ?? [],
     ...editorThemeExtensions(),
   ]

@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.3] - 2026-11-08
+
+### Added
+
+- Added a persistent Java Editing Assistance switch that immediately controls browser-local Java features in open and future Java tabs.
+
+### Changed
+
+- Kept common editing, saving, drafts, indentation, and Python Intelligence independent from the Java feature gate.
+
 ## [0.3.2] - 2026-11-08
 
 ### Fixed

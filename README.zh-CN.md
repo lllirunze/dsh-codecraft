@@ -128,7 +128,7 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 将鼠标悬停在 Python 标识符上，可以查看 Pyright 提供的信息。在 macOS 使用 `Command+点击`、Windows 使用 `Ctrl+点击` 可从使用位置跳转到定义；在声明位置使用相同操作会打开按文件分组的引用列表。跨文件目标会在 DSH 原生 Tab 中打开。编辑器状态栏中的左右箭头或 `Command/Ctrl+Alt+左/右方向键` 可在成功的导航历史中移动。
 
-`.java` 文件会自动启用 Java 支持。补全内容包括 Java 关键字、常用标准库类型、`psvm` 和 `sout` 等代码片段，以及当前文档中的标识符。在完整的方法或构造器声明上方输入 `/**` 并按 Enter，可生成 CodeCraft Structured Javadoc。这些功能均在本地运行，不需要 JDK、JDT LS、Java 进程、额外下载或网络连接。Java 补全属于词法辅助，不会解析 import、依赖、推断成员或跨文件符号。
+`.java` 文件会自动启用 Java 支持。补全内容包括 Java 关键字、常用标准库类型、`psvm` 和 `sout` 等代码片段，以及当前文档中的标识符。在完整的方法或构造器声明上方输入 `/**` 并按 Enter，可生成 CodeCraft Structured Javadoc。可通过 **设置 → CodeCraft → Java 编辑辅助** 即时关闭或恢复已打开及后续 Java Tab 的这些专属能力；该设置默认开启并会在重启后保留。关闭后普通编辑和保存仍然可用。这些功能均在本地运行，不需要 JDK、JDT LS、Java 进程、额外下载或网络连接。Java 补全属于词法辅助，不会解析 import、依赖、推断成员或跨文件符号。
 
 ### 快捷键
 

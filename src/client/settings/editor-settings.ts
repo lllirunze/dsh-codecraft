@@ -1,11 +1,14 @@
 import {
   DEFAULT_EDITOR_SETTINGS,
+  DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveEditorSettings,
+  resolveJavaEditingAssistanceSettings,
   resolvePythonIntelligenceSettings,
   type AutoSaveInterval,
   type EditorSettings,
   type IndentSize,
+  type JavaEditingAssistanceSettings,
   type PythonIntelligenceSettings,
 } from '../../settings/schema.js'
 
@@ -30,6 +33,7 @@ export interface ConfigForm {
 export interface EditorSettingsSnapshot {
   settings: EditorSettings
   pythonIntelligence: PythonIntelligenceSettings
+  javaEditingAssistance: JavaEditingAssistanceSettings
   status: ConfigFormSnapshot['status']
   writable: boolean
   saving: boolean
@@ -39,6 +43,7 @@ export interface EditorSettingsSnapshot {
 const DEFAULT_SNAPSHOT: EditorSettingsSnapshot = {
   settings: DEFAULT_EDITOR_SETTINGS,
   pythonIntelligence: DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+  javaEditingAssistance: DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
   status: 'loading',
   writable: false,
   saving: false,
@@ -92,6 +97,10 @@ export class EditorSettingsStore {
     return this.#write(['pythonIntelligence', 'completion'], completion)
   }
 
+  async setJavaEditingAssistanceEnabled(enabled: boolean): Promise<boolean> {
+    return this.#write(['javaEditingAssistance', 'enabled'], enabled)
+  }
+
   async setPythonInterpreterPath(interpreterPath: string): Promise<boolean> {
     return this.#write(['pythonIntelligence', 'interpreterPath'], interpreterPath.trim())
   }
@@ -124,6 +133,7 @@ export class EditorSettingsStore {
     this.#replace({
       settings: resolveEditorSettings(formSnapshot?.value),
       pythonIntelligence: resolvePythonIntelligenceSettings(formSnapshot?.value),
+      javaEditingAssistance: resolveJavaEditingAssistanceSettings(formSnapshot?.value),
       status: formSnapshot?.status ?? 'loading',
       writable: formSnapshot?.writable ?? false,
       saving: false,

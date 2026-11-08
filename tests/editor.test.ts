@@ -11,6 +11,7 @@ import {
 } from '@codemirror/state'
 import { EditorView, type Command } from '@codemirror/view'
 import { differsFromSavedText } from '../src/client/document/state.js'
+import { languageExtensions } from '../src/client/editor/index.js'
 import { bracketExtensions, closeBracketTokens } from '../src/client/editor/extensions/brackets.js'
 import { codeCraftCompletionKeymap } from '../src/client/editor/extensions/completion.js'
 import { offsetAt, semanticCompletionSource } from '../src/client/editor/extensions/semantic-completion.js'
@@ -23,6 +24,7 @@ import {
   nextIndentBoundary,
   previousIndentBoundary,
 } from '../src/client/editor/extensions/indentation.js'
+import { languageForFile } from '../src/client/languages/index.js'
 
 function bracketState(doc = '', anchor = 0, head = anchor): EditorState {
   return EditorState.create({
@@ -66,6 +68,45 @@ describe('differsFromSavedText', () => {
     const submittedSnapshot = 'const value = 2\n'
 
     expect(differsFromSavedText(submittedSnapshot, submittedSnapshot)).toBe(false)
+  })
+})
+
+describe('Java editing assistance reconfiguration', () => {
+  it('removes Java-specific language data without changing the document or selection', () => {
+    const compartment = new Compartment()
+    const language = languageForFile('Demo.java')
+    let state = EditorState.create({
+      doc: 'class Demo {}',
+      selection: { anchor: 6, head: 10 },
+      extensions: [
+        history(),
+        compartment.of(languageExtensions(language, true)),
+      ],
+    })
+
+    expect(state.languageDataAt('autocomplete', 8).length).toBeGreaterThan(0)
+    state = state.update({
+      effects: compartment.reconfigure(languageExtensions(language, false)),
+    }).state
+
+    expect(state.doc.toString()).toBe('class Demo {}')
+    expect(state.selection.main).toMatchObject({ anchor: 6, head: 10 })
+    expect(state.languageDataAt('autocomplete', 8)).toEqual([])
+
+    state = state.update({
+      effects: compartment.reconfigure(languageExtensions(language, true)),
+    }).state
+    expect(state.languageDataAt('autocomplete', 8).length).toBeGreaterThan(0)
+  })
+
+  it('does not gate another language when Java assistance is disabled', () => {
+    const python = languageForFile('main.py')
+    const state = EditorState.create({
+      doc: 'value = 1',
+      extensions: languageExtensions(python, false),
+    })
+
+    expect(state.languageDataAt('commentTokens', 0).length).toBeGreaterThan(0)
   })
 })
 

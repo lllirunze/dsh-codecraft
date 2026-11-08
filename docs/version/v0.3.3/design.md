@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Design baseline; implementation and validation pending |
+| Status | Implemented and validated; release prepared |
 | Target version | 0.3.3 |
 | Baseline | 0.3.2 |
 | Release type | Patch feature release |
