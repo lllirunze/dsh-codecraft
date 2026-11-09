@@ -1,5 +1,103 @@
 # Repository Guidelines
 
+## Skill-Orchestrated Feature Development
+
+Versioned feature work in this repository is delivered through the `feature-development` skill, which coordinates four focused skills. Treat this section as the entry-point tutorial and each `.agents/skills/<name>/SKILL.md` as the authoritative detailed instruction when they differ.
+
+Load a skill with the `skill` tool using its exact name before acting on a matching request, then read every reference file named by that `SKILL.md`. Do not work from this summary alone, and do not follow a skill's instructions until it has been loaded.
+
+### Skill map
+
+| Skill | Load when | Owns | Must not do |
+| --- | --- | --- | --- |
+| `feature-development` | The user asks to build, implement, complete, or resume a planned version or substantial feature | End-to-end orchestration: scope, architecture plan, implementation, focused tests, regression handoff, manual checklist, delivery report | Publish, bump release metadata, or write changelog entries |
+| `version-documentation` | Requirements must move from `docs/planning/` into normalized `design.md` and `validation.md`, or a version number must be chosen | Version choice, requirement analysis, normalized English design and validation records, documentation index | Implement code, update package versions, commit, push, tag, or publish |
+| `language-module-architecture` | The work concerns a programming language, framework, or developer ecosystem | Placement, Client/Host responsibility split, registration, protocol, lifecycle, capability isolation | Change generic editor or release behavior unrelated to a language module |
+| `regression-testing` | The user asks to test, retest, verify, or audit current behavior | Impact-based automated verification, exact command evidence, DSH Desktop manual checklist | Implement fixes, edit tests to force a pass, install dependencies, or publish |
+| `release-management` | The user explicitly asks to publish a validated version after checks and manual acceptance pass | Release metadata sync, release commit, push `master`, annotated tag, push tag, GitHub Release content | Design requirements, plan validation, or publish without explicit authority |
+
+Detailed references: [version delivery gates](.agents/skills/feature-development/references/version-delivery-gates.md), [version numbering example](.agents/skills/version-documentation/references/version-number-example.md), [current language architecture](.agents/skills/language-module-architecture/references/current-architecture.md), [project regression test map](.agents/skills/regression-testing/references/project-test-map.md), and [release content example](.agents/skills/release-management/references/release-content-example.md).
+
+### End-to-end workflow
+
+For a complete planned version, proceed through these gates and stop at G5 until the user reports manual results:
+
+| Gate | Required evidence | Owner or applied skill | Exit condition |
+| --- | --- | --- | --- |
+| G0 Scope | Target version, requested outcome, platforms, explicit exclusions | `feature-development` | Scope is clear enough to proceed without changing product intent |
+| G1 Requirements | Normalized English `design.md`, requirement IDs, observable behavior, failure cases, and a planned `validation.md` | `version-documentation` | Every mandatory item is testable and later-version work is excluded |
+| G2 Architecture | Current-code investigation, requirement-to-file plan, Client/Host ownership, settings/protocol/lifecycle impacts, and test mapping | `feature-development`; `language-module-architecture` when applicable | The smallest feasible design uses real repository extension points |
+| G3 Implementation | Source changes, focused tests, and exact focused command results | `feature-development` | In-scope behavior exists and focused checks pass, or blockers are explicit |
+| G4 Regression | Impact scope, exact commands, `PASS`/`FAIL`/`INCOMPLETE`, and unverified areas | `regression-testing` | Required automation passes on the current code revision |
+| G5 Native acceptance | DSH Desktop steps and user-observed results per required platform | User, with an agent-provided checklist | Required manual cases pass; untested cases remain visibly unverified |
+| G6 Release handoff | Complete evidence, no critical blocker, and an explicit release request | `release-management` | Version metadata, commit, push, and tag follow the separate authorized workflow |
+
+A small isolated fix may compress this into a short scope, plan, and test loop instead of creating version documents, but it must still follow the same evidence and release boundaries.
+
+### Step-by-step procedure
+
+1. **Classify the request.** Decide whether the user asked for design only, implementation of a version or feature, a resume after manual testing, or publication. Do not infer publication authority from passing tests.
+2. **Establish the source of truth.** Read `AGENTS.md`, `package.json`, `git status`, and the target planning or version records. Preserve all unrelated staged, unstaged, and untracked work; never reset, clean, stash, or revert it. Prefer normalized records under `docs/version/vX.Y.Z/`; otherwise apply `version-documentation` before implementation.
+3. **Normalize requirements when needed.** Use `version-documentation` to turn the authoritative `docs/planning/` source into `docs/version/vX.Y.Z/design.md` and `validation.md`, preserve requirement IDs, and update `docs/README.md`. Keep `docs/planning/` as raw input, write documents in English, and leave every new checklist item unchecked.
+4. **Decide architecture before editing.** For any language, framework, or ecosystem feature, load `language-module-architecture` and read `docs/guide/intelligence-module-conventions.md` plus the current source. Produce a short placement plan showing each capability, its category, runtime (Client, Host, or shared boundary), concrete path, reused contract, and reason. Reuse existing extension points instead of creating parallel registries, routes, editors, save paths, or empty future modules.
+5. **Write a traceable plan.** Map every in-scope requirement ID to observable behavior and negative cases, owning modules and files, focused tests, and native Desktop scenarios. Flag only decisions that materially change scope, security, compatibility, or product behavior.
+6. **Implement the agreed scope.** Follow repository TypeScript style and public contracts, keep browser code free of Node APIs and Host code free of React, CodeMirror, and DOM objects, preserve ordinary editing and saving when optional assistance is disabled or fails, and add defensive handling for malformed input, stale async work, and teardown. Add or update flat Vitest files under `tests/`. Do not edit generated `lib/` by hand, weaken assertions, expand the version silently, or update release metadata.
+7. **Verify, fix, and reverify.** Run the smallest relevant Vitest files first, then the broader checks justified by the change. `feature-development` owns fixing in-scope defects; after any fix, rerun the affected focused checks and every broader result invalidated by that code change.
+8. **Run regression testing.** Load `regression-testing` when implementation stabilizes or the user asks for testing. Use its impact map to select focused files; for a completed feature or cross-module, settings, lifecycle, Host/protocol, file-safety, or packaging change, run the full gate. Report exact commands, test counts, and `PASS`/`FAIL`/`BLOCKED` evidence.
+9. **Hand off manual acceptance.** State explicitly that automated implementation and regression are complete and native DSH Desktop testing is required. Provide a checklist derived from `docs/version/vX.Y.Z/validation.md` and the changed behavior, covering editing and saving, new positive and negative cases, settings persistence, language isolation, paths with spaces and Chinese characters, offline behavior, and independent macOS and Windows checks when in scope. Leave items unchecked until the user reports observed results.
+10. **Report delivery.** State the target version, delivered scope and exclusions, requirement coverage, architecture and files changed, commands and results, validation document status, manual checks still required or user-confirmed outcomes, and remaining blockers or next actions.
+11. **Release only on explicit request.** After `npm run check` and required manual acceptance pass, load `release-management` and follow `docs/guide/releasing.md`. Publication requires a separate, explicit instruction to commit, push, and tag.
+
+### Choosing the right skill
+
+| User request | Action |
+| --- | --- |
+| “Design,” “plan,” or “document” the next version | Load `version-documentation`; modify only documentation and the documentation index |
+| “Implement,” “build,” or “complete” the planned version | Load `feature-development`; add `version-documentation` if normalized records are missing and `language-module-architecture` for language work |
+| “Test,” “retest,” “verify,” or “audit” current behavior | Load `regression-testing`; do not fix code or edit tests |
+| “I tested it” or “resume after manual testing” | Load `feature-development`; record only reported results and rerun automation invalidated by later code changes |
+| “Release,” “publish,” “tag,” or “push” the version | Load `release-management` only when the request is explicit and all required evidence exists |
+| Architecture, module placement, or capability-boundary question | Load `language-module-architecture`; read the checked-out source before proposing paths |
+
+### Evidence rules
+
+- Use only these states: `PASS` (the check actually ran or behavior was observed and succeeded), `FAIL`, `BLOCKED` (a concrete dependency, environment, permission, or decision prevents execution), `NOT VERIFIED` (required manual or external scenario not observed), and `NOT APPLICABLE` (outside approved scope, with a reason).
+- A command that was not run, is still running, or ran before the latest relevant code change is not a pass. Preserve the exact command, exit result, and key evidence.
+- Automated tests do not prove native DSH Desktop behavior, settings persistence across a restart, OS integration, or platform compatibility.
+- Requirement changes invalidate affected architecture, implementation, and test assumptions; production or test-code changes after regression invalidate relevant automated results; behavior changes after manual acceptance invalidate relevant manual results. Fix the earliest affected layer, then rerun dependent evidence.
+- Never present a design as implemented, automation as native acceptance, or release readiness as publication.
+
+### Standard commands
+
+Read `package.json` before relying on these scripts because they may evolve.
+
+```bash
+npx vitest run tests/<module>.test.ts   # focused local check during implementation
+npm run typecheck                       # strict TypeScript contracts
+npm test                               # full Vitest suite
+npm run build                          # bundle host and client entries into lib/
+npm run verify                         # validate generated package artifacts
+npm run check                          # canonical combined gate in CI order
+```
+
+`npm run check` runs typecheck, the full test suite, build, and artifact verification. It is the standard G4 evidence command for a completed version or any cross-module change.
+
+### Cross-skill handoff summary
+
+Keep transitions between skills compact and evidence-based:
+
+```text
+Version / baseline:
+In-scope requirement IDs:
+Changed modules and files:
+Architecture decisions:
+Automated commands and results:
+Manual status by platform:
+Known risks or blockers:
+Current gate:
+Next action and owner:
+```
+
 ## Project Structure & Module Organization
 
 `src/index.ts` is the DSH host entry point. Host-side filesystem and HTTP logic lives in `src/host/`; shared request and response types live in `src/protocol.ts`. The browser entry point is `src/client/index.tsx`. Client lifecycle and native-tab integration live in `src/client/core/` and `src/client/renderer/`; shared CodeMirror extensions, document state, and language selection live in `src/client/editor/`, `src/client/document/`, and `src/client/languages/`. Tests are flat under `tests/` and generally mirror the module name, such as `tests/files.test.ts`. Build scripts live in `scripts/`, CI workflows in `.github/workflows/`, and generated output in `lib/`. Do not edit `lib/` by hand.
