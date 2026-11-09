@@ -36,6 +36,8 @@ describe('languageForFile', () => {
     expect(languageForFile('main.go').label).toBe('Go')
     expect(languageForFile('main.rs').label).toBe('Rust')
     expect(languageForFile('Main.java').label).toBe('Java')
+    expect(languageForFile('index.html').label).toBe('HTML')
+    expect(languageForFile('legacy.htm').label).toBe('HTML')
     expect(languageForFile('config.yaml').label).toBe('YAML')
     expect(languageForFile('main.md').label).toBe('Markdown')
     expect(languageForFile('main.txt').label).toBe('纯文本')
@@ -44,6 +46,7 @@ describe('languageForFile', () => {
 
   it('is case-insensitive', () => {
     expect(languageForFile('MAIN.PY').label).toBe('Python')
+    expect(languageForFile('/项目/My Page.HTML').label).toBe('HTML')
   })
 
   it('selects registered adapters by extension', () => {

@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] - 2026-11-09
+
+### Added
+
+- Added a dedicated offline HTML editing module for `.html` and `.htm` files with local parsing, highlighting, contextual completion, entity completion, tag closing, comments, and HTML5 snippets.
+- Added syntax-aware HTML indentation that follows the live two- or four-space setting and safely handles paired tags, closing tags, void elements, and optional-end elements.
+- Added one persistent HTML Editing Assistance switch that immediately updates open and future HTML tabs and reports Ready, Disabled, or Error status without affecting ordinary editing or saving.
+
+### Changed
+
+- Kept HTML assistance entirely browser-local without an HTML language server, subprocess, runtime download, or network dependency.
+
 ## [0.3.3] - 2026-11-08
 
 ### Added

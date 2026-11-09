@@ -1,12 +1,15 @@
 import {
   DEFAULT_EDITOR_SETTINGS,
+  DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveEditorSettings,
+  resolveHtmlEditingAssistanceSettings,
   resolveJavaEditingAssistanceSettings,
   resolvePythonIntelligenceSettings,
   type AutoSaveInterval,
   type EditorSettings,
+  type HtmlEditingAssistanceSettings,
   type IndentSize,
   type JavaEditingAssistanceSettings,
   type PythonIntelligenceSettings,
@@ -34,6 +37,7 @@ export interface EditorSettingsSnapshot {
   settings: EditorSettings
   pythonIntelligence: PythonIntelligenceSettings
   javaEditingAssistance: JavaEditingAssistanceSettings
+  htmlEditingAssistance: HtmlEditingAssistanceSettings
   status: ConfigFormSnapshot['status']
   writable: boolean
   saving: boolean
@@ -44,6 +48,7 @@ const DEFAULT_SNAPSHOT: EditorSettingsSnapshot = {
   settings: DEFAULT_EDITOR_SETTINGS,
   pythonIntelligence: DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   javaEditingAssistance: DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
+  htmlEditingAssistance: DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS,
   status: 'loading',
   writable: false,
   saving: false,
@@ -101,6 +106,10 @@ export class EditorSettingsStore {
     return this.#write(['javaEditingAssistance', 'enabled'], enabled)
   }
 
+  async setHtmlEditingAssistanceEnabled(enabled: boolean): Promise<boolean> {
+    return this.#write(['htmlEditingAssistance', 'enabled'], enabled)
+  }
+
   async setPythonInterpreterPath(interpreterPath: string): Promise<boolean> {
     return this.#write(['pythonIntelligence', 'interpreterPath'], interpreterPath.trim())
   }
@@ -134,6 +143,7 @@ export class EditorSettingsStore {
       settings: resolveEditorSettings(formSnapshot?.value),
       pythonIntelligence: resolvePythonIntelligenceSettings(formSnapshot?.value),
       javaEditingAssistance: resolveJavaEditingAssistanceSettings(formSnapshot?.value),
+      htmlEditingAssistance: resolveHtmlEditingAssistanceSettings(formSnapshot?.value),
       status: formSnapshot?.status ?? 'loading',
       writable: formSnapshot?.writable ?? false,
       saving: false,

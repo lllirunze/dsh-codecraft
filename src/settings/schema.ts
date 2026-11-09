@@ -32,10 +32,15 @@ export interface JavaEditingAssistanceSettings {
   enabled: boolean
 }
 
+export interface HtmlEditingAssistanceSettings {
+  enabled: boolean
+}
+
 export interface CodeCraftSettings {
   editor: EditorSettings
   pythonIntelligence: PythonIntelligenceSettings
   javaEditingAssistance: JavaEditingAssistanceSettings
+  htmlEditingAssistance: HtmlEditingAssistanceSettings
 }
 
 export const DEFAULT_AUTO_SAVE_SETTINGS: AutoSaveSettings = {
@@ -64,10 +69,15 @@ export const DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS: JavaEditingAssistanceSett
   enabled: true,
 }
 
+export const DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS: HtmlEditingAssistanceSettings = {
+  enabled: true,
+}
+
 export const DEFAULT_CODECRAFT_SETTINGS: CodeCraftSettings = {
   editor: DEFAULT_EDITOR_SETTINGS,
   pythonIntelligence: DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   javaEditingAssistance: DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
+  htmlEditingAssistance: DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS,
 }
 
 export function isAutoSaveInterval(value: unknown): value is AutoSaveInterval {
@@ -158,10 +168,24 @@ export function resolveJavaEditingAssistanceSettings(value: unknown): JavaEditin
   }
 }
 
+/** Resolve the browser-local HTML feature gate without accepting truthy wire values. */
+export function resolveHtmlEditingAssistanceSettings(value: unknown): HtmlEditingAssistanceSettings {
+  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
+  const assistance = typeof root.htmlEditingAssistance === 'object' && root.htmlEditingAssistance !== null
+    ? root.htmlEditingAssistance as Record<string, unknown>
+    : {}
+  return {
+    enabled: typeof assistance.enabled === 'boolean'
+      ? assistance.enabled
+      : DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS.enabled,
+  }
+}
+
 export function resolveCodeCraftSettings(value: unknown): CodeCraftSettings {
   return {
     editor: resolveEditorSettings(value),
     pythonIntelligence: resolvePythonIntelligenceSettings(value),
     javaEditingAssistance: resolveJavaEditingAssistanceSettings(value),
+    htmlEditingAssistance: resolveHtmlEditingAssistanceSettings(value),
   }
 }

@@ -4,6 +4,7 @@ import z from '@deepseek-ai/schemastery'
 import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,
+  DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_INDENTATION_SETTINGS,
   DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
@@ -39,6 +40,10 @@ const JavaEditingAssistanceSchema = z.object({
   enabled: z.boolean().default(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS.enabled),
 })
 
+const HtmlEditingAssistanceSchema = z.object({
+  enabled: z.boolean().default(DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS.enabled),
+})
+
 /**
  * The editor group is volatile so accepted settings writes take effect without
  * remounting the Host plugin. The profile still persists the chosen values.
@@ -52,5 +57,8 @@ export const Config = z.object({
     .default(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS),
   javaEditingAssistance: JavaEditingAssistanceSchema
     .default(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS)
+    .volatile(),
+  htmlEditingAssistance: HtmlEditingAssistanceSchema
+    .default(DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS)
     .volatile(),
 }) as unknown as z<CodeCraftSettings>

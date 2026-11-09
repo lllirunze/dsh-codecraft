@@ -1,14 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import { autoSaveDelay, canAutoSave } from '../src/client/document/auto-save.js'
 import { EditorSettingsStore, type ConfigForm } from '../src/client/settings/editor-settings.js'
+import { en, zh } from '../src/client/locales.js'
 import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,
+  DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_INDENTATION_SETTINGS,
   DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
   DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
   resolveAutoSaveSettings,
   resolveIndentationSettings,
+  resolveHtmlEditingAssistanceSettings,
   resolveJavaEditingAssistanceSettings,
   resolvePythonIntelligenceSettings,
 } from '../src/settings/schema.js'
@@ -122,6 +125,33 @@ describe('resolveJavaEditingAssistanceSettings', () => {
   })
 })
 
+describe('resolveHtmlEditingAssistanceSettings', () => {
+  it('defaults missing and malformed values to enabled', () => {
+    expect(resolveHtmlEditingAssistanceSettings(undefined))
+      .toEqual(DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS)
+    expect(resolveHtmlEditingAssistanceSettings({
+      htmlEditingAssistance: { enabled: 'false' },
+    })).toEqual(DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS)
+  })
+
+  it('accepts explicit Boolean values', () => {
+    expect(resolveHtmlEditingAssistanceSettings({
+      htmlEditingAssistance: { enabled: false },
+    })).toEqual({ enabled: false })
+    expect(resolveHtmlEditingAssistanceSettings({
+      htmlEditingAssistance: { enabled: true },
+    })).toEqual({ enabled: true })
+  })
+
+  it('provides the required English and Chinese switch and status text', () => {
+    expect(en['settings.html.enabled.label']).toBe('Enable HTML Editing Assistance')
+    expect(zh['settings.html.enabled.label']).toBe('启用 HTML 编辑辅助')
+    expect(en['status.html.ready']).toBe('HTML: Ready')
+    expect(en['status.html.disabled']).toBe('HTML: Disabled')
+    expect(en['status.html.error']).toBe('HTML: Error')
+  })
+})
+
 describe('EditorSettingsStore', () => {
   it('tracks accepted Host settings and writes nested fields immediately', async () => {
     let listener = (): void => {}
@@ -136,6 +166,7 @@ describe('EditorSettingsStore', () => {
             indentation: { useSpaces: true, indentSize: 4 },
           },
           javaEditingAssistance: { enabled: false },
+          htmlEditingAssistance: { enabled: false },
         },
       }),
       subscribe: next => { listener = next; return () => {} },
@@ -150,6 +181,7 @@ describe('EditorSettingsStore', () => {
     })
     expect(store.getSnapshot().pythonIntelligence).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
     expect(store.getSnapshot().javaEditingAssistance).toEqual({ enabled: false })
+    expect(store.getSnapshot().htmlEditingAssistance).toEqual({ enabled: false })
     await expect(store.setInterval(120)).resolves.toBe(true)
     expect(mutate).toHaveBeenCalledWith([{
       op: 'set',
@@ -174,6 +206,12 @@ describe('EditorSettingsStore', () => {
       path: ['javaEditingAssistance', 'enabled'],
       value: true,
     }])
+    await expect(store.setHtmlEditingAssistanceEnabled(true)).resolves.toBe(true)
+    expect(mutate).toHaveBeenLastCalledWith([{
+      op: 'set',
+      path: ['htmlEditingAssistance', 'enabled'],
+      value: true,
+    }])
     await expect(store.setPythonInterpreterPath(' /workspace/.venv/bin/python ')).resolves.toBe(true)
     expect(mutate).toHaveBeenLastCalledWith([{
       op: 'set',
@@ -185,6 +223,8 @@ describe('EditorSettingsStore', () => {
     expect(store.getSnapshot().settings).toEqual(DEFAULT_EDITOR_SETTINGS)
     expect(store.getSnapshot().javaEditingAssistance)
       .toEqual(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS)
+    expect(store.getSnapshot().htmlEditingAssistance)
+      .toEqual(DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS)
   })
 
   it('keeps the accepted Java value and reports a rejected write', async () => {
@@ -207,6 +247,30 @@ describe('EditorSettingsStore', () => {
 
       await expect(store.setJavaEditingAssistanceEnabled(false)).resolves.toBe(false)
       expect(store.getSnapshot().javaEditingAssistance.enabled).toBe(true)
+      expect(store.getSnapshot().error).toBe(true)
+    }
+  })
+
+  it('keeps the accepted HTML value and reports a rejected write', async () => {
+    const mutations = [
+      vi.fn(async () => false),
+      vi.fn(async () => { throw new Error('write failed') }),
+    ]
+    for (const mutate of mutations) {
+      const form: ConfigForm = {
+        getSnapshot: () => ({
+          status: 'ready',
+          writable: true,
+          value: { htmlEditingAssistance: { enabled: true } },
+        }),
+        subscribe: () => () => {},
+        mutate,
+      }
+      const store = new EditorSettingsStore()
+      store.bind(form)
+
+      await expect(store.setHtmlEditingAssistanceEnabled(false)).resolves.toBe(false)
+      expect(store.getSnapshot().htmlEditingAssistance.enabled).toBe(true)
       expect(store.getSnapshot().error).toBe(true)
     }
   })

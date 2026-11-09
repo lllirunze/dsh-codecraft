@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Design baseline; implementation and validation pending |
+| Status | Validated on macOS and Windows; release ready |
 | Target version | 0.4.0 |
 | Baseline | 0.3.3 |
 | Release type | Minor feature release |

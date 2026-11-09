@@ -46,6 +46,7 @@ export interface EditorOptions {
   indentationCompartment: Compartment
   languageCompartment: Compartment
   javaEditingAssistanceEnabled: boolean
+  htmlEditingAssistanceEnabled?: boolean
   onUpdate: (update: ViewUpdate) => void
   completionSource?: CompletionSource
   extraExtensions?: Extension
@@ -76,8 +77,11 @@ export function setEditorIndentation(
 export function languageExtensions(
   language: FileLanguage,
   javaEditingAssistanceEnabled: boolean,
+  htmlEditingAssistanceEnabled = true,
 ): Extension {
   if (language.id === 'java' && !javaEditingAssistanceEnabled) return []
+  if (language.id === 'html' && !htmlEditingAssistanceEnabled) return []
+  if (language.initializationError === true) return []
   return [language.support ?? [], language.editorExtensions]
 }
 
@@ -90,8 +94,49 @@ export function setJavaEditingAssistance(
 ): void {
   if (language.id !== 'java') return
   view.dispatch({
-    effects: compartment.reconfigure(languageExtensions(language, enabled)),
+    effects: compartment.reconfigure(languageExtensions(language, enabled, true)),
   })
+}
+
+export type HtmlEditingStatus = 'ready' | 'disabled' | 'error'
+
+/** Apply the accepted HTML feature gate and safely fall back after a failure. */
+export function setHtmlEditingAssistance(
+  view: EditorView,
+  compartment: Compartment,
+  language: FileLanguage,
+  enabled: boolean,
+): HtmlEditingStatus | undefined {
+  if (language.id !== 'html') return undefined
+  if (!enabled) {
+    try {
+      view.dispatch({ effects: compartment.reconfigure([]) })
+      return 'disabled'
+    } catch {
+      return 'error'
+    }
+  }
+  if (language.initializationError === true) {
+    try {
+      view.dispatch({ effects: compartment.reconfigure([]) })
+    } catch {
+      // Retain the existing editable view and report the failed fallback.
+    }
+    return 'error'
+  }
+  try {
+    view.dispatch({
+      effects: compartment.reconfigure(languageExtensions(language, true, true)),
+    })
+    return 'ready'
+  } catch {
+    try {
+      view.dispatch({ effects: compartment.reconfigure([]) })
+    } catch {
+      // The document remains owned by the existing EditorView even if fallback dispatch fails.
+    }
+    return 'error'
+  }
 }
 
 /** Build the full extension set for one editor instance. */
@@ -123,6 +168,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
     options.languageCompartment.of(languageExtensions(
       options.language,
       options.javaEditingAssistanceEnabled,
+      options.htmlEditingAssistanceEnabled ?? true,
     )),
     options.extraExtensions ?? [],
     ...editorThemeExtensions(),

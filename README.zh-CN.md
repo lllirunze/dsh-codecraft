@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.3.2 使用正确的包版本元数据重新发布已经验证的 Python 导航更新。
+> **当前状态：** v0.4.0 在 macOS 和 Windows 上提供已验证的离线 HTML 编辑辅助。
 
 ## 功能
 
@@ -33,6 +33,8 @@
 - 无需语言服务器即可提供本地 Java 关键字、常用类型、代码片段和当前文档标识符补全。
 - 根据 Java 文档中已有的方法或构造器声明生成 CodeCraft Structured Javadoc。
 - 完全离线支持 Java 括号、缩进、行注释、折叠以及常用声明和控制流代码片段。
+- 为 `.html` 和 `.htm` 文件提供离线 HTML5 解析、高亮、上下文标签与属性补全、枚举值、实体、标签闭合、注释及主动选择的代码片段。
+- HTML 回车根据语法结构使用已配置的 2 格或 4 格缩进，并按照标准处理 void 元素和可选结束标签元素。
 - 取消过期补全请求、限制 Pyright 恢复次数，并在工作区没有 Python 文档后清理语言服务器会话。
 - 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
 - macOS 使用 `Cmd+S`、Windows 使用 `Ctrl+S` 保存，并显示未保存、保存中、已保存、失败和只读状态。
@@ -49,6 +51,7 @@
 | 基础编辑器 | macOS 或 Windows |
 | Python 智能编程 | macOS 或 Windows |
 | Java 编辑 | v0.3.0 支持 macOS 或 Windows；无需 JDK |
+| HTML 编辑 | v0.4.0 支持 macOS 或 Windows；完全离线 |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 从源码构建时需要 20 或更高版本 |
 
@@ -85,7 +88,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.3.2
+dsh plugin --profile desktop add dsh-codecraft@0.4.0
 ```
 
 更新后重启 DSH Desktop。
@@ -130,6 +133,8 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 `.java` 文件会自动启用 Java 支持。补全内容包括 Java 关键字、常用标准库类型、`psvm` 和 `sout` 等代码片段，以及当前文档中的标识符。在完整的方法或构造器声明上方输入 `/**` 并按 Enter，可生成 CodeCraft Structured Javadoc。可通过 **设置 → CodeCraft → Java 编辑辅助** 即时关闭或恢复已打开及后续 Java Tab 的这些专属能力；该设置默认开启并会在重启后保留。关闭后普通编辑和保存仍然可用。这些功能均在本地运行，不需要 JDK、JDT LS、Java 进程、额外下载或网络连接。Java 补全属于词法辅助，不会解析 import、依赖、推断成员或跨文件符号。
 
+`.html` 和 `.htm` 文件会自动启用 HTML 支持。补全内容包括标准标签、元素专属及全局属性、常见枚举值与实体，以及需要主动选择的 HTML5 文档、元数据、样式表和表单代码片段。普通标签会在本地安全闭合，void 元素和可选结束标签元素遵循 HTML 标准；回车使用已配置的 2 格或 4 格缩进。可通过 **设置 → CodeCraft → HTML 编辑辅助** 即时关闭或恢复已打开及后续 HTML Tab 的全部专属能力；关闭后普通文本编辑和保存仍然可用。状态栏会显示 `HTML: Ready`、`HTML: Disabled` 或 `HTML: Error`。这些功能不使用 HTML 语言服务器、子进程、运行时下载或网络连接。
+
 ### 快捷键
 
 | macOS | Windows | 功能 |
@@ -151,8 +156,9 @@ dsh plugin --profile desktop remove dsh-codecraft
 
 - CodeCraft 只支持不超过 2 MiB 的 UTF-8 源码和文本文件。
 - 符号链接只能只读打开。
-- 暂未提供 Python 悬浮说明、参数提示、诊断、跨文件自动编辑和跳转定义。
+- 暂未提供 Python 参数提示、诊断、跨文件自动编辑和重构。
 - 暂未提供 Java 语义补全、诊断、导航、重构和构建集成。
+- 暂未提供 HTML 悬浮说明、Outline、Emmet、格式化、诊断、重构、浏览器预览和跨语言工程关联。
 - Linux 尚未完成验证，目前不在支持范围内。
 - 暂无多窗口草稿同步。
 

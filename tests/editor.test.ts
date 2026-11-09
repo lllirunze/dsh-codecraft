@@ -11,7 +11,10 @@ import {
 } from '@codemirror/state'
 import { EditorView, type Command } from '@codemirror/view'
 import { differsFromSavedText } from '../src/client/document/state.js'
-import { languageExtensions } from '../src/client/editor/index.js'
+import {
+  languageExtensions,
+  setHtmlEditingAssistance,
+} from '../src/client/editor/index.js'
 import { bracketExtensions, closeBracketTokens } from '../src/client/editor/extensions/brackets.js'
 import { codeCraftCompletionKeymap } from '../src/client/editor/extensions/completion.js'
 import { offsetAt, semanticCompletionSource } from '../src/client/editor/extensions/semantic-completion.js'
@@ -107,6 +110,69 @@ describe('Java editing assistance reconfiguration', () => {
     })
 
     expect(state.languageDataAt('commentTokens', 0).length).toBeGreaterThan(0)
+  })
+})
+
+describe('HTML editing assistance reconfiguration', () => {
+  it('removes and restores HTML-specific language data without changing editor state', () => {
+    const compartment = new Compartment()
+    const language = languageForFile('页面 index.HTML')
+    let state = EditorState.create({
+      doc: '<div>content</div>',
+      selection: { anchor: 5, head: 12 },
+      extensions: [history(), compartment.of(languageExtensions(language, true, true))],
+    })
+    const view = {
+      get state() { return state },
+      dispatch: (spec: Transaction | TransactionSpec) => {
+        state = spec instanceof Transaction ? spec.state : state.update(spec).state
+      },
+    } as unknown as EditorView
+
+    expect(state.languageDataAt('commentTokens', 6).length).toBeGreaterThan(0)
+    expect(setHtmlEditingAssistance(view, compartment, language, false)).toBe('disabled')
+    expect(state.doc.toString()).toBe('<div>content</div>')
+    expect(state.selection.main).toMatchObject({ anchor: 5, head: 12 })
+    expect(state.languageDataAt('commentTokens', 6)).toEqual([])
+
+    expect(setHtmlEditingAssistance(view, compartment, language, true)).toBe('ready')
+    expect(state.languageDataAt('commentTokens', 6).length).toBeGreaterThan(0)
+  })
+
+  it('does not gate Java or Python when HTML assistance is disabled', () => {
+    for (const name of ['Demo.java', 'main.py']) {
+      const language = languageForFile(name)
+      const state = EditorState.create({
+        doc: name.endsWith('.java') ? 'class Demo {}' : 'value = 1',
+        extensions: languageExtensions(language, true, false),
+      })
+      expect(state.languageDataAt('commentTokens', 0).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('reports an HTML initialization error while retaining common editor state', () => {
+    const compartment = new Compartment()
+    const language = {
+      ...languageForFile('index.html'),
+      support: null,
+      editorExtensions: [],
+      initializationError: true,
+    }
+    let state = EditorState.create({
+      doc: '<div>draft</div>',
+      selection: { anchor: 5 },
+      extensions: [history(), compartment.of([])],
+    })
+    const view = {
+      get state() { return state },
+      dispatch: (spec: Transaction | TransactionSpec) => {
+        state = spec instanceof Transaction ? spec.state : state.update(spec).state
+      },
+    } as unknown as EditorView
+
+    expect(setHtmlEditingAssistance(view, compartment, language, true)).toBe('error')
+    expect(state.doc.toString()).toBe('<div>draft</div>')
+    expect(state.selection.main.head).toBe(5)
   })
 })
 

@@ -21,7 +21,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.3.1 | [Design](version/v0.3.1/design.md) | [Validation](version/v0.3.1/validation.md) | Validated Python Hover, semantic definition and reference navigation, native-tab reveal, and navigation history |
 | v0.3.2 | [Design](version/v0.3.2/design.md) | [Validation](version/v0.3.2/validation.md) | Package metadata correction with no functional changes |
 | v0.3.3 | [Design](version/v0.3.3/design.md) | [Validation](version/v0.3.3/validation.md) | Validated persistent, live Java Editing Assistance setting |
-| v0.4.0 | [Design](version/v0.4.0/design.md) | [Validation](version/v0.4.0/validation.md) | Planned offline HTML foundation, completion, input assistance, and live feature gate |
+| v0.4.0 | [Design](version/v0.4.0/design.md) | [Validation](version/v0.4.0/validation.md) | Validated offline HTML foundation, completion, input assistance, and live feature gate on macOS and Windows |
 
 ## Project Guides
 

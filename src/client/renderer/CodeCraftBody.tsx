@@ -36,9 +36,11 @@ import {
   cursorPosition,
   revealLine,
   revealRange,
+  setHtmlEditingAssistance,
   setEditorIndentation,
   setJavaEditingAssistance,
   setEditorReadOnly,
+  type HtmlEditingStatus,
 } from '../editor/index.js'
 import { semanticCompletionSource } from '../editor/extensions/semantic-completion.js'
 import { languageForFile } from '../languages/index.js'
@@ -180,6 +182,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const indentationSettings = settings.indentation
   const pythonIntelligenceSettings = settingsSnapshot.pythonIntelligence
   const javaEditingAssistance = settingsSnapshot.javaEditingAssistance
+  const htmlEditingAssistance = settingsSnapshot.htmlEditingAssistance
   const { tab } = props.useTabInfo()
   const request = props.content.kind === 'renderer' ? props.content : undefined
   const useResource = props.useResource ?? (() => ({ status: 'none' as const }))
@@ -219,6 +222,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   pythonIntelligenceSettingsRef.current = pythonIntelligenceSettings
   const javaEditingAssistanceRef = useRef(javaEditingAssistance)
   javaEditingAssistanceRef.current = javaEditingAssistance
+  const htmlEditingAssistanceRef = useRef(htmlEditingAssistance)
+  htmlEditingAssistanceRef.current = htmlEditingAssistance
   const savedTextRef = useRef('')
   const baseVersionRef = useRef('')
   const newlineRef = useRef<'lf' | 'crlf'>('lf')
@@ -260,6 +265,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [copied, setCopied] = useState(false)
   const [intelligenceStatus, setIntelligenceStatus] = useState<IntelligenceStatusKind>('disabled')
   const [intelligenceMessage, setIntelligenceMessage] = useState<string | undefined>(undefined)
+  const [htmlStatus, setHtmlStatus] = useState<HtmlEditingStatus | undefined>(undefined)
   const [navigationPanel, setNavigationPanel] = useState<NavigationPanel | null>(null)
 
   useEffect(() => {
@@ -300,6 +306,20 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       javaEditingAssistance.enabled,
     )
   }, [javaEditingAssistance.enabled])
+
+  useEffect(() => {
+    const view = viewRef.current
+    const parsed = parsedRef.current
+    if (view === null || parsed === null) return
+    const language = languageForFile(fileNameOf(parsed.path))
+    const nextStatus = setHtmlEditingAssistance(
+      view,
+      languageCompartmentRef.current,
+      language,
+      htmlEditingAssistance.enabled,
+    )
+    setHtmlStatus(nextStatus)
+  }, [htmlEditingAssistance.enabled])
 
   useEffect(() => {
     if (viewRef.current !== null) void syncIntelligenceDocumentRef.current()
@@ -590,7 +610,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
             }
           },
         })
-      : undefined
+      : language.completionSource
     const navigationExtensions = language.id === 'python'
       ? pythonNavigationExtensions({
           getInput: () => {
@@ -622,21 +642,37 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
           },
         })
       : undefined
-    const state = EditorState.create({
-      doc: initial.text,
-      extensions: buildEditorExtensions({
-        language,
-        indentation: indentationSettingsRef.current,
-        readOnly: initial.readOnly,
-        readOnlyCompartment: readOnlyCompartmentRef.current,
-        indentationCompartment: indentationCompartmentRef.current,
-        languageCompartment: languageCompartmentRef.current,
-        javaEditingAssistanceEnabled: javaEditingAssistanceRef.current.enabled,
-        onUpdate,
-        ...(completionSource === undefined ? {} : { completionSource }),
-        ...(navigationExtensions === undefined ? {} : { extraExtensions: navigationExtensions }),
-      }),
-    })
+    const editorOptions = {
+      language,
+      indentation: indentationSettingsRef.current,
+      readOnly: initial.readOnly,
+      readOnlyCompartment: readOnlyCompartmentRef.current,
+      indentationCompartment: indentationCompartmentRef.current,
+      languageCompartment: languageCompartmentRef.current,
+      javaEditingAssistanceEnabled: javaEditingAssistanceRef.current.enabled,
+      htmlEditingAssistanceEnabled: htmlEditingAssistanceRef.current.enabled,
+      onUpdate,
+      ...(completionSource === undefined ? {} : { completionSource }),
+      ...(navigationExtensions === undefined ? {} : { extraExtensions: navigationExtensions }),
+    }
+    let htmlInitializationFailed = language.initializationError === true
+    let state: EditorState
+    try {
+      state = EditorState.create({
+        doc: initial.text,
+        extensions: buildEditorExtensions(editorOptions),
+      })
+    } catch (failure) {
+      if (language.id !== 'html' || !htmlEditingAssistanceRef.current.enabled) throw failure
+      htmlInitializationFailed = true
+      state = EditorState.create({
+        doc: initial.text,
+        extensions: buildEditorExtensions({
+          ...editorOptions,
+          htmlEditingAssistanceEnabled: false,
+        }),
+      })
+    }
     const view = new EditorView({ state, parent: host })
     viewRef.current = view
     intelligenceRevisionRef.current = 1
@@ -664,6 +700,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     setReadOnly(initial.readOnly)
     setFileWritable(!initial.readOnly)
     setLanguageLabel(language.label)
+    setHtmlStatus(language.id === 'html'
+      ? !htmlEditingAssistanceRef.current.enabled
+        ? 'disabled'
+        : htmlInitializationFailed
+          ? 'error'
+          : 'ready'
+      : undefined)
     const semanticLanguage = language.id === 'python' ? language.id : undefined
     const semanticEnabled = semanticLanguage === 'python' && pythonIntelligenceSettingsRef.current.enabled
     setIntelligenceStatus(semanticEnabled ? 'starting' : 'disabled')
@@ -1374,6 +1417,14 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
             title={intelligenceMessage}
           >
             {t(`status.intelligence.python.${intelligenceStatus}`)}
+          </span>
+        )}
+        {phase === 'editing' && htmlStatus !== undefined && (
+          <span
+            className={`${ROOT_CLASS}-status-item`}
+            data-state={htmlStatus === 'error' ? 'error' : undefined}
+          >
+            {t(`status.html.${htmlStatus}`)}
           </span>
         )}
         {pending && <span className={`${ROOT_CLASS}-status-item`}>{t('status.loading')}</span>}
