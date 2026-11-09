@@ -1,0 +1,4 @@
+interface:
+  display_name: "Regression Testing"
+  short_description: "Run and report project regression checks"
+  default_prompt: "Use $regression-testing to run regression checks for the current changes, report the automated evidence, and give me the manual DSH Desktop test checklist."
