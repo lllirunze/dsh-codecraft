@@ -1,6 +1,6 @@
 ---
 name: version-documentation
-description: Analyze planned release requirements and create or revise normalized English version design and validation records for this repository. Use when work starts from docs/planning, targets docs/version, or asks for version requirement, feature design, validation, or release-scope documentation. Do not use for feature implementation or release publication alone.
+description: Analyze planned requirements, plan version numbers, and create or revise normalized English design and validation records. Use for work from docs/planning to docs/version. Do not use for implementation, package-version updates, commits, pushes, tags, or release publication.
 ---
 
 # Version Documentation
@@ -20,6 +20,8 @@ Turn raw future-version requirements into repository-aligned, evidence-safe vers
 ## Version rules
 
 Use three numeric components: `MAJOR.MINOR.PATCH`.
+
+When choosing a version or explaining why a planned scope has a particular number, read [references/version-number-example.md](references/version-number-example.md). It provides the canonical naming example, component meanings, zero-based starts, and prerelease progression used by this repository.
 
 - Increment `MAJOR` for broad whole-project implementation, architectural redesign, or large-scale refactoring.
 - Increment `MINOR` for delivery of a distinct feature or capability.
@@ -90,12 +92,13 @@ Create a planned evidence record tied to `design.md` and the same baseline. It s
 
 Leave every new checklist item unchecked. Use `- [ ]`, never `- [x]`, until the named evidence has actually been produced. Planned commands such as `npm run check` are checklist items, not claims that they passed.
 
-## Index and release-state boundaries
+## Documentation boundaries
 
 - Add the version to the canonical documentation index with links to both files and a summary that clearly says `Planned` while implementation or acceptance remains incomplete.
-- Do not update package versions, lockfile versions, tags, release headings, or changelog release entries merely because design work begins.
-- Do not add completed feature claims to the root README files before implementation and required validation are complete.
-- Follow `docs/guide/releasing.md` only when the user separately requests release preparation or publication.
+- Stop after requirements, version planning, design, validation planning, and documentation-index work.
+- Do not update package or lockfile versions, changelog release entries, release headings, commits, remote branches, or tags.
+- Do not add completed feature claims to root README files. Those claims belong to post-implementation release work after validation.
+- Route an explicit request to commit, push, tag, or publish a validated version to the separate `release-management` skill.
 
 ## Verify the result
 
