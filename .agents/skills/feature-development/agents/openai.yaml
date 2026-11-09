@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Development"
+  short_description: "Deliver version requirements through validation"
+  default_prompt: "Use $feature-development to implement the target version requirements, verify the changes, and hand off the required manual DSH Desktop tests."
