@@ -1,0 +1,4 @@
+interface:
+  display_name: "Language Module Architecture"
+  short_description: "Design client and host module boundaries"
+  default_prompt: "Use $language-module-architecture to place and design this language, framework, or ecosystem feature in the current client/host architecture."
