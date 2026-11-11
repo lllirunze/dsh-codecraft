@@ -116,6 +116,21 @@ class NavigationCoordinator {
     if (this.#histories.delete(sessionId)) this.#emit()
   }
 
+  /** Open one native resource tab without waiting for an editor acknowledgement. */
+  openResource(sessionId: string, path: string, params?: Record<string, unknown>): boolean {
+    const opener = this.#opener
+    if (opener === undefined) return false
+    try {
+      opener.openResource(sessionFileAddress(sessionId, path), {
+        ...(params === undefined ? {} : { params }),
+        revealIfOpened: true,
+      })
+      return true
+    } catch {
+      return false
+    }
+  }
+
   async #open(target: NavigationPoint): Promise<boolean> {
     const opener = this.#opener
     if (opener === undefined) return false

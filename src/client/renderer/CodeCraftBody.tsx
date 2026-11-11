@@ -50,6 +50,18 @@ import {
 } from '../languages/python/features/navigation.js'
 import { navigationCoordinator, type NavigationPoint } from '../navigation/coordinator.js'
 import { ROOT_CLASS } from '../theme.js'
+import { HtmlOutlinePanel } from './HtmlOutlinePanel.js'
+import { htmlBreadcrumbs, type HtmlBreadcrumb } from '../languages/html/features/structure.js'
+import { htmlOutline, type HtmlOutlineNode } from '../languages/html/features/outline.js'
+import { formatHtmlDocument, formatHtmlSelection } from '../languages/html/features/formatting.js'
+import { insertHtmlTemplate } from '../languages/html/features/emmet.js'
+import { bindHtmlFeatureHost, unbindHtmlFeatureHost } from '../languages/html/features/host.js'
+import {
+  isHtmlFilePath,
+  notifyHtmlPreviewController,
+  openPreviewPath,
+  setHtmlPreviewController,
+} from '../languages/html/preview.js'
 import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
 import { assessDiskChange } from '../document/conflicts.js'
 import { autoSaveDelay, canAutoSave } from '../document/auto-save.js'
@@ -96,6 +108,11 @@ interface BannerAction {
   onClick: () => void
 }
 
+interface FeatureNotice {
+  tone: 'error' | 'success' | 'info'
+  text: string
+}
+
 interface NavigationPanel {
   kind: 'loading' | 'locations' | 'message'
   titleKey: string
@@ -138,6 +155,21 @@ function excerptParts(location: IntelligenceLocation): { before: string, match: 
     match: excerpt.slice(start, end),
     after: excerpt.slice(end),
   }
+}
+
+const HTML_REPORT_KEYS: Record<string, string> = {
+  'missing-file': 'html.navigation.missingFile',
+  'outside-workspace': 'html.navigation.outsideWorkspace',
+  'root-relative': 'html.navigation.rootRelative',
+  'unsupported-url': 'html.navigation.unsupportedUrl',
+  'unresolved-path': 'html.navigation.unresolvedPath',
+  'missing-id': 'html.navigation.missingId',
+  'duplicate-id': 'html.navigation.duplicateId',
+  'emmet-invalid': 'html.emmet.invalid',
+  'empty-document': 'html.format.empty',
+  'unsupported-selection': 'html.format.unsupportedSelection',
+  'formatter-failed': 'html.format.failed',
+  'outside-selection': 'html.format.outsideSelection',
 }
 
 function messageOf(error: unknown): string {
@@ -209,6 +241,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   requestRef.current = request
   const metaVersionRef = useRef<string | undefined>(undefined)
   metaVersionRef.current = meta.status === 'live' ? meta.value?.version : undefined
+  const absolutePath = meta.value?.absolutePath
 
   const rootRef = useRef<HTMLDivElement | null>(null)
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -224,6 +257,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   javaEditingAssistanceRef.current = javaEditingAssistance
   const htmlEditingAssistanceRef = useRef(htmlEditingAssistance)
   htmlEditingAssistanceRef.current = htmlEditingAssistance
+  const phaseRef = useRef<Phase>('loading')
+  const absolutePathRef = useRef<string | undefined>(undefined)
+  const previewBusyRef = useRef(false)
+  const requestPreviewRef = useRef<() => void>(() => {})
+  const outlineOpenRef = useRef(false)
+  const htmlActiveRef = useRef(false)
+  const noticeTimerRef = useRef<number | undefined>(undefined)
   const savedTextRef = useRef('')
   const baseVersionRef = useRef('')
   const newlineRef = useRef<'lf' | 'crlf'>('lf')
@@ -267,6 +307,121 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [intelligenceMessage, setIntelligenceMessage] = useState<string | undefined>(undefined)
   const [htmlStatus, setHtmlStatus] = useState<HtmlEditingStatus | undefined>(undefined)
   const [navigationPanel, setNavigationPanel] = useState<NavigationPanel | null>(null)
+  const [languageId, setLanguageId] = useState('plain')
+  const [htmlCrumbs, setHtmlCrumbs] = useState<HtmlBreadcrumb[]>([])
+  const [htmlOutlineNodes, setHtmlOutlineNodes] = useState<HtmlOutlineNode[]>([])
+  const [outlineOpen, setOutlineOpen] = useState(false)
+  const [featureNotice, setFeatureNotice] = useState<FeatureNotice | null>(null)
+  const [previewPrompt, setPreviewPrompt] = useState(false)
+
+  phaseRef.current = phase
+  absolutePathRef.current = meta.value?.absolutePath
+  outlineOpenRef.current = outlineOpen
+  htmlActiveRef.current = languageId === 'html'
+    && htmlEditingAssistance.enabled
+    && htmlStatus !== 'error'
+    && phase === 'editing'
+
+  const showFeatureNotice = useCallback((text: string, tone: FeatureNotice['tone'] = 'error'): void => {
+    if (!mountedRef.current) return
+    setFeatureNotice({ tone, text })
+    if (noticeTimerRef.current !== undefined) window.clearTimeout(noticeTimerRef.current)
+    noticeTimerRef.current = window.setTimeout(() => {
+      noticeTimerRef.current = undefined
+      if (mountedRef.current) setFeatureNotice(null)
+    }, 5000)
+  }, [])
+
+  const reportHtmlCode = useCallback((code: string): void => {
+    showFeatureNotice(tRef.current(HTML_REPORT_KEYS[code] ?? 'html.genericError'))
+  }, [showFeatureNotice])
+
+  const revealHtmlOffset = useCallback((from: number, to: number): void => {
+    const view = viewRef.current
+    if (view === null) return
+    const limit = view.state.doc.length
+    const anchor = Math.min(Math.max(0, from), limit)
+    const head = Math.min(Math.max(anchor, to), limit)
+    view.dispatch({
+      selection: { anchor, head },
+      effects: EditorView.scrollIntoView(anchor, { y: 'center' }),
+    })
+    view.focus()
+  }, [])
+
+  const openPreviewNow = useCallback(async (): Promise<void> => {
+    const path = absolutePathRef.current
+    if (path === undefined) {
+      showFeatureNotice(tRef.current('preview.error.named'))
+      return
+    }
+    if (previewBusyRef.current) return
+    previewBusyRef.current = true
+    notifyHtmlPreviewController()
+    try {
+      const opened = await openPreviewPath(path)
+      if (!mountedRef.current) return
+      if (opened) showFeatureNotice(tRef.current('preview.opened'), 'success')
+      else showFeatureNotice(tRef.current('preview.error.open'))
+    } catch {
+      if (mountedRef.current) showFeatureNotice(tRef.current('preview.error.open'))
+    } finally {
+      previewBusyRef.current = false
+      notifyHtmlPreviewController()
+    }
+  }, [showFeatureNotice])
+
+  const saveForPreview = useCallback(async (): Promise<boolean> => {
+    for (let attempt = 0; attempt < 400 && savingRef.current; attempt += 1) {
+      await new Promise(resolve => window.setTimeout(resolve, 25))
+    }
+    if (dirtyRef.current) await doSaveRef.current()
+    return !dirtyRef.current && conflictRef.current === null && !readOnlyRef.current
+  }, [])
+
+  const requestPreview = useCallback((): void => {
+    if (phaseRef.current !== 'editing') {
+      showFeatureNotice(tRef.current('preview.error.named'))
+      return
+    }
+    if (readOnlyRef.current) {
+      showFeatureNotice(tRef.current('preview.error.readOnly'))
+      return
+    }
+    if (absolutePathRef.current === undefined) {
+      showFeatureNotice(tRef.current('preview.error.named'))
+      return
+    }
+    if (dirtyRef.current) {
+      setPreviewPrompt(true)
+      return
+    }
+    void openPreviewNow()
+  }, [openPreviewNow, showFeatureNotice])
+  requestPreviewRef.current = requestPreview
+
+  const saveAndPreview = useCallback(async (): Promise<void> => {
+    setPreviewPrompt(false)
+    const saved = await saveForPreview()
+    if (!saved) {
+      if (mountedRef.current) showFeatureNotice(tRef.current('preview.error.save'))
+      return
+    }
+    await openPreviewNow()
+  }, [openPreviewNow, saveForPreview, showFeatureNotice])
+
+  useEffect(() => {
+    const active = languageId === 'html'
+      && htmlEditingAssistance.enabled
+      && htmlStatus !== 'error'
+      && phase === 'editing'
+    if (!active || absolutePath === undefined || !isHtmlFilePath(absolutePath)) return
+    return setHtmlPreviewController({
+      path: absolutePath,
+      state: () => ({ dirty: dirtyRef.current, busy: previewBusyRef.current }),
+      requestPreview: () => requestPreviewRef.current(),
+    })
+  }, [absolutePath, languageId, htmlEditingAssistance.enabled, htmlStatus, phase])
 
   useEffect(() => {
     mountedRef.current = true
@@ -319,7 +474,20 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       htmlEditingAssistance.enabled,
     )
     setHtmlStatus(nextStatus)
+    if (nextStatus === 'ready') {
+      setHtmlCrumbs(htmlBreadcrumbs(view.state))
+    } else {
+      setHtmlCrumbs([])
+      setHtmlOutlineNodes([])
+      setOutlineOpen(false)
+    }
   }, [htmlEditingAssistance.enabled])
+
+  useEffect(() => {
+    if (!outlineOpen) return
+    const view = viewRef.current
+    if (view !== null && htmlActiveRef.current) setHtmlOutlineNodes(htmlOutline(view.state))
+  }, [outlineOpen, languageId, htmlEditingAssistance.enabled, htmlStatus])
 
   useEffect(() => {
     if (viewRef.current !== null) void syncIntelligenceDocumentRef.current()
@@ -371,6 +539,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     }
     flushDraft()
     viewRef.current = null
+    unbindHtmlFeatureHost(view)
     try {
       propsRef.current.scrollportRef(null)
     } catch {
@@ -391,6 +560,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (next !== dirtyRef.current) {
       dirtyRef.current = next
       if (mountedRef.current) setDirty(next)
+      notifyHtmlPreviewController()
     }
     if (!next) drafts.remove(addressRef.current)
     return next
@@ -454,6 +624,12 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       }, 150)
     }
     if (update.docChanged || update.selectionSet) {
+      if (htmlActiveRef.current) {
+        setHtmlCrumbs(htmlBreadcrumbs(update.view.state))
+        if (update.docChanged && outlineOpenRef.current) {
+          setHtmlOutlineNodes(htmlOutline(update.view.state))
+        }
+      }
       if (cursorFrameRef.current !== 0) return
       cursorFrameRef.current = window.requestAnimationFrame(() => {
         cursorFrameRef.current = 0
@@ -580,6 +756,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (host === null) return false
     if (viewRef.current !== null) return true
     const language = languageForFile(fileNameOf(parsedRef.current?.path ?? ''))
+    setLanguageId(language.id)
     const completionSource = language.id === 'python'
       ? semanticCompletionSource({
           getInput: () => {
@@ -675,6 +852,30 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     }
     const view = new EditorView({ state, parent: host })
     viewRef.current = view
+    bindHtmlFeatureHost(view, {
+      currentPath: () => parsedRef.current?.path ?? '',
+      report: code => reportHtmlCode(code),
+      revealAnchor: (from, to) => revealHtmlOffset(from, to),
+      openFile: targetPath => {
+        void (async () => {
+          const parsed = parsedRef.current
+          if (parsed === null || viewRef.current === null) return
+          try {
+            const result = await statFile({ sessionId: parsed.sessionId, path: targetPath })
+            if (!mountedRef.current) return
+            if (!result.exists) {
+              reportHtmlCode('missing-file')
+              return
+            }
+            if (!navigationCoordinator.openResource(parsed.sessionId, targetPath)) {
+              reportHtmlCode('unresolved-path')
+            }
+          } catch {
+            if (mountedRef.current) reportHtmlCode('unresolved-path')
+          }
+        })()
+      },
+    })
     intelligenceRevisionRef.current = 1
     intelligenceGenerationRef.current += 1
     intelligenceDocumentIdRef.current = `${tab.id}:${intelligenceGenerationRef.current}`
@@ -872,6 +1073,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       setNewlineStyle(result.newline)
       dirtyRef.current = false
       setDirty(false)
+      notifyHtmlPreviewController()
       setFileWritable(result.writable)
       setExternal(false)
       setConflict(null)
@@ -950,6 +1152,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       const stillDirty = reconciled.dirty
       dirtyRef.current = stillDirty
       setDirty(stillDirty)
+      notifyHtmlPreviewController()
       if (stillDirty) flushDraft()
       else drafts.remove(addressRef.current)
       setConflict(null)
@@ -1176,6 +1379,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
     if (copyTimerRef.current !== undefined) window.clearTimeout(copyTimerRef.current)
     if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
+    if (noticeTimerRef.current !== undefined) window.clearTimeout(noticeTimerRef.current)
     navigationAbortRef.current?.abort()
     destroyEditor()
   }, [destroyEditor])
@@ -1258,6 +1462,37 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
 
   return (
     <div ref={rootRef} className={ROOT_CLASS} data-dsh-codecraft-root="" data-dirty={dirty ? '' : undefined}>
+      {featureNotice !== null && (
+        <div className={`${ROOT_CLASS}-toast`} data-tone={featureNotice.tone} role="status">
+          {featureNotice.text}
+        </div>
+      )}
+      {previewPrompt && (
+        <div className={`${ROOT_CLASS}-banner`} data-tone="warn" role="status">
+          <div className={`${ROOT_CLASS}-banner-text`}>
+            <div className={`${ROOT_CLASS}-banner-title`}>{t('preview.confirm.title')}</div>
+            <div className={`${ROOT_CLASS}-banner-detail`}>{t('preview.confirm.detail')}</div>
+          </div>
+          <div className={`${ROOT_CLASS}-banner-actions`}>
+            <button
+              type="button"
+              className={`${ROOT_CLASS}-button`}
+              data-variant="primary"
+              onClick={() => { void saveAndPreview() }}
+            >
+              {t('preview.confirm.save')}
+            </button>
+            <button
+              type="button"
+              className={`${ROOT_CLASS}-button`}
+              data-variant="quiet"
+              onClick={() => setPreviewPrompt(false)}
+            >
+              {t('preview.confirm.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
       {banner !== null && (
         <div className={`${ROOT_CLASS}-banner`} data-tone={banner.tone} role="status">
           <div className={`${ROOT_CLASS}-banner-text`}>
@@ -1331,7 +1566,78 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         </div>
       )}
       <div className={`${ROOT_CLASS}-editor`} data-phase={phase}>
-        <div ref={hostRef} style={{ display: phase === 'editing' ? undefined : 'none' }} />
+        {phase === 'editing' && htmlActiveRef.current && (
+          <div className={`${ROOT_CLASS}-html-toolbar`}>
+            <nav className={`${ROOT_CLASS}-breadcrumbs`} aria-label={t('html.breadcrumbs')}>
+              {htmlCrumbs.length === 0
+                ? <span className={`${ROOT_CLASS}-breadcrumbs-empty`}>{t('html.breadcrumbs.empty')}</span>
+                : htmlCrumbs.map((crumb, index) => (
+                  <span key={`${crumb.from}:${crumb.name}`} className={`${ROOT_CLASS}-breadcrumb`}>
+                    {index > 0 && <span className={`${ROOT_CLASS}-breadcrumb-separator`} aria-hidden="true">›</span>}
+                    <button
+                      type="button"
+                      className={`${ROOT_CLASS}-breadcrumb-button`}
+                      title={t('html.breadcrumbs.goTo', { name: crumb.name })}
+                      onClick={() => revealHtmlOffset(crumb.nameFrom, crumb.nameFrom)}
+                    >
+                      {crumb.name}
+                    </button>
+                  </span>
+                ))}
+            </nav>
+            <div className={`${ROOT_CLASS}-html-actions`}>
+              <button
+                type="button"
+                className={`${ROOT_CLASS}-button`}
+                data-variant="quiet"
+                aria-pressed={outlineOpen}
+                onClick={() => setOutlineOpen(open => !open)}
+              >
+                {t('html.outline')}
+              </button>
+              <button
+                type="button"
+                className={`${ROOT_CLASS}-button`}
+                data-variant="quiet"
+                title={t('html.format.hint')}
+                onClick={() => {
+                  const view = viewRef.current
+                  if (view === null) return
+                  if (view.state.selection.main.empty) formatHtmlDocument(view)
+                  else formatHtmlSelection(view)
+                }}
+              >
+                {t('html.format')}
+              </button>
+              <button
+                type="button"
+                className={`${ROOT_CLASS}-button`}
+                data-variant="quiet"
+                title={t('html.template.hint')}
+                onClick={() => {
+                  const view = viewRef.current
+                  if (view !== null) insertHtmlTemplate(view)
+                }}
+              >
+                {t('html.template')}
+              </button>
+            </div>
+          </div>
+        )}
+        <div className={`${ROOT_CLASS}-editor-row`}>
+          <div
+            ref={hostRef}
+            className={`${ROOT_CLASS}-editor-host`}
+            style={{ display: phase === 'editing' ? undefined : 'none' }}
+          />
+          {phase === 'editing' && htmlActiveRef.current && outlineOpen && (
+            <HtmlOutlinePanel
+              nodes={htmlOutlineNodes}
+              onClose={() => setOutlineOpen(false)}
+              onSelect={node => revealHtmlOffset(node.nameFrom, node.nameFrom)}
+              t={t}
+            />
+          )}
         {phase !== 'editing' && (
           <div className={`${ROOT_CLASS}-center`}>
             {phase === 'loading' && (
@@ -1370,6 +1676,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
             )}
           </div>
         )}
+        </div>
       </div>
       <footer className={`${ROOT_CLASS}-status`} aria-live="polite">
         {phase === 'editing' && navigationAddress !== undefined && (

@@ -70,6 +70,25 @@ export interface ConfigFormsService {
   whileServed(namespaces: string[], register: (served: Set<string>) => () => void): () => void
 }
 
+/** Result envelope of DSH's public Session Remote methods. */
+export type RemoteResult<T> =
+  | { ok: true, value: T }
+  | { ok: false, error: { code: string, message: string } }
+
+/** Public Session Remote methods CodeCraft uses for browser preview. */
+export interface SessionRemoteService {
+  openWorkspacePath(request: {
+    path: string
+    action?: 'reveal'
+    application?: string
+  }): Promise<RemoteResult<{ opened: boolean }>>
+  canOpenWorkspacePath(): Promise<RemoteResult<boolean>>
+}
+
+export interface RemoteService {
+  session: SessionRemoteService
+}
+
 export interface SidebarRightService {
   openResource(address: string, options?: {
     params?: Record<string, unknown>
@@ -85,6 +104,10 @@ export interface ClientContext {
   locale: LocaleService
   configForms: ConfigFormsService
   sidebarRight: SidebarRightService
+  /** Injected namespaces; only present when the enclosing plugin declares them. */
+  remote?: RemoteService
+  /** Wait for optional services and run a child scope when they are available. */
+  inject(dependencies: string[], callback: (ctx: ClientContext) => void): void
   effect(callback: () => (() => void) | void, label?: string): void
 }
 

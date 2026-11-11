@@ -17,6 +17,8 @@ import { drafts } from '../drafts.js'
 import { en, zh } from '../locales.js'
 import { CODECRAFT_CSS } from '../theme.js'
 import { navigationCoordinator } from '../navigation/coordinator.js'
+import { PreviewInBrowserAction } from '../renderer/PreviewInBrowserAction.js'
+import { bindHtmlPreviewOpener } from '../languages/html/preview.js'
 
 /** Browser services required before mounting. */
 export const inject = ['documentPreviews', 'slots', 'locale', 'configForms', 'sidebarRight']
@@ -95,4 +97,29 @@ export function apply(ctx: ClientContext): void {
     key: PREVIEW_ID,
     locale: LOCALE_NAMESPACE,
   }, CodeCraftBody)), 'dsh-codecraft: renderer body')
+
+  // The native document header owns the file-level action area. The action
+  // renders only while this plugin's HTML body has registered a controller.
+  ctx.effect(() => ctx.slots.inject('sidebar.right.tab.document.actions', () => ctx.slots.register({
+    name: 'sidebar.right.tab.document.actions',
+    id: 'dsh-codecraft-html-preview',
+    order: 40,
+    locale: LOCALE_NAMESPACE,
+  }, PreviewInBrowserAction)), 'dsh-codecraft: HTML preview action')
+
+  // Preview uses DSH's public Session Remote path opener. A deployment without
+  // the service keeps the editor and every other HTML feature.
+  if (typeof ctx.inject !== 'function') return
+  ctx.inject(['remote', 'remote.session'], child => {
+    const session = child.remote?.session
+    if (session === undefined) return
+    child.effect(() => bindHtmlPreviewOpener(async path => {
+      try {
+        const result = await session.openWorkspacePath({ path })
+        return result.ok && result.value.opened
+      } catch {
+        return false
+      }
+    }), 'dsh-codecraft: default-browser preview')
+  })
 }
