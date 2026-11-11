@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed; native acceptance pending |
+| Status | Validated on macOS and Windows; release ready |
 | Target version | 0.4.1 |
 | Baseline | 0.4.0 |
 | Release type | Patch feature enhancement |
@@ -243,7 +243,7 @@ src/client/languages/html/
 
 The native integration adds one list-slot action (`sidebar.right.tab.document.actions`) in `src/client/core/plugin.ts` through `PreviewInBrowserAction.tsx`. `CodeCraftBody.tsx` owns the live dirty/save state, the save-before-preview banner, the HTML breadcrumb toolbar, and the Outline panel. No Host route, provider, process, or setting was added.
 
-`npm run check` passes on the implementation revision, including 226 Vitest tests. Native macOS and Windows DSH Desktop acceptance remains required and is recorded in [validation.md](validation.md).
+`npm run check` passes on the implementation revision, including 226 Vitest tests. The complete macOS and Windows DSH Desktop manual matrix was confirmed by the user and is recorded in [validation.md](validation.md).
 
 ## Definition of Done
 

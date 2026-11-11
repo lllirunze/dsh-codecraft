@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.4.0 在 macOS 和 Windows 上提供已验证的离线 HTML 编辑辅助。
+> **当前状态：** v0.4.1 在 macOS 和 Windows 上提供已验证的 HTML 高效编辑、本地导航、格式化、Emmet 与默认浏览器预览。
 
 ## 功能
 
@@ -35,6 +35,12 @@
 - 完全离线支持 Java 括号、缩进、行注释、折叠以及常用声明和控制流代码片段。
 - 为 `.html` 和 `.htm` 文件提供离线 HTML5 解析、高亮、上下文标签与属性补全、枚举值、实体、标签闭合、注释及主动选择的代码片段。
 - HTML 回车根据语法结构使用已配置的 2 格或 4 格缩进，并按照标准处理 void 元素和可选结束标签元素。
+- 为 HTML 标准标签、属性和已知属性值提供离线参考 Hover，并提供嵌套大纲、DOM 祖先面包屑和当前元素范围高亮。
+- 支持 HTML 元素与多行注释折叠、开始/结束标签匹配跳转，以及按属性值、属性、开始标签、完整元素逐级扩大或缩小选区。
+- 在原生 Tab 中打开工作区内的相对本地 `src`/`href` 资源与同文档 `#id` 目标；目标缺失或重复时给出明确提示。
+- 使用全局 2 格或 4 格缩进格式化整篇 HTML 或完整选中行，同时保护 `pre`、`textarea` 和行内文本空白。
+- 仅在显式补全或命令操作时展开支持的 Emmet 标记子集，并插入 HTML5 文档模板。
+- 为当前 HTML 编辑器提供原生 **在浏览器中预览** 按钮；必要时先确认保存，再通过操作系统默认浏览器打开已保存文件。
 - 取消过期补全请求、限制 Pyright 恢复次数，并在工作区没有 Python 文档后清理语言服务器会话。
 - 在 DSH 设置中提供可选的自动保存，可选择 10、30、60 或 120 秒；默认关闭。
 - macOS 使用 `Cmd+S`、Windows 使用 `Ctrl+S` 保存，并显示未保存、保存中、已保存、失败和只读状态。
@@ -51,7 +57,7 @@
 | 基础编辑器 | macOS 或 Windows |
 | Python 智能编程 | macOS 或 Windows |
 | Java 编辑 | v0.3.0 支持 macOS 或 Windows；无需 JDK |
-| HTML 编辑 | v0.4.0 支持 macOS 或 Windows；完全离线 |
+| HTML 编辑 | v0.4.1 支持 macOS 或 Windows；完全离线 |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 从源码构建时需要 20 或更高版本 |
 
@@ -88,7 +94,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.4.0
+dsh plugin --profile desktop add dsh-codecraft@0.4.1
 ```
 
 更新后重启 DSH Desktop。

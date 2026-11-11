@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.4.0 adds validated offline HTML editing assistance on macOS and Windows.
+> **Status:** v0.4.1 adds validated HTML productivity, local navigation, formatting, Emmet, and default-browser preview on macOS and Windows.
 
 ## Features
 
@@ -35,6 +35,12 @@
 - Supports Java brackets, indentation, line comments, folding, and common declaration or control-flow snippets entirely offline.
 - Provides offline HTML5 parsing, highlighting, contextual tag and attribute completion, enumerated values, entities, tag closing, comments, and explicitly selected snippets for `.html` and `.htm` files.
 - Uses syntax-aware HTML Enter behavior with the configured two- or four-space indentation and standards-aware handling for void and optional-end elements.
+- Shows offline HTML reference Hover for standard tags, attributes, and known values, with a nested Outline, DOM ancestor breadcrumbs, and current-element scope highlighting.
+- Folds HTML elements and multiline comments, jumps between matching start and end tags, and expands or shrinks selections through attribute value, attribute, start tag, and complete element.
+- Navigates relative local `src`/`href` resources inside the workspace and same-document `#id` targets in native tabs, with explicit feedback when a target is missing or ambiguous.
+- Formats whole HTML documents or complete selected lines with the shared two- or four-space setting while preserving `pre`, `textarea`, and inline text whitespace.
+- Expands the required Emmet markup subset and inserts an HTML5 document template only through explicit completion or command actions.
+- Adds a native **Preview in Browser** action for the active HTML editor, saving confirmed edits first and opening the saved file in the operating system default browser.
 - Cancels stale completion work, bounds Pyright recovery, and retires idle workspace language-server sessions.
 - Offers optional auto save in DSH Settings with 10, 30, 60, or 120-second intervals; it is disabled by default.
 - Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
@@ -51,7 +57,7 @@
 | Base editor | macOS or Windows |
 | Python Intelligence | macOS or Windows |
 | Java editing | macOS or Windows in v0.3.0; no JDK required |
-| HTML editing | macOS or Windows in v0.4.0; fully offline |
+| HTML editing | macOS or Windows in v0.4.1; fully offline |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 20 or later when building from source |
 
@@ -88,7 +94,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.4.0
+dsh plugin --profile desktop add dsh-codecraft@0.4.1
 ```
 
 Restart DSH Desktop after updating.

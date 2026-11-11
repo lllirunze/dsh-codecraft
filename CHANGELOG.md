@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.1] - 2026-11-11
+
+### Added
+
+- Added offline HTML Hover for standard tags, attributes, and known attribute values using the bundled HTML reference data.
+- Added a nested HTML Outline, DOM ancestor breadcrumbs, and a subtle highlight for the element containing the caret.
+- Added multiline HTML comment folding, start/end tag matching navigation, and syntax-aware expand/shrink selection.
+- Added navigation for relative local `src`/`href` resources and same-document `#id` targets with explicit failure feedback.
+- Added whole-document and selection HTML formatting that follows the shared two- or four-space indentation setting.
+- Added explicit Emmet abbreviation expansion and HTML5 template insertion without intercepting ordinary Tab.
+- Added a native **Preview in Browser** action that protects unsaved edits and opens the saved HTML file through the operating system's default file association.
+
+### Changed
+
+- Kept every new HTML capability inside the existing single HTML Editing Assistance switch and browser-local module, with no language server, development server, embedded WebView, or new Host route.
+
 ## [0.4.0] - 2026-11-09
 
 ### Added

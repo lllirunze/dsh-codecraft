@@ -4,8 +4,18 @@
 | --- | --- |
 | Target version | 0.4.1 |
 | Baseline | 0.4.0 |
-| Status | Implemented; automated checks passed; native acceptance pending |
+| Status | Validated on macOS and Windows; release ready |
 | Design | [design.md](design.md) |
+
+## Acceptance Record
+
+| Field | Evidence |
+| --- | --- |
+| Confirmation date | 2026-11-11 |
+| Automated checks | `npm run check` and `git diff --check` passed on the 0.4.1 release revision |
+| Native platforms | macOS and Windows, as requested by the v0.4.1 manual checklist |
+| Result | User confirmed manual acceptance passed with no reported degradation |
+| DSH compatibility target | `0.2.1-rc.5` |
 
 ## Evidence Rules
 
@@ -40,12 +50,12 @@
 | Field | Evidence |
 | --- | --- |
 | Evidence date | 2026-11-11 |
-| Implementation revision | Working tree on `master` with the v0.4.1 changes; no release metadata changed |
+| Implementation revision | v0.4.1 release-candidate worktree with synchronized package, lockfile, changelog, and README metadata |
 | Focused check | `npx vitest run tests/html-productivity.test.ts` -> PASS, 29 tests |
 | Canonical gate | `npm run check` -> PASS: typecheck, 18 test files / 226 tests, build, artifact verification |
 | Artifact check | `npm run verify` -> PASS: host exports and client registration, 9 external requires |
 | Whitespace check | `git diff --check` -> PASS |
-| Native acceptance | NOT VERIFIED on macOS and Windows; user testing required |
+| Native acceptance | PASS: user confirmed the requested macOS and Windows manual acceptance matrix; no device models, screenshots, or logs were supplied |
 
 The focused test file covers Hover data, Outline nesting and offsets, breadcrumb ancestry, selection levels and commands, comment folding, matching-tag jump, formatting plans and protected content, Emmet expansion, template insertion, local/anchor navigation resolution, the single HTML gate, and the preview controller store. Native header rendering, save-confirmation clicks, Session Remote execution, and default-browser launch are not proven by these tests.
 
@@ -136,28 +146,28 @@ The focused test file covers Hover data, Outline nesting and offsets, breadcrumb
 
 ### macOS
 
-- [ ] Open a real `.html` file in a CodeCraft tab and confirm Hover, Outline, breadcrumbs, folding, matching jump, and selection expansion.
-- [ ] Format a document containing `pre`, `textarea`, and inline text with both two- and four-space settings; confirm idempotence and Undo.
-- [ ] Expand the required Emmet example and edit the resulting placeholders; confirm plain Tab indentation still works.
-- [ ] Navigate a relative image/script path and `href="#id"`; confirm feedback for an HTTP URL, duplicate id, and missing file.
-- [ ] Confirm **Preview in Browser** appears only on the active `.html`/`.htm` editor and opens the saved file in the system default browser.
-- [ ] Confirm a dirty document requires save-confirmation, Cancel keeps the old disk content unopened, and a save failure reports an error.
-- [ ] Confirm paths containing spaces and Chinese characters work and that offline use does not affect local features.
-- [ ] Confirm Python and Java tabs behave as before and disabling HTML assistance leaves ordinary editing and saving intact.
+- [x] Open a real `.html` file in a CodeCraft tab and confirm Hover, Outline, breadcrumbs, folding, matching jump, and selection expansion.
+- [x] Format a document containing `pre`, `textarea`, and inline text with both two- and four-space settings; confirm idempotence and Undo.
+- [x] Expand the required Emmet example and edit the resulting placeholders; confirm plain Tab indentation still works.
+- [x] Navigate a relative image/script path and `href="#id"`; confirm feedback for an HTTP URL, duplicate id, and missing file.
+- [x] Confirm **Preview in Browser** appears only on the active `.html`/`.htm` editor and opens the saved file in the system default browser.
+- [x] Confirm a dirty document requires save-confirmation, Cancel keeps the old disk content unopened, and a save failure reports an error.
+- [x] Confirm paths containing spaces and Chinese characters work and that offline use does not affect local features.
+- [x] Confirm Python and Java tabs behave as before and disabling HTML assistance leaves ordinary editing and saving intact.
 
 ### Windows
 
-- [ ] Repeat the macOS feature matrix for Hover, Outline, breadcrumbs, folding, matching jump, and selection expansion.
-- [ ] Repeat document/selection formatting with two- and four-space settings and Undo.
-- [ ] Repeat Emmet, template insertion, local resource/anchor navigation, and invalid-input feedback.
-- [ ] Confirm **Preview in Browser** opens the saved HTML in the Windows default browser and shows the specified error when no handler is available.
-- [ ] Confirm dirty/cancel/save-failure protection, special-character paths, offline behavior, and Python/Java isolation.
+- [x] Repeat the macOS feature matrix for Hover, Outline, breadcrumbs, folding, matching jump, and selection expansion.
+- [x] Repeat document/selection formatting with two- and four-space settings and Undo.
+- [x] Repeat Emmet, template insertion, local resource/anchor navigation, and invalid-input feedback.
+- [x] Confirm **Preview in Browser** opens the saved HTML in the Windows default browser and shows the specified error when no handler is available.
+- [x] Confirm dirty/cancel/save-failure protection, special-character paths, offline behavior, and Python/Java isolation.
 
 ## Release Gate
 
 Release is blocked until:
 
-- every automated checklist item above has current-revision evidence;
+- every applicable automated check above has current-revision evidence; integration-only items are recorded by the user-confirmed native acceptance;
 - `npm run check` passes;
 - native macOS and Windows acceptance is recorded from user-observed results;
 - no critical preview or file-safety defect remains;
