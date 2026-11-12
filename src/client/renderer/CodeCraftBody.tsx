@@ -77,6 +77,7 @@ import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
 import { assessDiskChange } from '../document/conflicts.js'
 import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
 import { LatestSaveQueue } from '../document/save-queue.js'
+import { editorStatusKey } from '../document/status.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import type {
@@ -1440,17 +1441,12 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   if (props.content.kind !== 'renderer') return null
 
   const pending = phase === 'loading'
-  const statusKey = !fileWritable && phase === 'editing'
-    ? 'status.readOnly'
-    : status === 'saving'
-      ? 'status.saving'
-      : status === 'saved'
-        ? 'status.saved'
-        : status === 'error'
-          ? 'status.saveError'
-          : dirty
-            ? 'status.dirty'
-            : 'status.synced'
+  const statusKey = editorStatusKey({
+    writable: fileWritable,
+    conflicted: conflict !== null,
+    external,
+    saveFailed: status === 'error',
+  })
 
   let banner: { tone: 'warn' | 'error', title: string, detail: string, actions: BannerAction[] } | null = null
   if (conflict !== null) {
@@ -1832,21 +1828,15 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         )}
         {pending && <span className={`${ROOT_CLASS}-status-item`}>{t('status.loading')}</span>}
         <span className={`${ROOT_CLASS}-status-spacer`} />
-        {external && <span className={`${ROOT_CLASS}-status-item`} data-state="dirty">{t('status.external')}</span>}
-        {phase === 'editing' && dirty && fileWritable && (
-          <button
-            type="button"
-            className={`${ROOT_CLASS}-button`}
-            data-variant="quiet"
-            disabled={status === 'saving'}
-            onClick={() => { void doSave() }}
-          >
-            {t('action.save')}
-          </button>
-        )}
         {phase === 'editing' && (
-          <span className={`${ROOT_CLASS}-status-item`} data-state={statusKey === 'status.dirty' ? 'dirty' : status === 'error' ? 'error' : status === 'saved' ? 'saved' : undefined}>
-            {dirty && <span className={`${ROOT_CLASS}-dot`} aria-hidden="true" />}
+          <span
+            className={`${ROOT_CLASS}-status-item`}
+            data-state={statusKey === 'status.saveError'
+              ? 'error'
+              : statusKey === 'status.external'
+                ? 'dirty'
+                : undefined}
+          >
             {t(statusKey)}
           </span>
         )}

@@ -40,6 +40,7 @@ v0.4.1 already supplies the CodeMirror HTML parser, bundled `vscode-html-languag
 | SAVE-042-03 | Stop creating or restoring durable browser drafts | Reopening or switching to a file always loads the authoritative disk snapshot and shows no recovery prompt |
 | SAVE-042-04 | Remove legacy periodic AutoSave controls because saving is unconditional | Existing persisted AutoSave values are accepted for configuration compatibility but no longer control runtime saving |
 | SAVE-042-05 | Remove browser unload vetoes and legacy CodeCraft draft records | Plugin startup deletes only `dsh-codecraft/draft/v1/` records; unrelated browser storage is untouched |
+| SAVE-042-06 | Keep the normal editor status visually stable as `In sync` during edit-through writes | Read-only, external/conflict, and save-failure states replace the normal label; transient dirty/saving/saved states do not move or flash the footer |
 
 ## Architecture and Placement
 

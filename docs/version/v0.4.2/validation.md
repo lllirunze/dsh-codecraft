@@ -36,6 +36,7 @@
 | SAVE-042-03 | Disk-only initial state and legacy-draft migration tests | Reopen/switch tabs with no restore prompt |
 | SAVE-042-04 | Settings and typecheck regressions | AutoSave switch and interval are absent; edits still save unconditionally |
 | SAVE-042-05 | Prefix-scoped cleanup test and absence of unload handlers | Normal macOS/Windows quit succeeds without Force Quit |
+| SAVE-042-06 | Pure footer-status priority tests | Normal typing remains `In sync`; read-only, conflict, and failure labels remain visible when applicable |
 
 ## Current Automated Evidence
 
@@ -43,7 +44,8 @@
 | --- | --- |
 | Evidence date | 2026-11-12 |
 | Focused save/lifecycle check | `npx vitest run tests/save-queue.test.ts tests/drafts.test.ts tests/document.test.ts tests/settings.test.ts tests/files.test.ts tests/editor.test.ts` -> PASS, 6 files / 72 tests |
-| Canonical gate | `npm run check` -> PASS: typecheck, 21 test files / 236 tests, build, artifact verification |
+| Focused footer-status check | `npx vitest run tests/document-status.test.ts tests/save-queue.test.ts tests/document.test.ts tests/drafts.test.ts` -> PASS, 4 files / 11 tests |
+| Canonical gate | `npm run check` -> PASS: typecheck, 22 test files / 238 tests, build, artifact verification |
 | Artifact result | Host exports and client registration verified with 11 external requires |
 | Native acceptance | NOT VERIFIED on macOS and Windows |
 
@@ -92,7 +94,8 @@
 ### macOS
 
 - [ ] With a clean CodeCraft tab open, press **Command+Q** and confirm DSH Desktop exits normally without Force Quit.
-- [ ] Edit a writable file and confirm its status moves through saving to saved immediately, without waiting for a timer or pressing Command+S.
+- [ ] Edit a writable file without pressing Command+S and confirm the disk content updates immediately.
+- [ ] While typing normally, confirm the footer stays visually stable as `In sync` with no transient Save button, dot, Saving, or Saved flash.
 - [ ] Type rapidly, then Undo and Redo while saving; confirm the final disk content exactly matches the editor and no older write wins.
 - [ ] Switch tabs, close the edited tab, reopen the file, and confirm the saved disk content appears with no draft-recovery prompt.
 - [ ] Press **Command+Q** immediately after an edit, confirm DSH Desktop exits without Force Quit, then restart and verify the edit is on disk.
