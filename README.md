@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.4.1 adds validated HTML productivity, local navigation, formatting, Emmet, and default-browser preview on macOS and Windows.
+> **Status:** v0.4.2 adds validated offline HTML diagnostics, safe tag/ID rename, immediate saving, and normal Desktop exit on macOS and Windows.
 
 ## Features
 
@@ -41,11 +41,13 @@
 - Formats whole HTML documents or complete selected lines with the shared two- or four-space setting while preserving `pre`, `textarea`, and inline text whitespace.
 - Expands the required Emmet markup subset and inserts an HTML5 document template only through explicit completion or command actions.
 - Adds a native **Preview in Browser** action for the active HTML editor, saving confirmed edits first and opening the saved file in the operating system default browser.
+- Reports conservative offline HTML structure, attribute, link, document, accessibility, and deprecation problems with exact-range navigation.
+- Previews and safely applies paired-tag or current-document ID rename as one Undoable edit while rejecting stale, conflicting, or ambiguous changes.
 - Cancels stale completion work, bounds Pyright recovery, and retires idle workspace language-server sessions.
-- Offers optional auto save in DSH Settings with 10, 30, 60, or 120-second intervals; it is disabled by default.
-- Saves with `Cmd+S` on macOS or `Ctrl+S` on Windows and reports dirty, saving, saved, failed, and read-only states.
+- Saves every writable document change immediately through the conflict-checked write path while keeping the normal footer stable as `In sync`.
+- Retains `Cmd+S` on macOS and `Ctrl+S` on Windows, and reports save failures, conflicts, external changes, and read-only states.
 - Detects external changes and refuses stale writes.
-- Restores unsaved drafts after tab switches, tab closure, or page reloads.
+- Reopens files from their authoritative disk state without durable browser drafts or recovery prompts.
 - Preserves LF/CRLF, UTF-8 BOM, and POSIX file mode where supported.
 - Safely rejects files that are too large, binary, non-UTF-8, mixed-line-ending, or otherwise unsafe to edit.
 - Performs editing locally without model calls, telemetry, or file uploads.
@@ -57,7 +59,7 @@
 | Base editor | macOS or Windows |
 | Python Intelligence | macOS or Windows |
 | Java editing | macOS or Windows in v0.3.0; no JDK required |
-| HTML editing | macOS or Windows in v0.4.1; fully offline |
+| HTML editing | macOS or Windows in v0.4.2; fully offline |
 | DSH Desktop | `0.2.1-rc.5` |
 | Node.js | 20 or later when building from source |
 
@@ -94,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.4.1
+dsh plugin --profile desktop add dsh-codecraft@0.4.2
 ```
 
 Restart DSH Desktop after updating.
@@ -122,10 +124,10 @@ Restart DSH Desktop. Native file previews are restored automatically.
 
 1. Open a supported source or text file from DSH's workspace explorer.
 2. DSH opens its native file tab and selects the CodeCraft renderer.
-3. Edit the file and press `Cmd+S` on macOS or `Ctrl+S` on Windows, or use the Save action in the status bar.
+3. Edit the file; CodeCraft saves each writable change immediately through its conflict-checked save path. `Cmd+S` on macOS and `Ctrl+S` on Windows remain available.
 4. Use the viewer menu above the tab to switch to DSH's native Code or Plain Text preview when needed.
 
-Auto save is disabled by default. Open **Settings → CodeCraft** from the settings sidebar to enable it and choose a 10, 30, 60, or 120-second interval. Automatic and manual saves use the same conflict-safe write path.
+Immediate saving is always enabled for writable documents. The normal footer remains `In sync`; read-only, external-change, conflict, and save-failure states remain visible. Periodic AutoSave controls and durable draft recovery are no longer used.
 
 New indentation always uses spaces. In the same settings section, choose a width of two or four spaces; the change applies to open editors without rewriting existing file content. Python files additionally use syntax-aware Enter indentation for blocks, branches, and multiline expressions.
 
@@ -139,7 +141,7 @@ Hover over a Python identifier to see information supplied by Pyright. Use `Comm
 
 Java support activates automatically for `.java` files. Completion includes Java keywords, common standard-library type names, snippets such as `psvm` and `sout`, and identifiers found in the current document. Type `/**` above a complete method or constructor and press Enter to generate CodeCraft Structured Javadoc. Use **Settings → CodeCraft → Java Editing Assistance** to disable or restore these Java-specific features immediately for open and future Java tabs; the setting is enabled by default and persists across restarts. Ordinary editing and saving remain available while it is disabled. These features run locally without a JDK, JDT LS, a Java process, downloads, or network access. Java completion is lexical rather than project-aware: it does not resolve imports, dependencies, inferred members, or cross-file symbols.
 
-HTML support activates automatically for `.html` and `.htm` files. Completion covers standard tags, element-specific and global attributes, common enumerated values and entities, and explicitly selected HTML5 document, metadata, stylesheet, and form snippets. Eligible tags close locally, while void and optional-end elements follow HTML rules. Enter uses the configured two- or four-space indentation. Use **Settings → CodeCraft → HTML Editing Assistance** to disable or restore all HTML-specific behavior immediately for open and future HTML tabs; ordinary text editing and saving remain available while it is disabled. The status bar reports `HTML: Ready`, `HTML: Disabled`, or `HTML: Error`. No HTML language server, subprocess, runtime download, or network connection is used.
+HTML support activates automatically for `.html` and `.htm` files. Completion covers standard tags, element-specific and global attributes, common enumerated values and entities, and explicitly selected HTML5 document, metadata, stylesheet, and form snippets. Eligible tags close locally, while void and optional-end elements follow HTML rules. Enter uses the configured two- or four-space indentation. Conservative diagnostics report definite structure, attribute, link, document, accessibility, and deprecation problems. Paired-tag and unique current-document ID rename always show a preview and refuse unsafe or stale changes. Use **Settings → CodeCraft → HTML Editing Assistance** to disable or restore all HTML-specific behavior immediately for open and future HTML tabs; ordinary text editing and saving remain available while it is disabled. The status bar reports `HTML: Ready`, `HTML: Disabled`, or `HTML: Error`. No HTML language server, subprocess, runtime download, or network connection is used.
 
 ### Keyboard shortcuts
 
@@ -164,9 +166,8 @@ HTML support activates automatically for `.html` and `.htm` files. Completion co
 - Symbolic links are read-only.
 - Python signature help, diagnostics, automatic cross-file edits, and refactoring are not included.
 - Java semantic completion, diagnostics, navigation, refactoring, and build integration are not included.
-- HTML Hover, Outline, Emmet, formatting, diagnostics, refactoring, browser preview, and cross-language project association are not included.
+- HTML diagnostics and refactoring are intentionally current-document scoped; CSS/JavaScript analysis, cross-file rename, and cross-language project association are not included.
 - Linux has not been validated and is not currently supported.
-- There is no cross-window draft synchronization.
 
 ## License
 

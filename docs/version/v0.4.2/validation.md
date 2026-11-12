@@ -4,7 +4,7 @@
 | --- | --- |
 | Target version | 0.4.2 |
 | Baseline | 0.4.1 |
-| Status | Automated validation passed; native macOS and Windows acceptance pending |
+| Status | Automated and native macOS and Windows acceptance passed |
 | Design | [design.md](design.md) |
 
 ## Evidence Rules
@@ -47,7 +47,7 @@
 | Focused footer-status check | `npx vitest run tests/document-status.test.ts tests/save-queue.test.ts tests/document.test.ts tests/drafts.test.ts` -> PASS, 4 files / 11 tests |
 | Canonical gate | `npm run check` -> PASS: typecheck, 22 test files / 238 tests, build, artifact verification |
 | Artifact result | Host exports and client registration verified with 11 external requires |
-| Native acceptance | NOT VERIFIED on macOS and Windows |
+| Native acceptance | PASS on macOS and Windows, reported by the user on 2026-11-12 |
 
 ## Native Defect and Retest Record
 
@@ -59,7 +59,7 @@
 | Observed before correction | Application did not terminate normally and required Force Quit |
 | Root cause | Cancelling `beforeunload` handlers in both plugin and editor lifecycles could leave the native shell waiting for an unavailable browser confirmation |
 | Correction | Removed unload vetoes and draft recovery; every document change now starts the existing checked save path, with later edits queued behind an in-flight save |
-| Current native status | NOT VERIFIED — immediate disk writes, tab switching, and macOS/Windows application quit must be tested in DSH Desktop |
+| Current native status | PASS — the user reported the required macOS and Windows DSH Desktop matrices passed on 2026-11-12 |
 
 ## Automated Validation
 
@@ -77,8 +77,8 @@
 - [x] Paired tag rename changes only uniquely paired tag-name ranges and rejects unsafe structures.
 - [x] ID rename changes one unique definition and exact same-document fragment links only.
 - [x] Duplicate IDs, new-name collision, invalid names, stale document state, and read-only/conflict apply guards produce zero changes.
-- [ ] Preview contains every affected location and replacement; Cancel is a no-op; one transaction is Undoable once. (Plan contents and one-step Undo are automated; UI Cancel/Confirm remains native acceptance.)
-- [ ] Problems and preview state remain local to one editor/tab and clean up on disable or teardown.
+- [x] Preview contains every affected location and replacement; Cancel is a no-op; one transaction is Undoable once. (Plan contents and one-step Undo are automated; UI Cancel/Confirm passed native acceptance.)
+- [x] Problems and preview state remain local to one editor/tab and clean up on disable or teardown.
 
 ### Regression gate
 
@@ -93,29 +93,29 @@
 
 ### macOS
 
-- [ ] With a clean CodeCraft tab open, press **Command+Q** and confirm DSH Desktop exits normally without Force Quit.
-- [ ] Edit a writable file without pressing Command+S and confirm the disk content updates immediately.
-- [ ] While typing normally, confirm the footer stays visually stable as `In sync` with no transient Save button, dot, Saving, or Saved flash.
-- [ ] Type rapidly, then Undo and Redo while saving; confirm the final disk content exactly matches the editor and no older write wins.
-- [ ] Switch tabs, close the edited tab, reopen the file, and confirm the saved disk content appears with no draft-recovery prompt.
-- [ ] Press **Command+Q** immediately after an edit, confirm DSH Desktop exits without Force Quit, then restart and verify the edit is on disk.
-- [ ] Confirm the CodeCraft settings page no longer shows an AutoSave switch or interval.
-- [ ] Open a full HTML page containing a mismatch, duplicate attribute, invalid `target`, duplicate ID, missing fragment target, missing `alt`, missing label target, and deprecated element; verify each severity/reason/range and Problems navigation.
-- [ ] Correct issues and confirm stale entries and waves disappear without changing another tab's results.
-- [ ] Open a legal fragment with optional `li`/`p` closing, void elements, `alt=""`, boolean attributes, comments, and text containing `<`; confirm no listed false positives.
-- [ ] Rename `<section>…</section>` to `article`: inspect two preview entries, Cancel once with zero change, repeat Confirm, and Undo once to restore both names.
-- [ ] Rename a unique `id="profile"` to `account`; confirm exact `href="#profile"` references change while CSS, JavaScript, comments, text, and another file do not.
-- [ ] Confirm duplicate source ID, target-name collision, invalid new name, self-closing/void/mismatched tag, read-only state, external disk change, and edits made after preview all refuse with zero partial change.
-- [ ] Disable/re-enable HTML assistance and confirm diagnostics/refactoring disappear/return without affecting edit-through saving or native tab behavior.
-- [ ] Repeat with paths containing spaces and Chinese characters, multiple tabs, a larger HTML file, and no network; confirm Python and Java remain unchanged.
+- [x] With a clean CodeCraft tab open, press **Command+Q** and confirm DSH Desktop exits normally without Force Quit.
+- [x] Edit a writable file without pressing Command+S and confirm the disk content updates immediately.
+- [x] While typing normally, confirm the footer stays visually stable as `In sync` with no transient Save button, dot, Saving, or Saved flash.
+- [x] Type rapidly, then Undo and Redo while saving; confirm the final disk content exactly matches the editor and no older write wins.
+- [x] Switch tabs, close the edited tab, reopen the file, and confirm the saved disk content appears with no draft-recovery prompt.
+- [x] Press **Command+Q** immediately after an edit, confirm DSH Desktop exits without Force Quit, then restart and verify the edit is on disk.
+- [x] Confirm the CodeCraft settings page no longer shows an AutoSave switch or interval.
+- [x] Open a full HTML page containing a mismatch, duplicate attribute, invalid `target`, duplicate ID, missing fragment target, missing `alt`, missing label target, and deprecated element; verify each severity/reason/range and Problems navigation.
+- [x] Correct issues and confirm stale entries and waves disappear without changing another tab's results.
+- [x] Open a legal fragment with optional `li`/`p` closing, void elements, `alt=""`, boolean attributes, comments, and text containing `<`; confirm no listed false positives.
+- [x] Rename `<section>…</section>` to `article`: inspect two preview entries, Cancel once with zero change, repeat Confirm, and Undo once to restore both names.
+- [x] Rename a unique `id="profile"` to `account`; confirm exact `href="#profile"` references change while CSS, JavaScript, comments, text, and another file do not.
+- [x] Confirm duplicate source ID, target-name collision, invalid new name, self-closing/void/mismatched tag, read-only state, external disk change, and edits made after preview all refuse with zero partial change.
+- [x] Disable/re-enable HTML assistance and confirm diagnostics/refactoring disappear/return without affecting edit-through saving or native tab behavior.
+- [x] Repeat with paths containing spaces and Chinese characters, multiple tabs, a larger HTML file, and no network; confirm Python and Java remain unchanged.
 
 ### Windows
 
-- [ ] Repeat the immediate-save, rapid-edit/Undo/Redo, tab-close/reopen, no-recovery-prompt, settings, and immediate-quit checks from macOS.
-- [ ] Repeat the complete diagnostics and legal-boundary matrix.
-- [ ] Repeat paired-tag preview/Cancel/Confirm/one-Undo and current-document ID rename.
-- [ ] Repeat refusal, stale-preview, external-change, multi-tab, larger-file, disabled-gate, offline, special-path, Python, and Java checks.
+- [x] Repeat the immediate-save, rapid-edit/Undo/Redo, tab-close/reopen, no-recovery-prompt, settings, and immediate-quit checks from macOS.
+- [x] Repeat the complete diagnostics and legal-boundary matrix.
+- [x] Repeat paired-tag preview/Cancel/Confirm/one-Undo and current-document ID rename.
+- [x] Repeat refusal, stale-preview, external-change, multi-tab, larger-file, disabled-gate, offline, special-path, Python, and Java checks.
 
 ## Release Gate
 
-Release is blocked until every applicable automated item has current evidence, the user reports both native platform matrices, no critical diagnostic/refactoring/save-safety defect remains, and the user explicitly requests the separate release workflow. Package versions, changelog, README release claims, commits, pushes, tags, and publication are not part of implementation.
+PASS — every applicable automated item has current evidence, the user reported both native platform matrices passed, no critical diagnostic/refactoring/save-safety defect remains, and the user explicitly requested the separate release workflow on 2026-11-12.

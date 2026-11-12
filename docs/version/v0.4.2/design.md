@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented with automated validation; native macOS and Windows acceptance pending |
+| Status | Implemented and validated on macOS and Windows |
 | Target version | 0.4.2 |
 | Baseline | 0.4.1 |
 | Release type | Patch feature enhancement |
@@ -119,8 +119,8 @@ src/client/renderer/
 
 `@codemirror/lint` is now a direct pinned development dependency (it was already present transitively). The bundled HTML metadata and fixed rule tables remain offline. No Host, protocol, route, process, network, save path, or setting was added.
 
-The current implementation has focused coverage for immediate-save serialization, legacy-draft cleanup, disk-only reopening, settings, file conflicts, and editor behavior. The full `npm run check` result is recorded in [validation.md](validation.md). Native DSH Desktop behavior, including immediate write-through and corrected macOS/Windows quit flow, remains unverified until the user completes the platform checklist.
+The current implementation has focused coverage for immediate-save serialization, legacy-draft cleanup, disk-only reopening, settings, file conflicts, and editor behavior. The full `npm run check` result and completed native macOS and Windows acceptance are recorded in [validation.md](validation.md).
 
 ## Definition of Done
 
-HTML-042-01 through HTML-042-12 have current automated evidence; diagnostics remain conservative and offline; problem navigation and both rename flows work only in the owning HTML tab; preview, cancellation, staleness protection, one-transaction application, and one-step Undo are verified; the single HTML gate and sibling languages regress cleanly; `npm run check` passes; and the user reports the required native macOS and Windows acceptance. Automated implementation is complete, but native acceptance and release authorization are still outstanding. Release remains a separate explicitly authorized workflow.
+HTML-042-01 through HTML-042-12 have current automated evidence; diagnostics remain conservative and offline; problem navigation and both rename flows work only in the owning HTML tab; preview, cancellation, staleness protection, one-transaction application, and one-step Undo are verified; the single HTML gate and sibling languages regress cleanly; `npm run check` passes; and the user reports the required native macOS and Windows acceptance. The user separately authorized the v0.4.2 release workflow on 2026-11-12.

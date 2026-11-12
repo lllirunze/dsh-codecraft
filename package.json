@@ -1,6 +1,6 @@
 {
   "name": "dsh-codecraft",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A precise, safe code editor inside DSH's native file tabs.",
   "repository": {
     "type": "git",

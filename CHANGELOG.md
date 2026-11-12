@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.2] - 2026-11-12
+
+### Added
+
+- Added offline HTML diagnostics for malformed structure, invalid attributes and values, duplicate or missing targets, document skeletons, accessibility issues, and deprecated constructs.
+- Added a current-tab Problems list with exact-range navigation and stale-result isolation.
+- Added previewed, syntax-aware paired-tag and current-document ID rename with explicit confirmation, refusal guards, and one-step Undo.
+
+### Changed
+
+- Replaced periodic AutoSave and durable draft recovery with immediate conflict-checked saving after every writable document change.
+- Kept the normal editor footer stable as `In sync` while preserving visible read-only, external-change, conflict, and save-failure states.
+
+### Fixed
+
+- Removed browser unload vetoes that could prevent normal DSH Desktop exit on macOS or Windows.
+
 ## [0.4.1] - 2026-11-11
 
 ### Added
