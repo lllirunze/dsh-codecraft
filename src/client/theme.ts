@@ -124,6 +124,8 @@ body[data-ds-dark-theme] .dsh-codecraft {
   display: flex;
   align-items: center;
   gap: 4px;
+  max-width: 68%;
+  overflow-x: auto;
 }
 .dsh-codecraft-html-actions .dsh-codecraft-button { font-size: 11px; line-height: 18px; padding: 0 7px; }
 .dsh-codecraft-outline {
@@ -188,6 +190,90 @@ body[data-ds-dark-theme] .dsh-codecraft {
   padding: 12px;
   color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .62));
 }
+.dsh-codecraft-problems { width: min(360px, 45%); }
+.dsh-codecraft-problem-list {
+  margin: 0;
+  padding: 4px 0;
+  overflow: auto;
+  list-style: none;
+}
+.dsh-codecraft-problem {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dsh-codecraft-problem:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .05)); }
+.dsh-codecraft-problem-severity {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-business-primary, #4078f2);
+}
+.dsh-codecraft-problem[data-severity="error"] .dsh-codecraft-problem-severity { background: var(--dsw-alias-state-error-primary, #d1242f); }
+.dsh-codecraft-problem[data-severity="warning"] .dsh-codecraft-problem-severity { background: var(--dsw-alias-state-warn-primary, #b76e00); }
+.dsh-codecraft-problem-content { min-width: 0; display: grid; gap: 2px; }
+.dsh-codecraft-problem-content small {
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dsh-codecraft-rename {
+  flex: none;
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1, rgba(0, 0, 0, .08));
+  background: var(--dsw-alias-bg-layer-2, #f7f7f8);
+  font-size: 12px;
+}
+.dsh-codecraft-rename-header,
+.dsh-codecraft-rename-form,
+.dsh-codecraft-rename-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dsh-codecraft-rename-header { justify-content: space-between; }
+.dsh-codecraft-rename-form { margin-top: 6px; }
+.dsh-codecraft-rename-input {
+  flex: 1 1 auto;
+  min-width: 120px;
+  padding: 4px 7px;
+  border: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .16));
+  border-radius: 4px;
+  background: var(--dsw-alias-bg-layer-1, #ffffff);
+  color: inherit;
+  font: inherit;
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+.dsh-codecraft-rename-error { margin-top: 6px; color: var(--dsw-alias-state-error-primary, #d1242f); }
+.dsh-codecraft-rename-summary { margin-top: 8px; color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .62)); }
+.dsh-codecraft-rename-file {
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45));
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dsh-codecraft-rename-list {
+  max-height: 120px;
+  margin: 5px 0;
+  padding-left: 24px;
+  overflow: auto;
+}
+.dsh-codecraft-rename-list li { display: flex; align-items: center; gap: 7px; margin: 2px 0; }
+.dsh-codecraft-rename-list code { padding: 1px 4px; border-radius: 3px; background: var(--dsw-alias-bg-layer-1, #ffffff); }
+.dsh-codecraft-rename-actions { justify-content: flex-end; }
 .dsh-codecraft-toast {
   flex: none;
   padding: 6px 12px;

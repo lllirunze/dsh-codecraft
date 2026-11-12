@@ -2,6 +2,7 @@ import { LanguageSupport } from '@codemirror/language'
 import { html, htmlLanguage } from '@codemirror/lang-html'
 import type { EditorLanguageAdapter } from '../EditorLanguageAdapter.js'
 import { htmlCompletionSource } from './features/completion.js'
+import { htmlDiagnosticExtensions } from './features/diagnostics.js'
 import { htmlEmmetCompletionSource, htmlEmmetExtensions } from './features/emmet.js'
 import { htmlFormattingExtensions } from './features/formatting.js'
 import { htmlHoverExtensions } from './features/hover.js'
@@ -31,6 +32,7 @@ export const htmlEditorLanguage: EditorLanguageAdapter = {
   createEditorExtensions: () => [
     htmlTagClosingExtensions(),
     htmlIndentationExtensions(),
+    htmlDiagnosticExtensions(),
     htmlStructureExtensions(),
     htmlHoverExtensions(),
     htmlFormattingExtensions(),

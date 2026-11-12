@@ -51,8 +51,20 @@ import {
 import { navigationCoordinator, type NavigationPoint } from '../navigation/coordinator.js'
 import { ROOT_CLASS } from '../theme.js'
 import { HtmlOutlinePanel } from './HtmlOutlinePanel.js'
+import { HtmlProblemsPanel } from './HtmlProblemsPanel.js'
+import { HtmlRenamePanel } from './HtmlRenamePanel.js'
 import { htmlBreadcrumbs, type HtmlBreadcrumb } from '../languages/html/features/structure.js'
 import { htmlOutline, type HtmlOutlineNode } from '../languages/html/features/outline.js'
+import { analyzeHtml, type HtmlDiagnostic } from '../languages/html/features/diagnostics.js'
+import {
+  htmlIdAt,
+  htmlTagAt,
+  canApplyHtmlRefactor,
+  planHtmlIdRename,
+  planHtmlTagRename,
+  type HtmlRefactorError,
+  type HtmlRefactorPlan,
+} from '../languages/html/features/refactoring.js'
 import { formatHtmlDocument, formatHtmlSelection } from '../languages/html/features/formatting.js'
 import { insertHtmlTemplate } from '../languages/html/features/emmet.js'
 import { bindHtmlFeatureHost, unbindHtmlFeatureHost } from '../languages/html/features/host.js'
@@ -121,6 +133,14 @@ interface NavigationPanel {
   message?: string
 }
 
+interface HtmlRenameSession {
+  kind: 'tag' | 'id'
+  position: number
+  newName: string
+  plan?: HtmlRefactorPlan
+  error?: string
+}
+
 function containsPosition(location: IntelligenceLocation, path: string, position: { line: number, character: number }): boolean {
   if (location.path.replaceAll('\\', '/') !== path.replaceAll('\\', '/')) return false
   const { start, end } = location.range
@@ -170,6 +190,16 @@ const HTML_REPORT_KEYS: Record<string, string> = {
   'unsupported-selection': 'html.format.unsupportedSelection',
   'formatter-failed': 'html.format.failed',
   'outside-selection': 'html.format.outsideSelection',
+}
+
+const HTML_REFACTOR_KEYS: Record<HtmlRefactorError, string> = {
+  'not-tag': 'html.rename.error.notTag',
+  'not-id': 'html.rename.error.notId',
+  'invalid-name': 'html.rename.error.invalidName',
+  'unsafe-tag': 'html.rename.error.unsafeTag',
+  'duplicate-id': 'html.rename.error.duplicateId',
+  'id-conflict': 'html.rename.error.idConflict',
+  unchanged: 'html.rename.error.unchanged',
 }
 
 function messageOf(error: unknown): string {
@@ -282,6 +312,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const flashTimerRef = useRef<number | undefined>(undefined)
   const copyTimerRef = useRef<number | undefined>(undefined)
   const intelligenceTimerRef = useRef<number | undefined>(undefined)
+  const htmlDiagnosticTimerRef = useRef<number | undefined>(undefined)
   const intelligenceRevisionRef = useRef(1)
   const intelligenceGenerationRef = useRef(0)
   const intelligenceDocumentIdRef = useRef<string | undefined>(undefined)
@@ -310,7 +341,10 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [languageId, setLanguageId] = useState('plain')
   const [htmlCrumbs, setHtmlCrumbs] = useState<HtmlBreadcrumb[]>([])
   const [htmlOutlineNodes, setHtmlOutlineNodes] = useState<HtmlOutlineNode[]>([])
+  const [htmlDiagnostics, setHtmlDiagnostics] = useState<HtmlDiagnostic[]>([])
   const [outlineOpen, setOutlineOpen] = useState(false)
+  const [problemsOpen, setProblemsOpen] = useState(false)
+  const [htmlRename, setHtmlRename] = useState<HtmlRenameSession | null>(null)
   const [featureNotice, setFeatureNotice] = useState<FeatureNotice | null>(null)
   const [previewPrompt, setPreviewPrompt] = useState(false)
 
@@ -479,7 +513,10 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     } else {
       setHtmlCrumbs([])
       setHtmlOutlineNodes([])
+      setHtmlDiagnostics([])
       setOutlineOpen(false)
+      setProblemsOpen(false)
+      setHtmlRename(null)
     }
   }, [htmlEditingAssistance.enabled])
 
@@ -609,6 +646,34 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   }, [])
   syncIntelligenceDocumentRef.current = syncIntelligenceDocument
 
+  const scheduleHtmlDiagnostics = useCallback((view: EditorView): void => {
+    if (htmlDiagnosticTimerRef.current !== undefined) {
+      window.clearTimeout(htmlDiagnosticTimerRef.current)
+    }
+    const document = view.state.doc
+    htmlDiagnosticTimerRef.current = window.setTimeout(() => {
+      htmlDiagnosticTimerRef.current = undefined
+      const current = viewRef.current
+      if (current !== view || current.state.doc !== document || !htmlActiveRef.current) return
+      setHtmlDiagnostics(analyzeHtml(current.state))
+    }, 300)
+  }, [])
+
+  useEffect(() => {
+    const view = viewRef.current
+    if (!htmlActiveRef.current || view === null) {
+      if (htmlDiagnosticTimerRef.current !== undefined) {
+        window.clearTimeout(htmlDiagnosticTimerRef.current)
+        htmlDiagnosticTimerRef.current = undefined
+      }
+      setHtmlDiagnostics([])
+      setProblemsOpen(false)
+      setHtmlRename(null)
+      return
+    }
+    setHtmlDiagnostics(analyzeHtml(view.state))
+  }, [languageId, htmlEditingAssistance.enabled, htmlStatus, phase])
+
   const onUpdate = useCallback((update: ViewUpdate) => {
     if (update.docChanged) {
       navigationAbortRef.current?.abort()
@@ -617,6 +682,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       syncDirty(update.view)
       scheduleDraft()
       intelligenceRevisionRef.current += 1
+      if (htmlActiveRef.current) scheduleHtmlDiagnostics(update.view)
       if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
       intelligenceTimerRef.current = window.setTimeout(() => {
         intelligenceTimerRef.current = undefined
@@ -637,7 +703,98 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         if (view !== null && mountedRef.current) setCursor(cursorPosition(view))
       })
     }
-  }, [scheduleDraft, syncDirty, syncIntelligenceDocument])
+  }, [scheduleDraft, scheduleHtmlDiagnostics, syncDirty, syncIntelligenceDocument])
+
+  const startHtmlRename = useCallback((kind: 'tag' | 'id'): void => {
+    const view = viewRef.current
+    if (view === null || !htmlActiveRef.current) return
+    const position = view.state.selection.main.head
+    const current = kind === 'tag'
+      ? htmlTagAt(view.state, position)
+      : htmlIdAt(view.state, position)
+    if (current === undefined) {
+      showFeatureNotice(tRef.current(kind === 'tag' ? 'html.rename.error.notTag' : 'html.rename.error.notId'))
+      return
+    }
+    setHtmlRename({ kind, position, newName: current })
+  }, [showFeatureNotice])
+
+  const previewHtmlRename = useCallback((): void => {
+    const view = viewRef.current
+    if (view === null || htmlRename === null) return
+    const result = htmlRename.kind === 'tag'
+      ? planHtmlTagRename(view.state, htmlRename.position, htmlRename.newName)
+      : planHtmlIdRename(view.state, htmlRename.position, htmlRename.newName)
+    if ('error' in result) {
+      setHtmlRename({
+        kind: htmlRename.kind,
+        position: htmlRename.position,
+        newName: htmlRename.newName,
+        error: tRef.current(HTML_REFACTOR_KEYS[result.error]),
+      })
+      return
+    }
+    setHtmlRename({
+      kind: htmlRename.kind,
+      position: htmlRename.position,
+      newName: htmlRename.newName,
+      plan: result.plan,
+    })
+  }, [htmlRename])
+
+  const confirmHtmlRename = useCallback(async (): Promise<void> => {
+    const session = htmlRename
+    const plan = session?.plan
+    const view = viewRef.current
+    const parsed = parsedRef.current
+    if (session === null || session === undefined || plan === undefined || view === null || parsed === null) return
+    const fail = (key: string): void => {
+      setHtmlRename({
+        kind: session.kind,
+        position: session.position,
+        newName: session.newName,
+        plan,
+        error: tRef.current(key),
+      })
+    }
+    if (!canApplyHtmlRefactor(plan, view.state, {
+      active: htmlActiveRef.current,
+      readOnly: view.state.readOnly || readOnlyRef.current,
+      conflicted: conflictRef.current !== null,
+      saving: savingRef.current,
+    })) {
+      fail('html.rename.error.stale')
+      return
+    }
+    try {
+      const disk = await statFile(parsed)
+      if (viewRef.current !== view || view.state.doc !== plan.document || !htmlActiveRef.current) {
+        fail('html.rename.error.stale')
+        return
+      }
+      if (!disk.exists) {
+        setExternal(true)
+        setConflict({ kind: 'deleted' })
+        fail('html.rename.error.external')
+        return
+      }
+      if (disk.version !== baseVersionRef.current) {
+        setExternal(true)
+        setConflict({ kind: 'external' })
+        fail('html.rename.error.external')
+        return
+      }
+    } catch {
+      fail('html.rename.error.verify')
+      return
+    }
+    view.dispatch({
+      changes: plan.changes.map(change => ({ from: change.from, to: change.to, insert: change.insert })),
+      userEvent: 'input.rename',
+    })
+    view.focus()
+    setHtmlRename(null)
+  }, [htmlRename])
 
   const navigateToLocation = useCallback(async (
     source: NavigationPoint,
@@ -1379,6 +1536,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
     if (copyTimerRef.current !== undefined) window.clearTimeout(copyTimerRef.current)
     if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
+    if (htmlDiagnosticTimerRef.current !== undefined) window.clearTimeout(htmlDiagnosticTimerRef.current)
     if (noticeTimerRef.current !== undefined) window.clearTimeout(noticeTimerRef.current)
     navigationAbortRef.current?.abort()
     destroyEditor()
@@ -1591,9 +1749,40 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
                 className={`${ROOT_CLASS}-button`}
                 data-variant="quiet"
                 aria-pressed={outlineOpen}
-                onClick={() => setOutlineOpen(open => !open)}
+                onClick={() => {
+                  setProblemsOpen(false)
+                  setOutlineOpen(open => !open)
+                }}
               >
                 {t('html.outline')}
+              </button>
+              <button
+                type="button"
+                className={`${ROOT_CLASS}-button`}
+                data-variant="quiet"
+                aria-pressed={problemsOpen}
+                onClick={() => {
+                  setOutlineOpen(false)
+                  setProblemsOpen(open => !open)
+                }}
+              >
+                {t('html.problems')} ({htmlDiagnostics.length})
+              </button>
+              <button
+                type="button"
+                className={`${ROOT_CLASS}-button`}
+                data-variant="quiet"
+                onClick={() => startHtmlRename('tag')}
+              >
+                {t('html.rename.tag')}
+              </button>
+              <button
+                type="button"
+                className={`${ROOT_CLASS}-button`}
+                data-variant="quiet"
+                onClick={() => startHtmlRename('id')}
+              >
+                {t('html.rename.id')}
               </button>
               <button
                 type="button"
@@ -1624,6 +1813,25 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
             </div>
           </div>
         )}
+        {phase === 'editing' && htmlActiveRef.current && htmlRename !== null && (
+          <HtmlRenamePanel
+            kind={htmlRename.kind}
+            newName={htmlRename.newName}
+            {...(htmlRename.plan === undefined ? {} : { plan: htmlRename.plan })}
+            {...(htmlRename.error === undefined ? {} : { error: htmlRename.error })}
+            document={viewRef.current?.state.doc}
+            path={parsedRef.current?.path ?? ''}
+            onNameChange={newName => setHtmlRename({
+              kind: htmlRename.kind,
+              position: htmlRename.position,
+              newName,
+            })}
+            onPreview={previewHtmlRename}
+            onConfirm={() => { void confirmHtmlRename() }}
+            onCancel={() => setHtmlRename(null)}
+            t={t}
+          />
+        )}
         <div className={`${ROOT_CLASS}-editor-row`}>
           <div
             ref={hostRef}
@@ -1635,6 +1843,15 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
               nodes={htmlOutlineNodes}
               onClose={() => setOutlineOpen(false)}
               onSelect={node => revealHtmlOffset(node.nameFrom, node.nameFrom)}
+              t={t}
+            />
+          )}
+          {phase === 'editing' && htmlActiveRef.current && problemsOpen && (
+            <HtmlProblemsPanel
+              diagnostics={htmlDiagnostics}
+              document={viewRef.current?.state.doc}
+              onClose={() => setProblemsOpen(false)}
+              onSelect={diagnostic => revealHtmlOffset(diagnostic.from, diagnostic.to)}
               t={t}
             />
           )}

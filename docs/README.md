@@ -23,6 +23,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.3.3 | [Design](version/v0.3.3/design.md) | [Validation](version/v0.3.3/validation.md) | Validated persistent, live Java Editing Assistance setting |
 | v0.4.0 | [Design](version/v0.4.0/design.md) | [Validation](version/v0.4.0/validation.md) | Validated offline HTML foundation, completion, input assistance, and live feature gate on macOS and Windows |
 | v0.4.1 | [Design](version/v0.4.1/design.md) | [Validation](version/v0.4.1/validation.md) | Validated HTML Hover, Outline, breadcrumbs, folding, selection, local navigation, formatting, Emmet, and native browser preview on macOS and Windows |
+| v0.4.2 | [Design](version/v0.4.2/design.md) | [Validation](version/v0.4.2/validation.md) | Implemented offline HTML diagnostics, problem navigation, and previewed safe tag/ID rename; native acceptance pending |
 
 ## Project Guides
 
