@@ -2,7 +2,7 @@
  * The body DSH renders inside a native file tab for source and text files.
  *
  * It owns three things and nothing else: loading the complete file through the
- * Host save adapter, the CodeMirror editor, and draft/conflict state. The tab,
+ * Host save adapter, the CodeMirror editor, and disk-conflict state. The tab,
  * file tree, viewer menu, and tab lifecycle stay native.
  *
  * @module dsh-codecraft/client/body
@@ -29,7 +29,6 @@ import {
   syncIntelligence,
 } from '../api.js'
 import { fileNameOf, parseSessionFileAddress } from '../address.js'
-import { drafts } from '../drafts.js'
 import {
   applyTextPreservingSelection,
   buildEditorExtensions,
@@ -76,8 +75,8 @@ import {
 } from '../languages/html/preview.js'
 import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
 import { assessDiskChange } from '../document/conflicts.js'
-import { autoSaveDelay, canAutoSave } from '../document/auto-save.js'
 import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
+import { LatestSaveQueue } from '../document/save-queue.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import type {
@@ -89,8 +88,8 @@ import type {
 
 type Phase = 'loading' | 'editing' | 'notice' | 'error'
 type Status = 'idle' | 'saving' | 'saved' | 'error'
-type ConflictKind = 'external' | 'save' | 'restored' | 'deleted'
-type ErrorKind = 'save' | 'load' | 'copy' | 'readOnly'
+type ConflictKind = 'external' | 'save' | 'deleted'
+type ErrorKind = 'save' | 'load' | 'readOnly'
 
 interface Conflict {
   kind: ConflictKind
@@ -210,7 +209,6 @@ function messageOf(error: unknown): string {
 
 function unsupportedNotice(
   result: UnsupportedFileSnapshot,
-  hasDraft: boolean,
   t: DocumentBodyProps['t'],
 ): Notice {
   const reasonTitle: Record<UnsupportedFileSnapshot['reason'], string> = {
@@ -225,10 +223,9 @@ function unsupportedNotice(
     encoding: 'notice.encoding.detail',
     newline: 'notice.newline.detail',
   }
-  const detail = t(reasonDetail[result.reason])
   return {
     title: t(reasonTitle[result.reason]),
-    detail: hasDraft ? `${detail} ${t('notice.draftRetained')}` : detail,
+    detail: t(reasonDetail[result.reason]),
     reason: result.reason,
   }
 }
@@ -240,7 +237,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     editorSettings.getSnapshot,
   )
   const settings = settingsSnapshot.settings
-  const autoSaveSettings = settings.autoSave
   const indentationSettings = settings.indentation
   const pythonIntelligenceSettings = settingsSnapshot.pythonIntelligence
   const javaEditingAssistance = settingsSnapshot.javaEditingAssistance
@@ -301,16 +297,15 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const dirtyRef = useRef(false)
   const readOnlyRef = useRef(false)
   const savingRef = useRef(false)
-  const saveQueuedRef = useRef(false)
+  const saveQueueRef = useRef(new LatestSaveQueue())
   const doSaveRef = useRef<() => Promise<void>>(async () => {})
   const conflictRef = useRef<Conflict | null>(null)
   const parsedRef = useRef<{ sessionId: string, path: string } | null>(null)
   const mountedRef = useRef(true)
   const initialisedRef = useRef(false)
   const cursorFrameRef = useRef(0)
-  const draftTimerRef = useRef<number | undefined>(undefined)
+  const suppressSaveRef = useRef(false)
   const flashTimerRef = useRef<number | undefined>(undefined)
-  const copyTimerRef = useRef<number | undefined>(undefined)
   const intelligenceTimerRef = useRef<number | undefined>(undefined)
   const htmlDiagnosticTimerRef = useRef<number | undefined>(undefined)
   const intelligenceRevisionRef = useRef(1)
@@ -333,7 +328,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [languageLabel, setLanguageLabel] = useState('纯文本')
   const [fileWritable, setFileWritable] = useState(true)
   const [newlineStyle, setNewlineStyle] = useState<'lf' | 'crlf'>('lf')
-  const [copied, setCopied] = useState(false)
   const [intelligenceStatus, setIntelligenceStatus] = useState<IntelligenceStatusKind>('disabled')
   const [intelligenceMessage, setIntelligenceMessage] = useState<string | undefined>(undefined)
   const [htmlStatus, setHtmlStatus] = useState<HtmlEditingStatus | undefined>(undefined)
@@ -539,31 +533,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     conflictRef.current = conflict
   }, [conflict])
 
-  const flushDraft = useCallback(() => {
-    const view = viewRef.current
-    if (view === null) return
-    const fileAddress = addressRef.current
-    if (!dirtyRef.current) {
-      drafts.remove(fileAddress)
-      return
-    }
-    const content = view.state.doc.toString()
-    if (content === savedTextRef.current) {
-      drafts.remove(fileAddress)
-      return
-    }
-    const selection = view.state.selection.main
-    drafts.put(fileAddress, {
-      content,
-      baseVersion: baseVersionRef.current,
-      newline: newlineRef.current,
-      bom: bomRef.current,
-      savedAt: Date.now(),
-      selection: { anchor: selection.anchor, head: selection.head },
-      scrollTop: view.scrollDOM.scrollTop,
-    })
-  }, [])
-
   const destroyEditor = useCallback(() => {
     const view = viewRef.current
     if (view === null) return
@@ -574,7 +543,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       window.clearTimeout(intelligenceTimerRef.current)
       intelligenceTimerRef.current = undefined
     }
-    flushDraft()
     viewRef.current = null
     unbindHtmlFeatureHost(view)
     try {
@@ -590,7 +558,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         tabId: documentId,
       }).catch(() => undefined)
     }
-  }, [flushDraft])
+  }, [])
 
   const syncDirty = useCallback((view: EditorView) => {
     const next = differsFromSavedText(view.state.doc.toString(), savedTextRef.current)
@@ -599,17 +567,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       if (mountedRef.current) setDirty(next)
       notifyHtmlPreviewController()
     }
-    if (!next) drafts.remove(addressRef.current)
     return next
   }, [])
-
-  const scheduleDraft = useCallback(() => {
-    if (draftTimerRef.current !== undefined) window.clearTimeout(draftTimerRef.current)
-    draftTimerRef.current = window.setTimeout(() => {
-      draftTimerRef.current = undefined
-      flushDraft()
-    }, 700)
-  }, [flushDraft])
 
   const syncIntelligenceDocument = useCallback(async (): Promise<void> => {
     const parsed = parsedRef.current
@@ -680,7 +639,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       navigationAbortRef.current = undefined
       setNavigationPanel(null)
       syncDirty(update.view)
-      scheduleDraft()
+      if (!suppressSaveRef.current) void doSaveRef.current()
       intelligenceRevisionRef.current += 1
       if (htmlActiveRef.current) scheduleHtmlDiagnostics(update.view)
       if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
@@ -703,7 +662,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         if (view !== null && mountedRef.current) setCursor(cursorPosition(view))
       })
     }
-  }, [scheduleDraft, scheduleHtmlDiagnostics, syncDirty, syncIntelligenceDocument])
+  }, [scheduleHtmlDiagnostics, syncDirty, syncIntelligenceDocument])
 
   const startHtmlRename = useCallback((kind: 'tag' | 'id'): void => {
     const view = viewRef.current
@@ -1074,12 +1033,10 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   }, [onUpdate, syncIntelligenceDocument, tab.id])
 
   const applySnapshot = useCallback((snapshot: TextFileSnapshot, currentRequest: RendererRequest) => {
-    const fileAddress = addressRef.current
     const observed = metaVersionRef.current ?? ''
     const view = viewRef.current
     if (view === null) {
-      const draft = drafts.get(fileAddress)
-      const initial = initialDocumentState(snapshot, draft)
+      const initial = initialDocumentState(snapshot)
       savedTextRef.current = initial.savedText
       baseVersionRef.current = initial.baseVersion
       newlineRef.current = initial.newline
@@ -1094,7 +1051,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       const created = createEditor({
         text: initial.text,
         readOnly: !snapshot.writable,
-        ...(draft !== undefined ? { selection: draft.selection, scrollTop: draft.scrollTop } : {}),
       })
       if (!created) {
         setPhase('error')
@@ -1102,8 +1058,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         currentRequest.failed()
         return
       }
-      if (initial.dirty) flushDraft()
-      else drafts.remove(fileAddress)
       currentRequest.loaded(observed)
       return
     }
@@ -1123,11 +1077,18 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       return
     }
 
-    applyTextPreservingSelection(view, snapshot.content)
+    suppressSaveRef.current = true
+    try {
+      applyTextPreservingSelection(view, snapshot.content)
+    } finally {
+      suppressSaveRef.current = false
+    }
     savedTextRef.current = snapshot.content
     baseVersionRef.current = snapshot.version
     newlineRef.current = snapshot.newline
     bomRef.current = snapshot.bom
+    dirtyRef.current = false
+    setDirty(false)
     setNewlineStyle(snapshot.newline)
     setFileWritable(snapshot.writable)
     setExternal(false)
@@ -1140,7 +1101,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       setReadOnly(!snapshot.writable)
     }
     currentRequest.loaded(observed)
-  }, [createEditor, flushDraft])
+  }, [createEditor])
 
   const handleLoadError = useCallback((failure: unknown, currentRequest: RendererRequest) => {
     const message = messageOf(failure)
@@ -1175,11 +1136,9 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         const result = await readFile(parsed, signal)
         if (cancelled || signal.aborted) return
         if (result.kind === 'unsupported') {
-          flushDraft()
-          const hasDraft = drafts.has(addressRef.current)
           destroyEditor()
           if (!mountedRef.current) return
-          setNotice(unsupportedNotice(result, hasDraft, tRef.current))
+          setNotice(unsupportedNotice(result, tRef.current))
           setPhase('notice')
           setExternal(false)
           setError(null)
@@ -1197,7 +1156,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       cancelled = true
       controller.abort()
     }
-  }, [request?.revision, tab.signal, address, applySnapshot, destroyEditor, flushDraft, handleLoadError])
+  }, [request?.revision, tab.signal, address, applySnapshot, destroyEditor, handleLoadError])
 
   // Tear the editor down when the body is showing a notice or a load error.
   useEffect(() => {
@@ -1212,17 +1171,13 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     try {
       const result = await readFile(parsed)
       if (result.kind !== 'text') {
-        flushDraft()
-        const hasDraft = drafts.has(addressRef.current)
         destroyEditor()
         if (!mountedRef.current) return
-        setNotice(unsupportedNotice(result, hasDraft, tRef.current))
+        setNotice(unsupportedNotice(result, tRef.current))
         setPhase('notice')
         setConflict(null)
         return
       }
-      const draft = drafts.get(addressRef.current)
-      drafts.remove(addressRef.current)
       savedTextRef.current = result.content
       baseVersionRef.current = result.version
       newlineRef.current = result.newline
@@ -1238,8 +1193,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         const created = createEditor({
           text: result.content,
           readOnly: !result.writable,
-          ...(draft?.selection !== undefined ? { selection: draft.selection } : {}),
-          ...(draft?.scrollTop !== undefined ? { scrollTop: draft.scrollTop } : {}),
         })
         if (!created) {
           setPhase('error')
@@ -1247,7 +1200,12 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
           return
         }
       } else {
-        applyTextPreservingSelection(viewRef.current, result.content)
+        suppressSaveRef.current = true
+        try {
+          applyTextPreservingSelection(viewRef.current, result.content)
+        } finally {
+          suppressSaveRef.current = false
+        }
         if (readOnlyRef.current !== !result.writable) {
           setEditorReadOnly(viewRef.current, readOnlyCompartmentRef.current, !result.writable)
           readOnlyRef.current = !result.writable
@@ -1260,132 +1218,89 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       setError({ kind: 'load', message: messageOf(failure) })
       setStatus('error')
     }
-  }, [createEditor, destroyEditor, flushDraft])
+  }, [createEditor, destroyEditor])
 
   const doSave = useCallback(async () => {
-    const view = viewRef.current
-    const parsed = parsedRef.current
-    if (view === null || parsed === null) return
-    if (savingRef.current) {
-      saveQueuedRef.current = true
-      return
-    }
-    if (readOnlyRef.current) {
-      setError({ kind: 'readOnly', message: tRef.current('error.readOnly') })
-      setStatus('error')
-      return
-    }
-    const content = view.state.doc.toString()
-    if (content === savedTextRef.current) {
-      drafts.remove(addressRef.current)
-      dirtyRef.current = false
-      setDirty(false)
-      setStatus('saved')
-      if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
-      flashTimerRef.current = window.setTimeout(() => {
-        if (mountedRef.current) setStatus('idle')
-      }, 1600)
-      return
-    }
-    savingRef.current = true
-    setStatus('saving')
-    setError(null)
-    try {
-      const result = await saveFile(createSaveRequest({
-        sessionId: parsed.sessionId,
-        path: parsed.path,
-        content,
-        expectedVersion: baseVersionRef.current,
-        newline: newlineRef.current,
-        bom: bomRef.current,
-      }))
-      // The editor remains usable while the request is in flight. Reconcile
-      // against its live document so keystrokes made after `content` was
-      // captured remain dirty and protected by the draft store.
-      const currentContent = viewRef.current?.state.doc.toString() ?? content
-      const reconciled = reconcileSaveSuccess(currentContent, content, result)
-      savedTextRef.current = reconciled.savedText
-      baseVersionRef.current = reconciled.baseVersion
-      const stillDirty = reconciled.dirty
-      dirtyRef.current = stillDirty
-      setDirty(stillDirty)
-      notifyHtmlPreviewController()
-      if (stillDirty) flushDraft()
-      else drafts.remove(addressRef.current)
-      setConflict(null)
-      conflictRef.current = null
-      setExternal(false)
-      setStatus(stillDirty ? 'idle' : 'saved')
-      if (!stillDirty) {
+    await saveQueueRef.current.request(async () => {
+      const view = viewRef.current
+      const parsed = parsedRef.current
+      if (view === null || parsed === null) return
+      if (readOnlyRef.current) {
+        setError({ kind: 'readOnly', message: tRef.current('error.readOnly') })
+        setStatus('error')
+        return
+      }
+      if (conflictRef.current !== null) return
+      const content = view.state.doc.toString()
+      if (content === savedTextRef.current) {
+        dirtyRef.current = false
+        setDirty(false)
+        setStatus('saved')
         if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
         flashTimerRef.current = window.setTimeout(() => {
           if (mountedRef.current) setStatus('idle')
-        }, 2200)
+        }, 1600)
+        return
       }
-    } catch (failure) {
-      if (!mountedRef.current) return
-      const apiFailure = failure instanceof ApiCallError ? failure : undefined
-      if (apiFailure?.code === 'conflict') {
-        setExternal(true)
-        const nextConflict: Conflict = { kind: 'save' }
-        conflictRef.current = nextConflict
-        setConflict(nextConflict)
-      } else {
-        setError({ kind: 'save', message: apiFailure?.message ?? messageOf(failure) })
+      savingRef.current = true
+      setStatus('saving')
+      setError(null)
+      try {
+        const result = await saveFile(createSaveRequest({
+          sessionId: parsed.sessionId,
+          path: parsed.path,
+          content,
+          expectedVersion: baseVersionRef.current,
+          newline: newlineRef.current,
+          bom: bomRef.current,
+        }))
+        // The editor remains usable while the request is in flight. Reconcile
+        // against its live document so keystrokes made after `content` was
+        // captured remain dirty and are written by the queued follow-up save.
+        const currentContent = viewRef.current?.state.doc.toString() ?? content
+        const reconciled = reconcileSaveSuccess(currentContent, content, result)
+        savedTextRef.current = reconciled.savedText
+        baseVersionRef.current = reconciled.baseVersion
+        const stillDirty = reconciled.dirty
+        dirtyRef.current = stillDirty
+        setDirty(stillDirty)
+        notifyHtmlPreviewController()
+        setConflict(null)
+        conflictRef.current = null
+        setExternal(false)
+        setStatus(stillDirty ? 'idle' : 'saved')
+        if (!stillDirty) {
+          if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
+          flashTimerRef.current = window.setTimeout(() => {
+            if (mountedRef.current) setStatus('idle')
+          }, 2200)
+        }
+      } catch (failure) {
+        if (!mountedRef.current) return
+        const apiFailure = failure instanceof ApiCallError ? failure : undefined
+        if (apiFailure?.code === 'conflict') {
+          setExternal(true)
+          const nextConflict: Conflict = { kind: 'save' }
+          conflictRef.current = nextConflict
+          setConflict(nextConflict)
+        } else {
+          setError({ kind: 'save', message: apiFailure?.message ?? messageOf(failure) })
+        }
+        setStatus('error')
+      } finally {
+        savingRef.current = false
       }
-      setStatus('error')
-    } finally {
-      savingRef.current = false
-      if (saveQueuedRef.current) {
-        saveQueuedRef.current = false
-        queueMicrotask(() => {
-          if (
-            mountedRef.current
-            && dirtyRef.current
-            && conflictRef.current === null
-          ) void doSaveRef.current()
-        })
-      }
-    }
-  }, [flushDraft])
+    })
+  }, [])
   doSaveRef.current = doSave
 
-  useEffect(() => {
-    if (!autoSaveSettings.enabled) return
-    const timer = window.setInterval(() => {
-      if (!canAutoSave({
-        editing: phase === 'editing',
-        dirty: dirtyRef.current,
-        readOnly: readOnlyRef.current,
-        saving: savingRef.current,
-        conflicted: conflictRef.current !== null,
-      })) return
-      void doSaveRef.current()
-    }, autoSaveDelay(autoSaveSettings))
-    return () => window.clearInterval(timer)
-  }, [autoSaveSettings.enabled, autoSaveSettings.intervalSeconds, phase])
-
-  const keepDraft = useCallback(() => {
+  const continueEditing = useCallback(() => {
+    conflictRef.current = null
     setConflict(null)
   }, [])
 
   const retryLoad = useCallback(() => {
     requestRef.current?.reload()
-  }, [])
-
-  const copyDraft = useCallback(async () => {
-    const draft = drafts.get(addressRef.current)
-    if (draft === undefined) return
-    try {
-      await navigator.clipboard.writeText(draft.content)
-      setCopied(true)
-      if (copyTimerRef.current !== undefined) window.clearTimeout(copyTimerRef.current)
-      copyTimerRef.current = window.setTimeout(() => {
-        if (mountedRef.current) setCopied(false)
-      }, 1600)
-    } catch {
-      setError({ kind: 'copy', message: tRef.current('error.copyFailed') })
-    }
   }, [])
 
   useEffect(() => {
@@ -1434,24 +1349,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
   }, [tab.visible])
-
-  useEffect(() => {
-    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
-      flushDraft()
-      if (!dirtyRef.current && !drafts.has(addressRef.current)) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-    const onVisibility = (): void => {
-      if (document.visibilityState === 'hidden') flushDraft()
-    }
-    window.addEventListener('beforeunload', onBeforeUnload)
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [flushDraft])
 
   useEffect(() => {
     const onFocus = (): void => {
@@ -1532,9 +1429,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
 
   useEffect(() => () => {
     if (cursorFrameRef.current !== 0) window.cancelAnimationFrame(cursorFrameRef.current)
-    if (draftTimerRef.current !== undefined) window.clearTimeout(draftTimerRef.current)
     if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
-    if (copyTimerRef.current !== undefined) window.clearTimeout(copyTimerRef.current)
     if (intelligenceTimerRef.current !== undefined) window.clearTimeout(intelligenceTimerRef.current)
     if (htmlDiagnosticTimerRef.current !== undefined) window.clearTimeout(htmlDiagnosticTimerRef.current)
     if (noticeTimerRef.current !== undefined) window.clearTimeout(noticeTimerRef.current)
@@ -1545,7 +1440,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   if (props.content.kind !== 'renderer') return null
 
   const pending = phase === 'loading'
-  const noticeHasDraft = phase === 'notice' ? drafts.has(address) : false
   const statusKey = !fileWritable && phase === 'editing'
     ? 'status.readOnly'
     : status === 'saving'
@@ -1560,24 +1454,14 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
 
   let banner: { tone: 'warn' | 'error', title: string, detail: string, actions: BannerAction[] } | null = null
   if (conflict !== null) {
-    if (conflict.kind === 'restored') {
-      banner = {
-        tone: 'warn',
-        title: t('banner.restored.title'),
-        detail: t('banner.restored.detail'),
-        actions: [
-          { label: t('action.discard'), variant: 'primary', onClick: () => { void reloadFromDisk() } },
-          { label: t('action.continue'), variant: 'quiet', onClick: keepDraft },
-        ],
-      }
-    } else if (conflict.kind === 'external') {
+    if (conflict.kind === 'external') {
       banner = {
         tone: 'warn',
         title: t('banner.external.title'),
         detail: t('banner.external.detail'),
         actions: [
           { label: t('action.reload'), variant: 'primary', onClick: () => { void reloadFromDisk() } },
-          { label: t('action.keep'), variant: 'quiet', onClick: keepDraft },
+          { label: t('action.keep'), variant: 'quiet', onClick: continueEditing },
         ],
       }
     } else if (conflict.kind === 'save') {
@@ -1587,7 +1471,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         detail: t('banner.save.detail'),
         actions: [
           { label: t('action.reload'), variant: 'primary', onClick: () => { void reloadFromDisk() } },
-          { label: t('action.keep'), variant: 'quiet', onClick: keepDraft },
+          { label: t('action.keep'), variant: 'quiet', onClick: continueEditing },
         ],
       }
     } else {
@@ -1597,7 +1481,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         detail: t('banner.deleted.detail'),
         actions: [
           { label: t('action.retry'), variant: 'primary', onClick: retryLoad },
-          { label: t('action.keep'), variant: 'quiet', onClick: keepDraft },
+          { label: t('action.keep'), variant: 'quiet', onClick: continueEditing },
         ],
       }
     }
@@ -1872,11 +1756,6 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
                   <button type="button" className={`${ROOT_CLASS}-button`} onClick={retryLoad}>
                     {t('action.retry')}
                   </button>
-                  {noticeHasDraft && (
-                    <button type="button" className={`${ROOT_CLASS}-button`} data-variant="quiet" onClick={() => { void copyDraft() }}>
-                      {copied ? t('action.copied') : t('action.copyDraft')}
-                    </button>
-                  )}
                 </div>
               </>
             )}

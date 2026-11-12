@@ -7,7 +7,7 @@
 | Baseline | 0.4.1 |
 | Release type | Patch feature enhancement |
 | Platforms | macOS and Windows |
-| Scope | Offline HTML diagnostics, problem navigation, paired-tag rename, and current-document ID rename with preview and conflict protection |
+| Scope | Offline HTML diagnostics and safe refactoring, plus edit-through saving that removes durable draft recovery and unload blocking |
 
 ## Purpose
 
@@ -35,6 +35,11 @@ v0.4.1 already supplies the CodeMirror HTML parser, bundled `vscode-html-languag
 | HTML-042-10 | Preview every location and replacement before applying; Cancel makes no edit | Confirmation is explicit and unrelated text is never changed |
 | HTML-042-11 | Require the previewed editor document and conflict state to remain current, then apply one CodeMirror transaction | Stale preview, read-only state, or external/save conflict produces zero edits; one Undo restores the prior content |
 | HTML-042-12 | Preserve offline behavior, the single HTML gate, multiple-tab isolation, and Python/Java behavior on macOS and Windows | Disabling HTML assistance removes diagnostics and rename UI while ordinary editing and saving remain available |
+| SAVE-042-01 | Start a checked Host save immediately after every writable document change | A save already in flight is not duplicated concurrently; one queued follow-up writes the latest editor content |
+| SAVE-042-02 | Preserve version-checked conflict handling and visible save failures | Read-only files, external changes, deleted files, and failed writes are never reported as saved or silently overwritten |
+| SAVE-042-03 | Stop creating or restoring durable browser drafts | Reopening or switching to a file always loads the authoritative disk snapshot and shows no recovery prompt |
+| SAVE-042-04 | Remove legacy periodic AutoSave controls because saving is unconditional | Existing persisted AutoSave values are accepted for configuration compatibility but no longer control runtime saving |
+| SAVE-042-05 | Remove browser unload vetoes and legacy CodeCraft draft records | Plugin startup deletes only `dsh-codecraft/draft/v1/` records; unrelated browser storage is untouched |
 
 ## Architecture and Placement
 
@@ -72,11 +77,19 @@ Both operations first produce a preview containing line/column, old text, and re
 - Closing/replacing a tab destroys its editor and its lint state. React timers are cancelled during cleanup.
 - Disabling HTML assistance removes the lint extension and hides/clears the HTML problems and rename presentation.
 - No document content is executed, sent over the network, or treated as a workspace authority.
-- Python, Java, generic editing, drafts, AutoSave, conflicts, and native saving remain unchanged.
+- Python, Java, generic editing, conflict-safe Host writes, and native tabs remain unchanged. Durable drafts and configurable periodic AutoSave are intentionally replaced by unconditional edit-through saving.
+
+### Edit-through save and Desktop quit lifecycle
+
+Native macOS acceptance exposed an existing shared-editor defect: both the plugin and every mounted editor registered cancelling `beforeunload` handlers whenever durable drafts existed. During **Command+Q**, the embedded browser could wait for a confirmation dialog that DSH Desktop did not present, leaving the application unable to terminate without Force Quit.
+
+The correction removes both unload vetoes and the draft-recovery path. Every CodeMirror document change immediately enters the existing version-checked Host save path. If a write is already running, later changes coalesce into one follow-up save of the newest content. Save conflicts and failures remain visible and never overwrite an unexpected disk version.
+
+On plugin startup, legacy `dsh-codecraft/draft/v1/` local-storage entries are deleted without reading them into an editor; unrelated storage is untouched. The former AutoSave switch and interval are removed from the settings UI. Their persisted schema fields remain accepted only so existing profiles continue to load safely.
 
 ## Explicitly Out of Scope
 
-Full WCAG auditing, automatic bulk fixes, CSS/JavaScript relationship analysis, selector indexing, cross-file rename, dynamic strings, development servers, live page/source synchronization, new settings, and release metadata or publication are excluded.
+Full WCAG auditing, automatic bulk fixes, CSS/JavaScript relationship analysis, selector indexing, cross-file rename, dynamic strings, development servers, live page/source synchronization, Desktop-process changes, close-confirmation dialogs, new settings, and release metadata or publication are excluded.
 
 ## Implementation Sequence
 
@@ -85,7 +98,8 @@ Full WCAG auditing, automatic bulk fixes, CSS/JavaScript relationship analysis, 
 3. Implement pure tag and ID rename planners with refusal results and exact ranges.
 4. Add current-tab problems and rename-preview panels to the existing renderer, including stale-preview and conflict checks.
 5. Add localized copy and scoped styles, then run focused tests, typecheck, and the full regression gate.
-6. Stop at native macOS/Windows acceptance and wait for user-observed results before any release work.
+6. Replace draft restore and periodic AutoSave with immediate checked saves, then verify close/quit behavior without unload interception.
+7. Stop at native macOS/Windows acceptance and wait for user-observed results before any release work.
 
 ## Implementation Outcome
 
@@ -104,7 +118,7 @@ src/client/renderer/
 
 `@codemirror/lint` is now a direct pinned development dependency (it was already present transitively). The bundled HTML metadata and fixed rule tables remain offline. No Host, protocol, route, process, network, save path, or setting was added.
 
-The current implementation revision passes the four-file HTML focused command (55 tests) and `npm run check` (20 files / 239 tests, typecheck, both bundles, and artifact verification). Native DSH Desktop behavior remains unverified until the user completes the macOS and Windows checklist in [validation.md](validation.md).
+The current implementation has focused coverage for immediate-save serialization, legacy-draft cleanup, disk-only reopening, settings, file conflicts, and editor behavior. The full `npm run check` result is recorded in [validation.md](validation.md). Native DSH Desktop behavior, including immediate write-through and corrected macOS/Windows quit flow, remains unverified until the user completes the platform checklist.
 
 ## Definition of Done
 

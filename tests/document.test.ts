@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { assessDiskChange } from '../src/client/document/conflicts.js'
 import { reconcileSaveSuccess } from '../src/client/document/save.js'
 import { initialDocumentState } from '../src/client/document/state.js'
-import type { Draft } from '../src/client/drafts.js'
 import type { TextFileSnapshot } from '../src/protocol.js'
 
 const snapshot: TextFileSnapshot = {
@@ -18,19 +17,8 @@ const snapshot: TextFileSnapshot = {
   indent: { kind: 'spaces', size: 2 },
 }
 
-function draft(overrides: Partial<Draft> = {}): Draft {
-  return {
-    content: 'draft\n',
-    baseVersion: 'disk-v1',
-    newline: 'lf',
-    bom: false,
-    savedAt: 1,
-    ...overrides,
-  }
-}
-
 describe('initialDocumentState', () => {
-  it('opens the disk snapshot clean when no distinct draft exists', () => {
+  it('always opens the authoritative disk snapshot clean', () => {
     expect(initialDocumentState(snapshot)).toMatchObject({
       text: 'disk\n',
       savedText: 'disk\n',
@@ -38,16 +26,6 @@ describe('initialDocumentState', () => {
       dirty: false,
       conflict: null,
     })
-    expect(initialDocumentState(snapshot, draft({ content: 'disk\n' })).dirty).toBe(false)
-  })
-
-  it('restores a draft and distinguishes matching and stale baselines', () => {
-    expect(initialDocumentState(snapshot, draft({ baseVersion: 'disk-v2' }))).toMatchObject({
-      text: 'draft\n',
-      dirty: true,
-      conflict: 'restored',
-    })
-    expect(initialDocumentState(snapshot, draft())).toMatchObject({ dirty: true, conflict: 'external' })
   })
 })
 

@@ -3,7 +3,7 @@
  *
  * The editor keeps its own authoritative document; React only mirrors status
  * (cursor, dirty, language) and drives explicit replacements when the file
- * changes on disk with no local draft.
+ * changes on disk with no unsaved edit.
  *
  * @module dsh-codecraft/client/editor
  */
@@ -203,7 +203,7 @@ function positionAt(doc: EditorState['doc'], lineNumber: number, column: number)
 /**
  * Replace the whole document while keeping the logical cursor location and
  * scroll offsets. Used for silent refreshes when the file changed on disk and
- * there is no local draft.
+ * there is no unsaved edit.
  */
 export function applyTextPreservingSelection(view: EditorView, text: string): void {
   if (view.state.doc.toString() === text) return

@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import { autoSaveDelay, canAutoSave } from '../src/client/document/auto-save.js'
 import { EditorSettingsStore, type ConfigForm } from '../src/client/settings/editor-settings.js'
 import { en, zh } from '../src/client/locales.js'
 import {
@@ -29,32 +28,6 @@ describe('resolveAutoSaveSettings', () => {
       expect(resolveAutoSaveSettings({
         editor: { autoSave: { enabled: true, intervalSeconds } },
       })).toEqual({ enabled: true, intervalSeconds })
-    }
-  })
-})
-
-describe('automatic save policy', () => {
-  it('converts the configured interval and only admits safe dirty documents', () => {
-    expect(autoSaveDelay({ enabled: true, intervalSeconds: 30 })).toBe(30_000)
-    expect(canAutoSave({
-      editing: true,
-      dirty: true,
-      readOnly: false,
-      saving: false,
-      conflicted: false,
-    })).toBe(true)
-
-    for (const blocked of ['editing', 'dirty', 'readOnly', 'saving', 'conflicted'] as const) {
-      const state = {
-        editing: true,
-        dirty: true,
-        readOnly: false,
-        saving: false,
-        conflicted: false,
-      }
-      if (blocked === 'editing' || blocked === 'dirty') state[blocked] = false
-      else state[blocked] = true
-      expect(canAutoSave(state)).toBe(false)
     }
   })
 })
@@ -182,12 +155,6 @@ describe('EditorSettingsStore', () => {
     expect(store.getSnapshot().pythonIntelligence).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
     expect(store.getSnapshot().javaEditingAssistance).toEqual({ enabled: false })
     expect(store.getSnapshot().htmlEditingAssistance).toEqual({ enabled: false })
-    await expect(store.setInterval(120)).resolves.toBe(true)
-    expect(mutate).toHaveBeenCalledWith([{
-      op: 'set',
-      path: ['editor', 'autoSave', 'intervalSeconds'],
-      value: 120,
-    }])
     await expect(store.setIndentSize(2)).resolves.toBe(true)
     expect(mutate).toHaveBeenLastCalledWith([{
       op: 'set',

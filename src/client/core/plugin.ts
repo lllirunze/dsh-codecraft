@@ -13,12 +13,12 @@ import { CodeCraftBody } from '../renderer/CodeCraftBody.js'
 import { CodeCraftSettingsCard } from '../settings/CodeCraftSettingsCard.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import { EDITOR_EXTENSIONS } from '../languages/index.js'
-import { drafts } from '../drafts.js'
 import { en, zh } from '../locales.js'
 import { CODECRAFT_CSS } from '../theme.js'
 import { navigationCoordinator } from '../navigation/coordinator.js'
 import { PreviewInBrowserAction } from '../renderer/PreviewInBrowserAction.js'
 import { bindHtmlPreviewOpener } from '../languages/html/preview.js'
+import { clearBrowserLegacyDrafts } from '../drafts.js'
 
 /** Browser services required before mounting. */
 export const inject = ['documentPreviews', 'slots', 'locale', 'configForms', 'sidebarRight']
@@ -37,6 +37,7 @@ const SETTINGS_ENTRY_ID = 'codecraft'
  * @param ctx - browser context carrying the preview registry, slots, and copy.
  */
 export function apply(ctx: ClientContext): void {
+  clearBrowserLegacyDrafts()
   ctx.effect(
     () => navigationCoordinator.bind(ctx.sidebarRight),
     'dsh-codecraft: native navigation',
@@ -48,16 +49,6 @@ export function apply(ctx: ClientContext): void {
     document.head.appendChild(style)
     return () => style.remove()
   }, 'dsh-codecraft: editor theme')
-
-  ctx.effect(() => {
-    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (drafts.addresses().length === 0) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-    window.addEventListener('beforeunload', onBeforeUnload)
-    return () => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, 'dsh-codecraft: durable-draft unload guard')
 
   ctx.effect(
     () => ctx.locale.register(LOCALE_NAMESPACE, { zh, en }),

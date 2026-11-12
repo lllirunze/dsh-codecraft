@@ -7,7 +7,6 @@ import {
   resolveHtmlEditingAssistanceSettings,
   resolveJavaEditingAssistanceSettings,
   resolvePythonIntelligenceSettings,
-  type AutoSaveInterval,
   type EditorSettings,
   type HtmlEditingAssistanceSettings,
   type IndentSize,
@@ -80,14 +79,6 @@ export class EditorSettingsStore {
       this.#form = undefined
       this.#replace(DEFAULT_SNAPSHOT)
     }
-  }
-
-  async setEnabled(enabled: boolean): Promise<boolean> {
-    return this.#write(['editor', 'autoSave', 'enabled'], enabled)
-  }
-
-  async setInterval(intervalSeconds: AutoSaveInterval): Promise<boolean> {
-    return this.#write(['editor', 'autoSave', 'intervalSeconds'], intervalSeconds)
   }
 
   async setIndentSize(indentSize: IndentSize): Promise<boolean> {
