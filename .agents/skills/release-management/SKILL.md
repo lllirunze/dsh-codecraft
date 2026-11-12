@@ -35,9 +35,14 @@ Publish an already implemented and accepted version through the repository's Git
   git push origin master
   ```
 
-- Verify that `origin/master` resolves to the release commit before tagging.
+- After pushing, fetch `origin/master` again and verify both of these conditions before tagging:
+  - `origin/master` resolves to the release commit;
+  - `package.json` in that fetched remote commit contains the exact target version.
+- A local version change or unpushed release commit is not sufficient. Do not create the version tag if the package version has not been changed, the `master` push failed, the remote branch points to a different commit, or the remote `package.json` version differs from the target.
 
 ### 2. Create the Git tag
+
+Tag creation is permitted only after the preceding remote package-version gate passes. Never create a tag first and update or push `package.json` afterward.
 
 Build the tag by prefixing the exact version with `v`:
 
