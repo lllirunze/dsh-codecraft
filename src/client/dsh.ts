@@ -91,10 +91,85 @@ export interface RemoteService {
 
 export interface SidebarRightService {
   openResource(address: string, options?: {
+    kind?: string
     params?: Record<string, unknown>
     revealIfOpened?: boolean
     preferNewPane?: boolean
+    replaceTab?: boolean
+    destination?: 'sidebar' | 'float'
   }): void
+}
+
+/** One page-type registration in the sidebar-right tab registry. */
+/** One entry the right Sidebar's guide page offers for this tab type. */
+export interface SidebarRightGuideEntry {
+  id: string
+  order: number
+  title: () => string
+  description?: () => string
+  commandId?: string
+}
+
+export interface SidebarRightTabDefinition {
+  id: string
+  kind: string
+  patterns?: readonly string[]
+  priority?: 'extension' | 'builtin' | 'fallback'
+  canOpen?: (address: string) => boolean
+  title: (address: string) => string
+  keepMounted?: boolean
+  multiple?: boolean
+  /**
+   * The guide page reads these from the type in force, so an extension that
+   * takes over a builtin kind must contribute its own entry or the builtin's
+   * entry disappears from the guide with it.
+   */
+  guide?: readonly SidebarRightGuideEntry[]
+}
+
+export interface SidebarRightTabsService {
+  register(definition: SidebarRightTabDefinition): () => void
+}
+
+/** Session snapshot shape published by DSH's client session service. */
+export interface SessionSnapshot {
+  ids: readonly string[]
+  byId: Record<string, { cwd?: string } & Record<string, unknown>>
+}
+
+export interface SessionsService {
+  list: { getSnapshot(): SessionSnapshot }
+}
+
+/** One row in a native `file` or `directory` context menu. */
+export interface ContextMenuAction {
+  id: string
+  label: string
+  disabled?: boolean
+  danger?: boolean
+  separatorBefore?: boolean
+  icon?: { key: string; src?: string }
+  commandId?: string
+  children?: readonly ContextMenuAction[]
+  failureLabel?: string
+  run?: () => void | Promise<void>
+}
+
+export interface ContextMenuTarget {
+  kind: 'file' | 'directory'
+  value: { sessionId: string; path: string } & Record<string, unknown>
+}
+
+export interface ContextMenusService {
+  register(contribution: {
+    id: string
+    target: 'file' | 'directory'
+    order?: number
+    resolve: (
+      target: ContextMenuTarget['value'],
+      signal: AbortSignal,
+    ) => readonly ContextMenuAction[] | Promise<readonly ContextMenuAction[]>
+  }): () => void
 }
 
 /** The Cordis browser context this plugin consumes. */
@@ -104,6 +179,9 @@ export interface ClientContext {
   locale: LocaleService
   configForms: ConfigFormsService
   sidebarRight: SidebarRightService
+  sidebarRightTabs: SidebarRightTabsService
+  sessions: SessionsService
+  contextMenus: ContextMenusService
   /** Injected namespaces; only present when the enclosing plugin declares them. */
   remote?: RemoteService
   /** Wait for optional services and run a child scope when they are available. */
@@ -114,10 +192,23 @@ export interface ClientContext {
 /** Tab identity and lifecycle handed to every document body. */
 export interface TabInfo {
   id: string
+  kind?: string
   contentId: string
   title: string
   visible: boolean
   signal: AbortSignal
+  actions: {
+    openResource(address: string, options?: {
+      kind?: string
+      params?: Record<string, unknown>
+      revealIfOpened?: boolean
+      preferNewPane?: boolean
+      replaceTab?: boolean
+      paneId?: string
+      destination?: 'sidebar' | 'float'
+    }): void
+    close(): void
+  }
   navigation: {
     revision: number
     params?: {

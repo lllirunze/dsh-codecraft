@@ -20,6 +20,10 @@ import {
   type ReadResult,
   type SaveResult,
   type StatResult,
+  type WorkspaceListResult,
+  type WorkspaceOperation,
+  type WorkspaceOperationResult,
+  type WorkspacePreflightResult,
 } from '../protocol.js'
 
 /** A typed failure answered by the Host, or a transport-level failure. */
@@ -162,4 +166,25 @@ export function intelligenceStatus(
   signal?: AbortSignal,
 ): Promise<IntelligenceStatusResult> {
   return callApi<IntelligenceStatusResult>({ action: 'intelligence-status', ...input }, signal)
+}
+
+export function listWorkspace(
+  input: { sessionId: string; path?: string },
+  signal?: AbortSignal,
+): Promise<WorkspaceListResult> {
+  return callApi<WorkspaceListResult>({ action: 'workspace-list', ...input }, signal)
+}
+
+export function preflightWorkspace(
+  input: { sessionId: string; operation: Extract<WorkspaceOperation, { kind: 'copy' | 'move' }> },
+  signal?: AbortSignal,
+): Promise<WorkspacePreflightResult> {
+  return callApi<WorkspacePreflightResult>({ action: 'workspace-preflight', ...input }, signal)
+}
+
+export function runWorkspaceOperation(
+  input: { sessionId: string; operation: WorkspaceOperation },
+  signal?: AbortSignal,
+): Promise<WorkspaceOperationResult> {
+  return callApi<WorkspaceOperationResult>({ action: 'workspace-operation', ...input }, signal)
 }

@@ -101,6 +101,90 @@ export interface StatRequest {
   path: string
 }
 
+/** One directory entry as the Explorer sees it. */
+export interface WorkspaceEntry {
+  /** Workspace-relative path using `/` separators. */
+  path: string
+  name: string
+  kind: 'file' | 'directory' | 'symlink' | 'other'
+  size?: number
+  /** Opaque file metadata token, when the entry is a regular file. */
+  version?: string
+  hidden: boolean
+}
+
+export interface WorkspaceListRequest {
+  action: 'workspace-list'
+  sessionId: string
+  /** Workspace-relative directory; omitted or empty means the workspace root. */
+  path?: string
+}
+
+export interface WorkspaceListResult {
+  /** Absolute workspace root resolved by the Host. */
+  root: string
+  /** Workspace-relative directory that was listed. */
+  path: string
+  entries: WorkspaceEntry[]
+}
+
+export type WorkspaceConflictPolicy = 'skip' | 'rename' | 'overwrite'
+
+export type WorkspaceOperation =
+  | { kind: 'createFile'; path: string; content?: string }
+  | { kind: 'createDirectory'; path: string }
+  | { kind: 'rename'; path: string; newName: string }
+  | { kind: 'copy'; paths: string[]; targetDirectory: string; conflict: WorkspaceConflictPolicy; confirmedOverwrite?: boolean }
+  | { kind: 'move'; paths: string[]; targetDirectory: string; conflict: WorkspaceConflictPolicy; confirmedOverwrite?: boolean }
+  | { kind: 'delete'; paths: string[]; mode: 'trash' | 'permanent'; confirmedPermanent?: boolean }
+
+export interface WorkspaceOperationRequest {
+  action: 'workspace-operation'
+  sessionId: string
+  operation: WorkspaceOperation
+}
+
+export interface WorkspacePreflightRequest {
+  action: 'workspace-preflight'
+  sessionId: string
+  operation: Extract<WorkspaceOperation, { kind: 'copy' | 'move' }>
+}
+
+export interface WorkspacePreflightItem {
+  path: string
+  targetPath: string
+  exists: boolean
+  targetKind?: WorkspaceEntry['kind']
+}
+
+export interface WorkspacePreflightResult {
+  items: WorkspacePreflightItem[]
+}
+
+export interface WorkspaceOperationItem {
+  path: string
+  to?: string
+}
+
+export interface WorkspaceOperationFailure {
+  path: string
+  code: string
+  message: string
+}
+
+export interface WorkspaceChangedPath {
+  from: string
+  to?: string
+  kind: 'created' | 'renamed' | 'moved' | 'copied' | 'deleted' | 'trashed'
+}
+
+export interface WorkspaceOperationResult {
+  succeeded: WorkspaceOperationItem[]
+  failed: WorkspaceOperationFailure[]
+  changedPaths: WorkspaceChangedPath[]
+  warnings: string[]
+}
+
 export interface IntelligenceDocumentRequest {
   sessionId: string
   path: string
@@ -150,6 +234,9 @@ export type CodeCraftRequest =
   | ReadRequest
   | SaveRequest
   | StatRequest
+  | WorkspaceListRequest
+  | WorkspaceOperationRequest
+  | WorkspacePreflightRequest
   | IntelligenceSyncRequest
   | IntelligenceCompletionRequest
   | IntelligenceHoverRequest
@@ -279,6 +366,16 @@ export const ERROR_CODES = {
   readOnly: 'read-only',
   conflict: 'conflict',
   writeFailed: 'write-failed',
+  invalidName: 'invalid-name',
+  alreadyExists: 'already-exists',
+  notDirectory: 'not-directory',
+  notEmpty: 'not-empty',
+  trashUnavailable: 'trash-unavailable',
+  confirmationRequired: 'confirmation-required',
+  operationFailed: 'operation-failed',
+  symlinkUnsupported: 'symlink-unsupported',
+  sameTarget: 'same-target',
+  invalidTarget: 'invalid-target',
   internal: 'internal',
   intelligenceDisabled: 'intelligence-disabled',
   intelligenceUnavailable: 'intelligence-unavailable',

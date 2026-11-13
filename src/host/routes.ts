@@ -9,6 +9,7 @@ import type {
   ResponseLike,
   WorkingDirectoryService,
 } from './context.js'
+import { WorkspaceService } from './workspace/operations.js'
 import {
   ERROR_CODES,
   MAX_REQUEST_BYTES,
@@ -17,7 +18,12 @@ import {
   type ReadResult,
   type SaveResult,
   type StatResult,
+  type WorkspaceConflictPolicy,
+  type WorkspaceOperation,
 } from '../protocol.js'
+
+/** One serialized operation service shared by all requests on this Host. */
+const defaultWorkspaceService = new WorkspaceService()
 
 /**
  * The authenticated JSON route behind CodeCraft's save adapter.
@@ -60,31 +66,123 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function requireText(value: unknown, field: string, maximum = 4096): string {
+  if (typeof value !== 'string' || value === '' || value.length > maximum) {
+    throw new CodeCraftError(ERROR_CODES.badRequest, `${field} 无效。`, 400)
+  }
+  return value
+}
+
+function requirePath(value: unknown, field = 'path', allowEmpty = false): string {
+  if (typeof value !== 'string' || value.length > 4096 || (!allowEmpty && value === '')) {
+    throw new CodeCraftError(ERROR_CODES.badRequest, `${field} 无效。`, 400)
+  }
+  return value
+}
+
+function requirePaths(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 1000) {
+    throw new CodeCraftError(ERROR_CODES.badRequest, 'paths 必须是非空路径数组。', 400)
+  }
+  return value.map(item => requirePath(item, 'paths[]'))
+}
+
+function requireConflict(value: unknown): WorkspaceConflictPolicy {
+  if (value !== 'skip' && value !== 'rename' && value !== 'overwrite') {
+    throw new CodeCraftError(ERROR_CODES.badRequest, 'conflict 无效。', 400)
+  }
+  return value
+}
+
+function requireOperation(value: unknown): WorkspaceOperation {
+  if (!isRecord(value) || typeof value.kind !== 'string') {
+    throw new CodeCraftError(ERROR_CODES.badRequest, '缺少 operation。', 400)
+  }
+  switch (value.kind) {
+    case 'createFile': {
+      const operation: WorkspaceOperation = { kind: 'createFile', path: requirePath(value.path) }
+      if (value.content !== undefined) {
+        if (typeof value.content !== 'string' || Buffer.byteLength(value.content) > MAX_REQUEST_BYTES) {
+          throw new CodeCraftError(ERROR_CODES.badRequest, 'content 无效或过大。', 400)
+        }
+        operation.content = value.content
+      }
+      return operation
+    }
+    case 'createDirectory':
+      return { kind: 'createDirectory', path: requirePath(value.path) }
+    case 'rename':
+      return {
+        kind: 'rename',
+        path: requirePath(value.path),
+        newName: requireText(value.newName, 'newName', 255),
+      }
+    case 'copy':
+    case 'move': {
+      const operation: Extract<WorkspaceOperation, { kind: 'copy' | 'move' }> = {
+        kind: value.kind,
+        paths: requirePaths(value.paths),
+        targetDirectory: requirePath(value.targetDirectory, 'targetDirectory', true),
+        conflict: requireConflict(value.conflict),
+      }
+      if (value.confirmedOverwrite === true) operation.confirmedOverwrite = true
+      return operation
+    }
+    case 'delete': {
+      if (value.mode !== 'trash' && value.mode !== 'permanent') {
+        throw new CodeCraftError(ERROR_CODES.badRequest, 'delete.mode 无效。', 400)
+      }
+      const operation: WorkspaceOperation = {
+        kind: 'delete',
+        paths: requirePaths(value.paths),
+        mode: value.mode,
+      }
+      if (value.confirmedPermanent === true) operation.confirmedPermanent = true
+      return operation
+    }
+    default:
+      throw new CodeCraftError(ERROR_CODES.badRequest, '未知的文件操作。', 400)
+  }
+}
+
 function requireRequest(value: unknown): CodeCraftRequest {
   if (!isRecord(value)) {
     throw new CodeCraftError(ERROR_CODES.badRequest, '请求体必须是 JSON 对象。', 400)
   }
   const action = value.action
   const sessionId = value.sessionId
-  const path = value.path
   if (typeof action !== 'string') {
     throw new CodeCraftError(ERROR_CODES.badRequest, '缺少 action。', 400)
   }
   if (typeof sessionId !== 'string' || sessionId === '') {
     throw new CodeCraftError(ERROR_CODES.badRequest, '缺少 sessionId。', 400)
   }
-  if (typeof path !== 'string' || path === '' || path.length > 4096) {
-    throw new CodeCraftError(ERROR_CODES.badRequest, '缺少有效的 path。', 400)
-  }
   if (action === 'read' || action === 'stat' || action === 'intelligence-status') {
-    return { action, sessionId, path }
+    return { action, sessionId, path: requirePath(value.path) }
+  }
+  if (action === 'workspace-list') {
+    return {
+      action,
+      sessionId,
+      ...(value.path === undefined ? {} : { path: requirePath(value.path, 'path', true) }),
+    }
+  }
+  if (action === 'workspace-operation') {
+    return { action, sessionId, operation: requireOperation(value.operation) }
+  }
+  if (action === 'workspace-preflight') {
+    const operation = requireOperation(value.operation)
+    if (operation.kind !== 'copy' && operation.kind !== 'move') {
+      throw new CodeCraftError(ERROR_CODES.badRequest, '预检仅支持 copy 或 move。', 400)
+    }
+    return { action, sessionId, operation }
   }
   if (action === 'intelligence-close') {
     const { tabId } = value
     if (typeof tabId !== 'string' || tabId === '') {
       throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求缺少 tabId。', 400)
     }
-    return { action, sessionId, path, tabId }
+    return { action, sessionId, path: requirePath(value.path), tabId }
   }
   if (action === 'intelligence-sync'
     || action === 'intelligence-complete'
@@ -102,7 +200,14 @@ function requireRequest(value: unknown): CodeCraftRequest {
       throw new CodeCraftError(ERROR_CODES.badRequest, '智能服务请求的文档内容无效或过大。', 400)
     }
     if (action === 'intelligence-sync') {
-      return { action, sessionId, path, tabId, revision: Number(revision), content }
+      return {
+        action,
+        sessionId,
+        path: requirePath(value.path),
+        tabId,
+        revision: Number(revision),
+        content,
+      }
     }
     const requestPosition = value.position
     if (!isRecord(requestPosition)
@@ -115,7 +220,7 @@ function requireRequest(value: unknown): CodeCraftRequest {
     return {
       action,
       sessionId,
-      path,
+      path: requirePath(value.path),
       tabId,
       revision: Number(revision),
       content,
@@ -136,7 +241,15 @@ function requireRequest(value: unknown): CodeCraftRequest {
     if (typeof bom !== 'boolean') {
       throw new CodeCraftError(ERROR_CODES.badRequest, '保存请求的 bom 无效。', 400)
     }
-    return { action, sessionId, path, content, expectedVersion, newline, bom }
+    return {
+      action,
+      sessionId,
+      path: requirePath(value.path),
+      content,
+      expectedVersion,
+      newline,
+      bom,
+    }
   }
   throw new CodeCraftError(ERROR_CODES.badRequest, '未知的 action。', 400)
 }
@@ -168,12 +281,16 @@ export async function dispatch(
   request: CodeCraftRequest,
   intelligence?: IntelligenceManager,
   signal?: AbortSignal,
+  workspaceService: WorkspaceService = defaultWorkspaceService,
 ): Promise<unknown> {
   const { root } = await workspaceOf(ctx, request.sessionId)
   switch (request.action) {
     case 'read': return readTextFile(root, request.path) satisfies Promise<ReadResult>
     case 'save': return saveTextFile({ root, ...request }) satisfies Promise<SaveResult>
     case 'stat': return statFile(root, request.path) satisfies Promise<StatResult>
+    case 'workspace-list': return workspaceService.list(root, request.path ?? '')
+    case 'workspace-operation': return workspaceService.run(root, request.operation)
+    case 'workspace-preflight': return workspaceService.preflight(root, request.operation)
     case 'intelligence-sync': return requireIntelligence(intelligence).sync(root, request)
       .catch(error => { throw publicIntelligenceError(error) })
     case 'intelligence-complete': return requireIntelligence(intelligence).complete(root, request, signal)

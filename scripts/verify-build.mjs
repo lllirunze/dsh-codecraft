@@ -139,6 +139,7 @@ function verifyClientRegistration(code, platform) {
   const previews = []
   const bodyRows = []
   const localeRows = []
+  const tabDefinitions = []
   const context = {
     documentPreviews: { register: definition => { previews.push(definition); return () => {} } },
     slots: {
@@ -162,7 +163,10 @@ function verifyClientRegistration(code, platform) {
           : () => {}
       },
     },
-    sidebarRight: { openResource() {} },
+    sidebarRight: { openResource() {}, close() {} },
+    sidebarRightTabs: { register: definition => { tabDefinitions.push(definition); return () => {} } },
+    sessions: { list: { getSnapshot: () => ({ byId: {} }) } },
+    contextMenus: { register: () => () => {} },
     effect: callback => { callback() },
   }
   plugin.apply(context)
@@ -173,10 +177,20 @@ function verifyClientRegistration(code, platform) {
   assert(preview.priority === 'extension' && preview.loading === 'renderer', 'document preview uses the wrong priority or loading mode')
   assert(preview.extensions.includes('ts') && preview.extensions.includes('py'), 'document preview is missing source extensions')
   assert(!preview.extensions.includes('png') && !preview.extensions.includes('pdf'), 'document preview claims binary extensions')
-  assert(bodyRows.length === 3, `client registered ${bodyRows.length} slot contributions`)
+  assert(bodyRows.length === 5, `client registered ${bodyRows.length} slot contributions`)
+  assert(
+    tabDefinitions.length === 1 && tabDefinitions[0].id === 'dsh-codecraft-files' && tabDefinitions[0].kind === 'files',
+    'client did not register the Files tab override',
+  )
+  assert(
+    tabDefinitions[0].guide?.[0]?.id === 'workspace',
+    'client Files tab override has no guide entry to open it',
+  )
   const documentBody = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document')
   const settingsCard = bodyRows.find(row => row.options.name === 'plugins.item')
   const previewAction = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document.actions')
+  const explorerBody = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab')
+  const dialogHost = bodyRows.find(row => row.options.name === 'shell.overlay')
   assert(
     documentBody?.options.key === 'dsh-codecraft',
     'client document body is registered in the wrong keyed slot',
@@ -188,6 +202,14 @@ function verifyClientRegistration(code, platform) {
   assert(
     previewAction?.options.id === 'dsh-codecraft-html-preview',
     'client HTML preview action is registered in the wrong slot',
+  )
+  assert(
+    explorerBody?.options.key === 'dsh-codecraft-files',
+    'client Explorer body is registered in the wrong keyed slot',
+  )
+  assert(
+    dialogHost?.options.id === 'dsh-codecraft-dialogs',
+    'client dialog host is registered in the wrong slot',
   )
   assert(localeRows.length === 1 && localeRows[0].namespace === 'sidebarCodeCraft', 'client locale registration is missing')
   assert(appendedStyles.length === 1, `client appended ${appendedStyles.length} style elements`)

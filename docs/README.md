@@ -24,6 +24,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.4.0 | [Design](version/v0.4.0/design.md) | [Validation](version/v0.4.0/validation.md) | Validated offline HTML foundation, completion, input assistance, and live feature gate on macOS and Windows |
 | v0.4.1 | [Design](version/v0.4.1/design.md) | [Validation](version/v0.4.1/validation.md) | Validated HTML Hover, Outline, breadcrumbs, folding, selection, local navigation, formatting, Emmet, and native browser preview on macOS and Windows |
 | v0.4.2 | [Design](version/v0.4.2/design.md) | [Validation](version/v0.4.2/validation.md) | Validated offline HTML diagnostics, problem navigation, safe tag/ID rename, immediate saving, and normal Desktop exit on macOS and Windows |
+| v0.5.0 | [Design](version/v0.5.0/design.md) | [Validation](version/v0.5.0/validation.md) | Implemented workspace file management and state synchronization; automated validation passed, native acceptance pending |
 
 ## Project Guides
 

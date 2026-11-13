@@ -28,7 +28,7 @@ import {
   statFile,
   syncIntelligence,
 } from '../api.js'
-import { fileNameOf, parseSessionFileAddress } from '../address.js'
+import { fileNameOf, parseSessionFileAddress, sessionFileAddress } from '../address.js'
 import {
   applyTextPreservingSelection,
   buildEditorExtensions,
@@ -77,6 +77,7 @@ import type { DocumentBodyProps, RendererRequest } from '../dsh.js'
 import { assessDiskChange } from '../document/conflicts.js'
 import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
 import { LatestSaveQueue } from '../document/save-queue.js'
+import { registerOpenDocument } from '../document/registry.js'
 import { editorStatusKey } from '../document/status.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import { editorSettings } from '../settings/editor-settings.js'
@@ -299,7 +300,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const readOnlyRef = useRef(false)
   const savingRef = useRef(false)
   const saveQueueRef = useRef(new LatestSaveQueue())
-  const doSaveRef = useRef<() => Promise<void>>(async () => {})
+  const doSaveRef = useRef<() => Promise<boolean>>(async () => false)
   const conflictRef = useRef<Conflict | null>(null)
   const parsedRef = useRef<{ sessionId: string, path: string } | null>(null)
   const mountedRef = useRef(true)
@@ -1221,7 +1222,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     }
   }, [createEditor, destroyEditor])
 
-  const doSave = useCallback(async () => {
+  const doSave = useCallback(async (): Promise<boolean> => {
+    let saved = false
     await saveQueueRef.current.request(async () => {
       const view = viewRef.current
       const parsed = parsedRef.current
@@ -1237,6 +1239,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         dirtyRef.current = false
         setDirty(false)
         setStatus('saved')
+        saved = true
         if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
         flashTimerRef.current = window.setTimeout(() => {
           if (mountedRef.current) setStatus('idle')
@@ -1270,6 +1273,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         conflictRef.current = null
         setExternal(false)
         setStatus(stillDirty ? 'idle' : 'saved')
+        saved = !stillDirty
         if (!stillDirty) {
           if (flashTimerRef.current !== undefined) window.clearTimeout(flashTimerRef.current)
           flashTimerRef.current = window.setTimeout(() => {
@@ -1292,8 +1296,33 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
         savingRef.current = false
       }
     })
+    return saved && !dirtyRef.current && conflictRef.current === null
   }, [])
   doSaveRef.current = doSave
+
+  useEffect(() => {
+    const parsed = parseSessionFileAddress(address)
+    if (parsed === undefined) return
+    const { sessionId, path } = parsed
+    return registerOpenDocument({
+      sessionId,
+      path,
+      address,
+      tabId: tab.id,
+      isDirty: () => dirtyRef.current || conflictRef.current !== null,
+      save: async () => {
+        await doSaveRef.current()
+        return !dirtyRef.current && conflictRef.current === null
+      },
+      relocate: (nextPath: string) => {
+        tab.actions.openResource(sessionFileAddress(sessionId, nextPath), {
+          revealIfOpened: true,
+        })
+        tab.actions.close()
+      },
+      close: () => { tab.actions.close() },
+    })
+  }, [address, tab.id, tab.actions])
 
   const continueEditing = useCallback(() => {
     conflictRef.current = null

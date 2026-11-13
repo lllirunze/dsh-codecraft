@@ -269,6 +269,54 @@ describe('CodeCraft API route', () => {
     }
   })
 
+  it('lists workspace entries and creates a file through the authenticated route', async () => {
+    const root = await workspace()
+    await writeFile(join(root, 'seed.txt'), 'seed\n')
+    const listed = await call(makeContext(root), { action: 'workspace-list', sessionId: 's1', path: '' })
+    expect(listed.statusCode).toBe(200)
+    expect(listed.json()).toMatchObject({
+      ok: true,
+      result: { path: '', entries: [{ path: 'seed.txt', kind: 'file', size: 5 }] },
+    })
+
+    const created = await call(makeContext(root), {
+      action: 'workspace-operation',
+      sessionId: 's1',
+      operation: { kind: 'createFile', path: 'new.txt', content: 'hello\n' },
+    })
+    expect(created.statusCode).toBe(200)
+    expect(created.json()).toMatchObject({
+      ok: true,
+      result: { succeeded: [{ path: 'new.txt' }], failed: [] },
+    })
+    expect(await readFile(join(root, 'new.txt'), 'utf8')).toBe('hello\n')
+  })
+
+  it('rejects a workspace operation outside the session workspace', async () => {
+    const root = await workspace()
+    const response = await call(makeContext(root), {
+      action: 'workspace-operation',
+      sessionId: 's1',
+      operation: { kind: 'createFile', path: '../escape.txt' },
+    })
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toMatchObject({
+      ok: true,
+      result: { succeeded: [], failed: [{ path: '../escape.txt', code: 'outside-workspace' }] },
+    })
+  })
+
+  it('rejects an unknown workspace operation shape', async () => {
+    const root = await workspace()
+    const response = await call(makeContext(root), {
+      action: 'workspace-operation',
+      sessionId: 's1',
+      operation: { kind: 'chmod', path: 'a.txt' },
+    })
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toMatchObject({ ok: false, error: { code: 'bad-request' } })
+  })
+
   it('does not expose internal Python provider paths to the browser', async () => {
     const root = await workspace()
     await writeFile(join(root, 'a.py'), 'value.\n')

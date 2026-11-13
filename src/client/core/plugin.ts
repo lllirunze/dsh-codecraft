@@ -19,9 +19,22 @@ import { navigationCoordinator } from '../navigation/coordinator.js'
 import { PreviewInBrowserAction } from '../renderer/PreviewInBrowserAction.js'
 import { bindHtmlPreviewOpener } from '../languages/html/preview.js'
 import { clearBrowserLegacyDrafts } from '../drafts.js'
+import { WorkspaceController } from '../workspace/controller.js'
+import { createExplorerPage } from '../workspace/ExplorerPage.js'
+import { createDialogHost } from '../workspace/DialogHost.js'
+import { registerNativeMenus } from '../workspace/native-menus.js'
 
 /** Browser services required before mounting. */
-export const inject = ['documentPreviews', 'slots', 'locale', 'configForms', 'sidebarRight']
+export const inject = [
+  'documentPreviews',
+  'slots',
+  'locale',
+  'configForms',
+  'sidebarRight',
+  'sidebarRightTabs',
+  'sessions',
+  'contextMenus',
+]
 
 /** Locale namespace bound to both the viewer label and the body copy. */
 const LOCALE_NAMESPACE = 'sidebarCodeCraft'
@@ -31,6 +44,9 @@ const PREVIEW_ID = 'dsh-codecraft'
 
 /** Loader entry id from cordis.patch.yml; DSH settings are keyed by this id. */
 const SETTINGS_ENTRY_ID = 'codecraft'
+
+/** Extension tab type that replaces the builtin Files page while installed. */
+const EXPLORER_ID = 'dsh-codecraft-files'
 
 /**
  * Register the editor for this plugin's lifetime.
@@ -55,6 +71,57 @@ export function apply(ctx: ClientContext): void {
     'dsh-codecraft: dictionaries',
   )
   const t = ctx.locale.bind(LOCALE_NAMESPACE)
+
+  // Reveal waits for DSH's public Session Remote instead of hard-depending on
+  // it: the editor and every workspace operation still work without it.
+  let revealPath: ((path: string) => Promise<unknown>) | null = null
+  const workspace = new WorkspaceController({
+    sessions: ctx.sessions,
+    t,
+    reveal: async (path) => {
+      if (revealPath === null) throw new Error(t('explorer.revealFailed'))
+      return await revealPath(path)
+    },
+  })
+
+  ctx.effect(() => ctx.sidebarRightTabs.register({
+    id: EXPLORER_ID,
+    kind: 'files',
+    priority: 'extension',
+    title: () => t('explorer.title'),
+    keepMounted: true,
+    // An extension owns the guide entry of the kind it takes over. Without this
+    // the builtin Files entry disappears from the guide with the builtin type.
+    guide: [{
+      id: 'workspace',
+      order: 10,
+      commandId: 'workspace.files',
+      title: () => t('explorer.title'),
+      description: () => t('explorer.guideDescription'),
+    }],
+  }), 'dsh-codecraft: Explorer tab type')
+
+  ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab',
+    key: EXPLORER_ID,
+    locale: LOCALE_NAMESPACE,
+  }, createExplorerPage(workspace))), 'dsh-codecraft: Explorer body')
+
+  ctx.effect(() => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay',
+    id: 'dsh-codecraft-dialogs',
+    order: 100,
+    locale: LOCALE_NAMESPACE,
+  }, createDialogHost(workspace))), 'dsh-codecraft: workspace dialogs')
+
+  ctx.effect(
+    () => registerNativeMenus({
+      contextMenus: ctx.contextMenus,
+      sidebarRight: ctx.sidebarRight,
+      t,
+    }, workspace),
+    'dsh-codecraft: native file menus',
+  )
 
   ctx.effect(
     () => editorSettings.bind(ctx.configForms.get(SETTINGS_ENTRY_ID)),
@@ -104,6 +171,11 @@ export function apply(ctx: ClientContext): void {
   ctx.inject(['remote', 'remote.session'], child => {
     const session = child.remote?.session
     if (session === undefined) return
+    revealPath = async path => {
+      const result = await session.openWorkspacePath({ path, action: 'reveal' })
+      if (!result.ok) throw new Error(result.error.message)
+      if (!result.value.opened) throw new Error(t('explorer.revealFailed'))
+    }
     child.effect(() => bindHtmlPreviewOpener(async path => {
       try {
         const result = await session.openWorkspacePath({ path })
