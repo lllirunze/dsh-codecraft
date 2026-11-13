@@ -61,7 +61,7 @@
 
 ## Local DSH Desktop Candidate Gate
 
-User-confirmed candidate record: source worktree based on `3eac7d2d875ae1ca67a7a4b91535aec8b85361fb`, package version `0.5.0` before the release-only metadata bump, DSH Desktop `0.2.2-rc.2`, `desktop` profile, and the single local source `link:/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft`. The subsequent `0.5.1` metadata update changes no runtime behavior; its package identity and startup/open smoke must be refreshed before tagging.
+User-confirmed candidate record: source worktree based on `3eac7d2d875ae1ca67a7a4b91535aec8b85361fb`, package version `0.5.0` before the release-only metadata bump, DSH Desktop `0.2.2-rc.2`, `desktop` profile, and the single local source `link:/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft`. The subsequent `0.5.1` metadata update changed no runtime behavior. Package identity was refreshed automatically, and the user confirmed the required restart plus startup, Explorer/icons, open/edit/save/reopen, settings, and normal-exit smoke against the `0.5.1` linked candidate.
 
 - [x] Record Git SHA, package version, DSH Desktop version, platform, profile, expected source, and absolute repository path.
 - [x] Apply exactly one local CodeCraft source through DSH Plugin Manager and record its receipt.
@@ -105,4 +105,4 @@ Run independently on macOS and Windows against the current candidate.
 
 ## Release Gate
 
-Automated/package gates, the local Desktop candidate gate, and the user-confirmed macOS and Windows acceptance matrix pass. The user explicitly requested publication; refresh the release-metadata package identity and startup/open smoke before committing and tagging `v0.5.1`.
+Automated/package gates, the local Desktop candidate gate, the user-confirmed macOS and Windows acceptance matrix, and the release-metadata startup/open smoke pass. The user explicitly requested publication of `v0.5.1`.
