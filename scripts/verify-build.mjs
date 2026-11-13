@@ -1,4 +1,4 @@
-import { access, readFile } from 'node:fs/promises'
+import { access, readFile, readdir } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import { resolve } from 'node:path'
 import vm from 'node:vm'
@@ -25,7 +25,23 @@ await Promise.all([
   mustExist('lib/protocol.d.ts'),
 ])
 
+async function findSvg(directory) {
+  const matches = []
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const child = `${directory}/${entry.name}`
+    if (entry.isDirectory()) matches.push(...await findSvg(child))
+    else if (entry.name.endsWith('.svg')) matches.push(child)
+  }
+  return matches
+}
+
+const packagedSvg = await findSvg('lib')
+if (packagedSvg.length > 0) throw new Error(`build unexpectedly contains SVG assets: ${packagedSvg[0]}`)
+
 const client = await readFile('lib/client.js', 'utf8')
+if (client.includes('registry.npmmirror.com') || client.includes('registry.npmjs.org')) {
+  throw new Error('client bundle must not perform Material Icon Theme downloads')
+}
 if (!client.startsWith('window.__ModuleLoader__.load({')) {
   throw new Error('client bundle does not register through window.__ModuleLoader__.load')
 }
@@ -77,6 +93,14 @@ function verifyClientRegistration(code, platform) {
   }
   const sandbox = {
     console,
+    AbortController,
+    fetch: async () => ({
+      status: 200,
+      json: async () => ({
+        ok: true,
+        result: { version: '5.40.0', installed: false, iconCount: 0 },
+      }),
+    }),
     document: documentStub,
     navigator: { userAgent: 'node', platform: platform === 'win32' ? 'Win32' : 'MacIntel' },
     setTimeout,
@@ -177,7 +201,7 @@ function verifyClientRegistration(code, platform) {
   assert(preview.priority === 'extension' && preview.loading === 'renderer', 'document preview uses the wrong priority or loading mode')
   assert(preview.extensions.includes('ts') && preview.extensions.includes('py'), 'document preview is missing source extensions')
   assert(!preview.extensions.includes('png') && !preview.extensions.includes('pdf'), 'document preview claims binary extensions')
-  assert(bodyRows.length === 5, `client registered ${bodyRows.length} slot contributions`)
+  assert(bodyRows.length === 6, `client registered ${bodyRows.length} slot contributions`)
   assert(
     tabDefinitions.length === 1 && tabDefinitions[0].id === 'dsh-codecraft-files' && tabDefinitions[0].kind === 'files',
     'client did not register the Files tab override',
@@ -190,6 +214,7 @@ function verifyClientRegistration(code, platform) {
   const settingsCard = bodyRows.find(row => row.options.name === 'plugins.item')
   const previewAction = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document.actions')
   const explorerBody = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab')
+  const explorerTitle = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab.title')
   const dialogHost = bodyRows.find(row => row.options.name === 'shell.overlay')
   assert(
     documentBody?.options.key === 'dsh-codecraft',
@@ -206,6 +231,10 @@ function verifyClientRegistration(code, platform) {
   assert(
     explorerBody?.options.key === 'dsh-codecraft-files',
     'client Explorer body is registered in the wrong keyed slot',
+  )
+  assert(
+    explorerTitle?.options.key === 'dsh-codecraft-files',
+    'client Explorer title is registered in the wrong keyed slot',
   )
   assert(
     dialogHost?.options.id === 'dsh-codecraft-dialogs',

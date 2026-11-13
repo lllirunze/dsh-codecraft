@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IntelligenceManager } from '../src/host/intelligence/manager.js'
+import type { MaterialIconManager } from '../src/host/material-icons.js'
 import type { HostContext, RequestLike, ResponseLike } from '../src/host/context.js'
 import { createApiHandler, dispatch } from '../src/host/routes.js'
 import { MAX_REQUEST_BYTES } from '../src/protocol.js'
@@ -127,6 +128,35 @@ describe('CodeCraft API route', () => {
       ok: false,
       error: { code: 'intelligence-unavailable' },
     })
+  })
+
+  it('serves global Material icon status, installation, and verified SVG reads without a workspace session', async () => {
+    const root = await workspace()
+    const materialIcons = {
+      status: vi.fn(async () => ({ version: '5.40.0', installed: false, iconCount: 0 })),
+      install: vi.fn(async () => ({ version: '5.40.0', installed: true, iconCount: 1256 })),
+      readIcon: vi.fn(async (fileName: string) => fileName === 'python.svg'
+        ? Buffer.from('<svg><path d="M0 0"/></svg>')
+        : undefined),
+    } as unknown as MaterialIconManager
+    const handler = createApiHandler(makeContext(root), undefined, materialIcons)
+    const statusResponse = new FakeResponse()
+    await handler(request({ action: 'material-icons-status' }), statusResponse)
+    expect(statusResponse.json()).toMatchObject({ ok: true, result: { installed: false } })
+    const installResponse = new FakeResponse()
+    await handler(request({ action: 'material-icons-install' }), installResponse)
+    expect(installResponse.json()).toMatchObject({ ok: true, result: { installed: true, iconCount: 1256 } })
+    expect(materialIcons.install).toHaveBeenCalledOnce()
+    const iconResponse = new FakeResponse()
+    await handler(request({ action: 'material-icon-read', fileName: 'python.svg' }), iconResponse)
+    expect(iconResponse.json()).toEqual({
+      ok: true,
+      result: { fileName: 'python.svg', svg: '<svg><path d="M0 0"/></svg>' },
+    })
+    const missingResponse = new FakeResponse()
+    await handler(request({ action: 'material-icon-read', fileName: '../python.svg' }), missingResponse)
+    expect(missingResponse.statusCode).toBe(404)
+    expect(missingResponse.json()).toMatchObject({ ok: false, error: { code: 'not-found' } })
   })
 
   it('reports an unknown session without resolving a path', async () => {

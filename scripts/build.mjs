@@ -57,7 +57,6 @@ ${code}
 });
 `
 await writeFile('lib/client.js', wrapped)
-
 execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.build.json'], {
   stdio: 'inherit',
 })

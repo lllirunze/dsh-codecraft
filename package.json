@@ -30,6 +30,7 @@
     "README.md",
     "README.zh-CN.md",
     "CHANGELOG.md",
+    "THIRD_PARTY_NOTICES.md",
     "LICENSE"
   ],
   "engines": {
@@ -72,9 +73,12 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "icons:update": "node scripts/update-material-icons.mjs",
+    "icons:sync": "node scripts/sync-material-icons.mjs",
+    "icons:verify": "node scripts/verify-material-icons.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "verify": "node scripts/verify-build.mjs",
+    "verify": "node scripts/verify-material-icons.mjs && node scripts/verify-build.mjs",
     "check": "npm run typecheck && npm run test && npm run build && npm run verify",
     "prepack": "npm run check"
   },
@@ -113,6 +117,7 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "esbuild": "^0.28.1",
+    "material-icon-theme": "5.40.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.9.3",

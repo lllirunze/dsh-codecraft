@@ -614,6 +614,19 @@ body[data-ds-dark-theme] .dsh-codecraft {
   outline: none;
 }
 .dsh-codecraft-settings-select:disabled { cursor: default; opacity: .55; }
+.dsh-codecraft-settings-button {
+  flex: none;
+  padding: 7px 12px;
+  border: .5px solid var(--dsw-alias-border-l4, rgba(0, 0, 0, .16));
+  border-radius: var(--dsw-radius-md, 8px);
+  background: var(--dsw-alias-interactive-bg-primary, #4078f2);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dsh-codecraft-settings-button:hover:not(:disabled) { filter: brightness(.96); }
+.dsh-codecraft-settings-button:disabled { cursor: default; opacity: .55; }
 .dsh-codecraft-settings-error {
   color: var(--dsw-alias-state-error-primary, #d1242f);
   font-size: 12px;
@@ -739,6 +752,9 @@ body[data-ds-dark-theme] .dsh-codecraft {
   background: var(--dsw-alias-bg-layer-1, #ffffff);
   font: inherit;
 }
+.cc-explorer-tab-title { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.cc-explorer-tab-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-explorer-tab-icon { width: 16px; height: 16px; flex: 0 0 16px; object-fit: contain; }
 .cc-explorer-empty {
   align-items: center;
   justify-content: center;
@@ -754,6 +770,9 @@ body[data-ds-dark-theme] .dsh-codecraft {
   border-bottom: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .12));
 }
 .cc-explorer-root {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -762,6 +781,8 @@ body[data-ds-dark-theme] .dsh-codecraft {
   font-weight: 600;
   font-size: 12px;
 }
+.cc-explorer-root > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-explorer-root-icon { width: 17px; height: 17px; flex: 0 0 17px; object-fit: contain; }
 .cc-explorer-actions { display: flex; gap: 4px; }
 .cc-explorer-actions button {
   font: inherit;
@@ -805,7 +826,10 @@ body[data-ds-dark-theme] .dsh-codecraft {
   line-height: 1;
   cursor: pointer;
 }
-.cc-explorer-icon { width: 14px; text-align: center; opacity: .75; font-size: 11px; }
+.cc-explorer-icon { width: 16px; height: 16px; flex: 0 0 16px; object-fit: contain; }
+.cc-explorer-default-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 1; color: currentColor; }
+.cc-explorer-material-icon { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+.cc-explorer-material-icon > svg { display: block; width: 100%; height: 100%; }
 .cc-explorer-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cc-explorer-spinner { opacity: .6; }
 .cc-explorer-row-error { color: var(--dsw-alias-state-error-primary, #d1242f); font-weight: 700; }

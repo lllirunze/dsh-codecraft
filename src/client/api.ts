@@ -17,6 +17,8 @@ import {
   type IntelligencePosition,
   type IntelligenceReferencesResult,
   type IntelligenceStatusResult,
+  type MaterialIconReadResult,
+  type MaterialIconStatusResult,
   type ReadResult,
   type SaveResult,
   type StatResult,
@@ -68,14 +70,14 @@ export async function callApi<T>(request: unknown, signal?: AbortSignal): Promis
     })
   } catch (error) {
     if (signal?.aborted) throw error
-    throw new ApiCallError('network', '无法连接 CodeCraft 保存服务。', 0)
+    throw new ApiCallError('network', '无法连接 CodeCraft 服务。', 0)
   }
   let body: unknown
   try {
     body = await response.json()
   } catch {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
-    throw new ApiCallError('bad-response', `保存服务返回了无效响应（HTTP ${response.status}）。`, response.status)
+    throw new ApiCallError('bad-response', `CodeCraft 服务返回了无效响应（HTTP ${response.status}）。`, response.status)
   }
   if (!isEnvelope(body)) {
     throw new ApiCallError('bad-response', `保存服务返回了未知响应（HTTP ${response.status}）。`, response.status)
@@ -187,4 +189,16 @@ export function runWorkspaceOperation(
   signal?: AbortSignal,
 ): Promise<WorkspaceOperationResult> {
   return callApi<WorkspaceOperationResult>({ action: 'workspace-operation', ...input }, signal)
+}
+
+export function materialIconStatus(signal?: AbortSignal): Promise<MaterialIconStatusResult> {
+  return callApi<MaterialIconStatusResult>({ action: 'material-icons-status' }, signal)
+}
+
+export function installMaterialIcons(signal?: AbortSignal): Promise<MaterialIconStatusResult> {
+  return callApi<MaterialIconStatusResult>({ action: 'material-icons-install' }, signal)
+}
+
+export function readMaterialIcon(fileName: string, signal?: AbortSignal): Promise<MaterialIconReadResult> {
+  return callApi<MaterialIconReadResult>({ action: 'material-icon-read', fileName }, signal)
 }

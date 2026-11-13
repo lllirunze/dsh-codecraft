@@ -5,6 +5,7 @@ import {
   type IndentSize,
 } from '../../settings/schema.js'
 import { editorSettings } from './editor-settings.js'
+import { materialIconState } from '../icons/material-icon-state.js'
 
 interface SettingsCardProps {
   view: 'summary' | 'settings'
@@ -17,6 +18,11 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
     editorSettings.getSnapshot,
     editorSettings.getSnapshot,
   )
+  const icons = useSyncExternalStore(
+    materialIconState.subscribe,
+    materialIconState.getSnapshot,
+    materialIconState.getSnapshot,
+  )
   if (view === 'summary') return t('settings.description')
 
   const disabled = snapshot.status !== 'ready' || !snapshot.writable || snapshot.saving
@@ -26,6 +32,41 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
         <div className="dsh-codecraft-settings-title">{t('settings.title')}</div>
         <div className="dsh-codecraft-settings-description">{t('settings.description')}</div>
       </div>
+      <section className="dsh-codecraft-settings-group">
+        <div className="dsh-codecraft-settings-group-title">{t('settings.group.materialIcons')}</div>
+        <div className="dsh-codecraft-settings-card">
+          <div className="dsh-codecraft-settings-row">
+            <div>
+              <div className="dsh-codecraft-settings-label">{t('settings.materialIcons.label')}</div>
+              <div className="dsh-codecraft-settings-hint">
+                {t('settings.materialIcons.hint', { version: icons.version })}
+              </div>
+              <div className="dsh-codecraft-settings-hint">
+                {icons.status === 'installed'
+                  ? t('settings.materialIcons.installed', { count: icons.iconCount })
+                  : t('settings.materialIcons.default')}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="dsh-codecraft-settings-button"
+              disabled={icons.status === 'installing'}
+              onClick={() => { void materialIconState.install() }}
+            >
+              {icons.status === 'installing'
+                ? t('settings.materialIcons.installing')
+                : icons.status === 'installed'
+                  ? t('settings.materialIcons.reinstall')
+                  : t('settings.materialIcons.install')}
+            </button>
+          </div>
+        </div>
+        {icons.status === 'error' && (
+          <div className="dsh-codecraft-settings-error" role="alert">
+            {t('settings.materialIcons.failed', { error: icons.error ?? '' })}
+          </div>
+        )}
+      </section>
       <section className="dsh-codecraft-settings-group">
         <div className="dsh-codecraft-settings-group-title">{t('settings.group.indentation')}</div>
         <div className="dsh-codecraft-settings-card">

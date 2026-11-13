@@ -25,6 +25,7 @@ import { listWorkspace } from '../api.js'
 import { sessionFileAddress } from '../address.js'
 import type { TabInfo } from '../dsh.js'
 import type { WorkspaceEntry } from '../../protocol.js'
+import { FileIcon } from '../icons/FileIcon.js'
 import type { WorkspaceController } from './controller.js'
 import { baseName, isInside, parentOf } from './paths.js'
 
@@ -414,7 +415,14 @@ export function createExplorerPage(
       <div className="cc-explorer">
         <div className="cc-explorer-toolbar">
           <div className="cc-explorer-root" title={rootPath === '' ? cwd : rootPath}>
-            {rootPath === '' ? baseName(cwd) : baseName(rootPath)}
+            <FileIcon
+              className="cc-explorer-root-icon"
+              name={rootPath === '' ? baseName(cwd) : baseName(rootPath)}
+              path=""
+              kind="root"
+              expanded
+            />
+            <span>{rootPath === '' ? baseName(cwd) : baseName(rootPath)}</span>
           </div>
           <div className="cc-explorer-actions">
             <button type="button" title={t('explorer.newFile')} onClick={() => controller.openCreate(sessionId, '', 'file')}>
@@ -503,9 +511,13 @@ export function createExplorerPage(
               >
                 {row.kind === 'directory' ? (expanded.has(row.path) ? '▾' : '▸') : ''}
               </button>
-              <span className="cc-explorer-icon" data-kind={row.kind} aria-hidden="true">
-                {row.kind === 'directory' ? '▣' : '▢'}
-              </span>
+              <FileIcon
+                className="cc-explorer-icon"
+                name={row.name}
+                path={row.path}
+                kind={row.kind}
+                expanded={row.kind === 'directory' && expanded.has(row.path)}
+              />
               <span className="cc-explorer-name">{row.name}</span>
               {loading.has(row.path) && <span className="cc-explorer-spinner">…</span>}
               {errors[row.path] !== undefined && <span className="cc-explorer-row-error" title={errors[row.path]}>!</span>}

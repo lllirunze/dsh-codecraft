@@ -185,6 +185,30 @@ export interface WorkspaceOperationResult {
   warnings: string[]
 }
 
+export interface MaterialIconStatusRequest {
+  action: 'material-icons-status'
+}
+
+export interface MaterialIconInstallRequest {
+  action: 'material-icons-install'
+}
+
+export interface MaterialIconReadRequest {
+  action: 'material-icon-read'
+  fileName: string
+}
+
+export interface MaterialIconStatusResult {
+  version: string
+  installed: boolean
+  iconCount: number
+}
+
+export interface MaterialIconReadResult {
+  fileName: string
+  svg: string
+}
+
 export interface IntelligenceDocumentRequest {
   sessionId: string
   path: string
@@ -231,6 +255,9 @@ export interface IntelligenceStatusRequest {
 }
 
 export type CodeCraftRequest =
+  | MaterialIconStatusRequest
+  | MaterialIconInstallRequest
+  | MaterialIconReadRequest
   | ReadRequest
   | SaveRequest
   | StatRequest
@@ -381,6 +408,9 @@ export const ERROR_CODES = {
   intelligenceUnavailable: 'intelligence-unavailable',
   intelligenceUnsupported: 'intelligence-unsupported',
   intelligenceStale: 'intelligence-stale',
+  iconDownloadFailed: 'icon-download-failed',
+  iconPackageInvalid: 'icon-package-invalid',
+  iconInstallFailed: 'icon-install-failed',
 } as const
 
 /** Why a path was rejected, as a short human-readable explanation. */

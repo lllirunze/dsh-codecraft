@@ -2,6 +2,7 @@ import { isAbsolute } from 'node:path'
 import { CodeCraftError } from './errors.js'
 import { readTextFile, saveTextFile, statFile } from './files.js'
 import { publicIntelligenceError, type IntelligenceManager } from './intelligence/manager.js'
+import type { MaterialIconManager } from './material-icons.js'
 import type {
   HostContext,
   HostSessionLike,
@@ -154,6 +155,10 @@ function requireRequest(value: unknown): CodeCraftRequest {
   if (typeof action !== 'string') {
     throw new CodeCraftError(ERROR_CODES.badRequest, '缺少 action。', 400)
   }
+  if (action === 'material-icons-status' || action === 'material-icons-install') return { action }
+  if (action === 'material-icon-read') {
+    return { action, fileName: requireText(value.fileName, 'fileName', 255) }
+  }
   if (typeof sessionId !== 'string' || sessionId === '') {
     throw new CodeCraftError(ERROR_CODES.badRequest, '缺少 sessionId。', 400)
   }
@@ -282,7 +287,17 @@ export async function dispatch(
   intelligence?: IntelligenceManager,
   signal?: AbortSignal,
   workspaceService: WorkspaceService = defaultWorkspaceService,
+  materialIcons?: MaterialIconManager,
 ): Promise<unknown> {
+  if (request.action === 'material-icons-status') return requireMaterialIcons(materialIcons).status()
+  if (request.action === 'material-icons-install') return requireMaterialIcons(materialIcons).install(signal)
+  if (request.action === 'material-icon-read') {
+    const content = await requireMaterialIcons(materialIcons).readIcon(request.fileName)
+    if (content === undefined) {
+      throw new CodeCraftError(ERROR_CODES.notFound, 'Material Icon 不存在或未通过校验。', 404)
+    }
+    return { fileName: request.fileName, svg: content.toString('utf8') }
+  }
   const { root } = await workspaceOf(ctx, request.sessionId)
   switch (request.action) {
     case 'read': return readTextFile(root, request.path) satisfies Promise<ReadResult>
@@ -309,6 +324,11 @@ export async function dispatch(
   }
 }
 
+function requireMaterialIcons(manager: MaterialIconManager | undefined): MaterialIconManager {
+  if (manager !== undefined) return manager
+  throw new CodeCraftError(ERROR_CODES.iconInstallFailed, 'Material Icons 服务不可用。', 503)
+}
+
 function requireIntelligence(manager: IntelligenceManager | undefined): IntelligenceManager {
   if (manager !== undefined) return manager
   throw new CodeCraftError(ERROR_CODES.intelligenceUnavailable, 'Python 智能服务不可用。', 503)
@@ -322,6 +342,7 @@ function requireIntelligence(manager: IntelligenceManager | undefined): Intellig
 export function createApiHandler(
   ctx: HostContext,
   intelligence?: IntelligenceManager,
+  materialIcons?: MaterialIconManager,
 ): (req: RequestLike, res: ResponseLike) => Promise<void> {
   return async (req, res) => {
     const controller = new AbortController()
@@ -363,7 +384,7 @@ export function createApiHandler(
         return
       }
       const request = requireRequest(parsed)
-      const result = await dispatch(ctx, request, intelligence, controller.signal)
+      const result = await dispatch(ctx, request, intelligence, controller.signal, defaultWorkspaceService, materialIcons)
       sendJson(res, 200, { ok: true, result })
     } catch (error) {
       if (controller.signal.aborted) {

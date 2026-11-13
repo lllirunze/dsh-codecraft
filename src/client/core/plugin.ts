@@ -21,8 +21,10 @@ import { bindHtmlPreviewOpener } from '../languages/html/preview.js'
 import { clearBrowserLegacyDrafts } from '../drafts.js'
 import { WorkspaceController } from '../workspace/controller.js'
 import { createExplorerPage } from '../workspace/ExplorerPage.js'
+import { ExplorerTitle } from '../workspace/ExplorerTitle.js'
 import { createDialogHost } from '../workspace/DialogHost.js'
 import { registerNativeMenus } from '../workspace/native-menus.js'
+import { materialIconState } from '../icons/material-icon-state.js'
 
 /** Browser services required before mounting. */
 export const inject = [
@@ -54,6 +56,11 @@ const EXPLORER_ID = 'dsh-codecraft-files'
  */
 export function apply(ctx: ClientContext): void {
   clearBrowserLegacyDrafts()
+  ctx.effect(() => {
+    const controller = new AbortController()
+    void materialIconState.refresh(controller.signal)
+    return () => controller.abort()
+  }, 'dsh-codecraft: Material icon status')
   ctx.effect(
     () => navigationCoordinator.bind(ctx.sidebarRight),
     'dsh-codecraft: native navigation',
@@ -106,6 +113,12 @@ export function apply(ctx: ClientContext): void {
     key: EXPLORER_ID,
     locale: LOCALE_NAMESPACE,
   }, createExplorerPage(workspace))), 'dsh-codecraft: Explorer body')
+
+  ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab.title',
+    key: EXPLORER_ID,
+    locale: LOCALE_NAMESPACE,
+  }, ExplorerTitle)), 'dsh-codecraft: Explorer title')
 
   ctx.effect(() => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',

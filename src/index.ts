@@ -14,6 +14,7 @@ import { CODECRAFT_ROUTE } from './protocol.js'
 import type { HostContext } from './host/context.js'
 import { IntelligenceManager } from './host/intelligence/manager.js'
 import { createApiHandler } from './host/routes.js'
+import { MaterialIconManager } from './host/material-icons.js'
 import { resolveCodeCraftSettings, type CodeCraftSettings } from './settings/schema.js'
 
 export { CODECRAFT_ROUTE } from './protocol.js'
@@ -23,6 +24,8 @@ export type {
   CodeCraftErrorBody,
   CodeCraftRequest,
   IndentStyle,
+  MaterialIconReadResult,
+  MaterialIconStatusResult,
   NewlineStyle,
   ReadResult,
   SaveResult,
@@ -53,15 +56,16 @@ export function apply(ctx: HostContext, config: CodeCraftSettings): void {
     settings.pythonIntelligence,
     process.platform,
   )
+  const materialIcons = new MaterialIconManager()
   ctx.effect(
     () => {
-      const unregister = ctx.webServer.register({
+      const unregisterApi = ctx.webServer.register({
         kind: 'exact',
         path: CODECRAFT_ROUTE,
-        handler: createApiHandler(ctx, intelligence),
+        handler: createApiHandler(ctx, intelligence, materialIcons),
       })
       return async () => {
-        unregister()
+        unregisterApi()
         await intelligence.dispose()
       }
     },
