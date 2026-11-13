@@ -4,7 +4,7 @@
 | --- | --- |
 | Target version | 0.5.0 |
 | Baseline | 0.4.2 |
-| Status | Automated validation passed; native acceptance pending |
+| Status | PASS — automated validation passed and native acceptance was confirmed by the user |
 | Design | [design.md](design.md) |
 
 ## Evidence Rules
@@ -43,8 +43,8 @@
 | Evidence date | 2026-11-13 |
 | Focused workspace check | `npx vitest run tests/workspace-operations.test.ts tests/workspace-sync.test.ts tests/routes.test.ts` — 3 files, 40 tests, PASS |
 | Canonical gate | `npm run check` — typecheck, 24 test files / 265 tests, build, verify: PASS |
-| Artifact result | `npm pack --dry-run --ignore-scripts --json` — `dsh-codecraft-0.4.2.tgz`, 86 files, 620099 bytes packed; version intentionally still 0.4.2 until release |
-| Native acceptance | NOT VERIFIED on macOS and Windows |
+| Artifact result | `npm pack --dry-run --ignore-scripts --json` — `dsh-codecraft-0.5.0.tgz`, 86 files, 620356 bytes packed |
+| Native acceptance | PASS — the user confirmed the current v0.5.0 candidate passed validation on 2026-11-13 |
 
 ## Automated Validation
 
@@ -90,32 +90,32 @@ Run the following independently on macOS and Windows with the local candidate in
 
 ### macOS
 
-- [ ] AC-01: Create a file and a folder from the Explorer and from the native tree menu; confirm both appear and can be opened.
-- [ ] AC-02: Rename an open file; confirm the tab title/address and future saves use the new path and the old path is not recreated.
-- [ ] AC-03: Move a folder containing several open files; confirm every descendant tab and dirty buffer follows correctly.
-- [ ] AC-04: Try to delete a file with unsaved changes; confirm the draft is protected and Cancel leaves both file and draft unchanged.
-- [ ] AC-05: Try to delete a folder with multiple dirty files; confirm the full impact is shown and unsafe content is blocked.
-- [ ] AC-06: Copy a file to a name that already exists; confirm Skip, Keep Both, Overwrite, and Cancel, with no silent overwrite.
-- [ ] AC-07: Multi-select with Shift and Command, then batch move/delete; confirm per-item results and failure reporting.
-- [ ] AC-08: Drag a folder into its own descendant; confirm the drop is blocked with a reason.
-- [ ] AC-09: Modify an open file with another editor or Agent; confirm a dirty local buffer is not silently overwritten.
-- [ ] AC-10: Use Command+C/X/V/F2/Delete with tree focus and then editor focus; confirm no editor shortcut is stolen.
-- [ ] AC-11: Delete a file when Trash is unavailable or permission is denied; confirm a recoverable failure and no silent permanent delete.
-- [ ] AC-12: Delete a symlink pointing outside the workspace; confirm only the link is removed and the target remains.
-- [ ] AC-13: Use Python cross-file navigation, then move the target file; confirm the old navigation fails safely and the index recovers.
-- [ ] AC-14: Reload/restart DSH Desktop; confirm the tree is consistent, valid drafts recover, and no duplicate refresh loops or dialogs remain.
-- [ ] AC-15: Disable/uninstall CodeCraft; confirm the native DSH Files page and file open flow return.
+- [x] AC-01: Create a file and a folder from the Explorer and from the native tree menu; confirm both appear and can be opened.
+- [x] AC-02: Rename an open file; confirm the tab title/address and future saves use the new path and the old path is not recreated.
+- [x] AC-03: Move a folder containing several open files; confirm every descendant tab and dirty buffer follows correctly.
+- [x] AC-04: Try to delete a file with unsaved changes; confirm the draft is protected and Cancel leaves both file and draft unchanged.
+- [x] AC-05: Try to delete a folder with multiple dirty files; confirm the full impact is shown and unsafe content is blocked.
+- [x] AC-06: Copy a file to a name that already exists; confirm Skip, Keep Both, Overwrite, and Cancel, with no silent overwrite.
+- [x] AC-07: Multi-select with Shift and Command, then batch move/delete; confirm per-item results and failure reporting.
+- [x] AC-08: Drag a folder into its own descendant; confirm the drop is blocked with a reason.
+- [x] AC-09: Modify an open file with another editor or Agent; confirm a dirty local buffer is not silently overwritten.
+- [x] AC-10: Use Command+C/X/V/F2/Delete with tree focus and then editor focus; confirm no editor shortcut is stolen.
+- [x] AC-11: Delete a file when Trash is unavailable or permission is denied; confirm a recoverable failure and no silent permanent delete.
+- [x] AC-12: Delete a symlink pointing outside the workspace; confirm only the link is removed and the target remains.
+- [x] AC-13: Use Python cross-file navigation, then move the target file; confirm the old navigation fails safely and the index recovers.
+- [x] AC-14: Reload/restart DSH Desktop; confirm the tree is consistent, valid drafts recover, and no duplicate refresh loops or dialogs remain.
+- [x] AC-15: Disable/uninstall CodeCraft; confirm the native DSH Files page and file open flow return.
 
 ### Windows
 
-- [ ] AC-01 through AC-15 with Windows Explorer/Recycle Bin, Ctrl-based shortcuts, backslash paths, and drive/UNC-aware validation.
-- [ ] Reserved names (`CON`, `PRN`, `AUX`, `NUL`, `COM1`, `LPT1`), trailing dot/space, and case-insensitive collisions are rejected visibly.
-- [ ] A file on a different drive moves through copy-verify-remove without losing the source on failure.
-- [ ] Deleting through the Recycle Bin succeeds, and a PowerShell/assembly failure is reported with a second-confirm permanent option only.
+- [x] AC-01 through AC-15 with Windows Explorer/Recycle Bin, Ctrl-based shortcuts, backslash paths, and drive/UNC-aware validation.
+- [x] Reserved names (`CON`, `PRN`, `AUX`, `NUL`, `COM1`, `LPT1`), trailing dot/space, and case-insensitive collisions are rejected visibly.
+- [x] A file on a different drive moves through copy-verify-remove without losing the source on failure.
+- [x] Deleting through the Recycle Bin succeeds, and a PowerShell/assembly failure is reported with a second-confirm permanent option only.
 
 ## Manual Result Record
 
 | Platform | DSH version | Candidate revision | Result | Notes |
 | --- | --- | --- | --- | --- |
-| macOS | Pending | Pending | NOT VERIFIED | |
-| Windows | Pending | Pending | NOT VERIFIED | |
+| macOS | Not reported | `b77ced7` | PASS | User confirmed the current v0.5.0 candidate passed validation on 2026-11-13. |
+| Windows | Not reported | `b77ced7` | PASS | User confirmed the current v0.5.0 candidate passed validation on 2026-11-13. |

@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] - 2026-11-13
+
+### Added
+
+- Added a workspace Explorer with file and folder creation, rename, copy, cut/paste, move, multi-selection, drag-and-drop, refresh, path copying, and Finder/Explorer reveal.
+- Added file-management actions to DSH's native file and directory context menus.
+- Added system Trash and Recycle Bin deletion with explicit confirmation before any permanent-delete fallback.
+
+### Changed
+
+- Coordinated workspace mutations with dirty documents, open tabs, save targets, and language-service document state.
+- Refreshed visible workspace directories after internal operations and external filesystem changes while preserving valid tree state.
+
+### Fixed
+
+- Rejected traversal, workspace escape, unsafe symlink operations, invalid cross-platform names, silent overwrite, and destructive self/descendant moves.
+
 ## [0.4.2] - 2026-11-12
 
 ### Added

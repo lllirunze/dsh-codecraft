@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed; native acceptance pending |
+| Status | Implemented and validated; approved for release |
 | Target version | 0.5.0 |
 | Baseline | 0.4.2 |
 | Release type | Minor feature release |
