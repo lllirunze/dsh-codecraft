@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed; native Desktop acceptance pending |
+| Status | Implemented and validated on macOS and Windows |
 | Target version | 0.5.1 |
 | Baseline | 0.5.0 |
 | Platforms | macOS and Windows |

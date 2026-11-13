@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.4.2 在 macOS 和 Windows 上提供已验证的离线 HTML 诊断、安全标签/ID 重命名、即时保存和正常退出。
+> **当前状态：** v0.5.1 为 CodeCraft 文件管理器提供已验证的可选 Material 图标，且不在插件包中内置 SVG 资源。
 
 ## 功能
 
@@ -96,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.4.2
+dsh plugin --profile desktop add dsh-codecraft@0.5.1
 ```
 
 更新后重启 DSH Desktop。

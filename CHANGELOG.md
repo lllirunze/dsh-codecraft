@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1] - 2026-11-13
+
+### Added
+
+- Added an explicit CodeCraft settings action that installs the pinned Material Icon Theme into the rebuildable DSH cache through configured, mainland-China, or official npm registries.
+- Added synchronized file, compound-extension, named-folder, expanded-folder, workspace, and native Explorer tab icon mappings generated from the exact compatible icon package version.
+
+### Changed
+
+- Removed bundled Material SVG assets from the source tree and npm package while retaining upstream license attribution and deterministic version-update tooling.
+- Kept unmatched files and folders, unavailable networks, missing caches, and invalid icon resources on CodeCraft's built-in default icons without affecting Explorer or editor behavior.
+
+### Fixed
+
+- Routed verified icon reads through CodeCraft's authenticated API so installed icons render immediately in DSH Desktop without relying on a separate custom-protocol image request.
+
 ## [0.5.0] - 2026-11-13
 
 ### Added

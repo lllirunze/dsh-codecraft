@@ -4,7 +4,7 @@
 | --- | --- |
 | Target version | 0.5.1 |
 | Baseline | 0.5.0 |
-| Status | Automated validation PASS; Desktop candidate BLOCKED and native acceptance NOT VERIFIED |
+| Status | Automated validation PASS; local Desktop candidate PASS; macOS and Windows native acceptance PASS |
 | Design | [design.md](design.md) |
 
 ## Automated Requirement Matrix
@@ -42,7 +42,7 @@
 - [x] Concurrent rows share one Client icon read; mismatched and malformed API responses are rejected without caching.
 - [x] Explorer exact-name, compound-extension, named-folder, expanded, and root resolution remains correct.
 - [x] Unmatched files, folders, expanded folders, symlinks, and other entries resolve directly to built-in icons without throwing.
-- [ ] Uninstalled, failed, and missing-resource states render built-in glyphs without blocking Explorer behavior.
+- [x] Uninstalled, failed, and missing-resource states render built-in glyphs without blocking Explorer behavior.
 - [x] Build and packed artifact contain no Material SVG files and include third-party attribution.
 
 ## Automated Evidence
@@ -53,23 +53,24 @@
 | Workspace regression | `npx vitest run tests/workspace-operations.test.ts tests/workspace-sync.test.ts tests/routes.test.ts` | PASS | 3 files, 41 tests |
 | Canonical gate | `npm run check` | PASS | Typecheck; 28 files / 283 tests; build; generated metadata and build verification |
 | Deterministic mapping sync | `npm run icons:sync` with before/after generated-module hashes | PASS | Byte-identical combined hash `8da12cacae52aae2c93277ef8a9215ca97368ab25a2ef6899a1b4c43b9b2bfb9` |
-| Package inspection | `npm pack --dry-run --ignore-scripts --json` | PASS | 95 files; 873,619 bytes packed; 3,357,020 unpacked; zero SVGs; required runtime files and notice present |
+| Package inspection | `npm pack --dry-run --ignore-scripts --json` | PASS | Release identity `dsh-codecraft@0.5.1`; 95 files; 873,999 bytes packed; 3,357,943 unpacked; zero SVGs; required runtime files and notice present |
 | Real registry smoke | Bundled current installer to a temporary module and installed the pinned package into a temporary cache | PASS | 1,256 icons; installed/status true; `python.svg` 773 bytes; temporary cache removed |
 | Installed-cache API source smoke | Bundled the current Host reader and read the existing DSH cache without mutation | PASS | Installed `5.40.0`, 1,256 icons; `python.svg` revalidated at 773 bytes; traversal name rejected |
 | Repository SVG inspection | `find` excluding `.git` and `node_modules` | PASS | Zero SVG files |
+| Release metadata refresh | `npm run check`; package inspection; desktop link identity inspection | PASS | `0.5.1`; 28 files / 283 tests; profile resolves the exact repository and reads installed package version `0.5.1` |
 
 ## Local DSH Desktop Candidate Gate
 
-Profile mutation requires explicit authorization. Until authorized, this gate is `BLOCKED` and all native behavior remains `NOT VERIFIED`.
+User-confirmed candidate record: source worktree based on `3eac7d2d875ae1ca67a7a4b91535aec8b85361fb`, package version `0.5.0` before the release-only metadata bump, DSH Desktop `0.2.2-rc.2`, `desktop` profile, and the single local source `link:/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft`. The subsequent `0.5.1` metadata update changes no runtime behavior; its package identity and startup/open smoke must be refreshed before tagging.
 
-- [ ] Record Git SHA, package version, DSH Desktop version, platform, profile, expected source, and absolute repository path.
-- [ ] Apply exactly one local CodeCraft source through DSH Plugin Manager and record its receipt.
-- [ ] Fully restart Desktop after replacing Host or Client code.
-- [ ] Confirm the Host row registers the exact API route once and has no obsolete Material icon prefix route.
-- [ ] Confirm Config schema and `packageDir` resolve from the expected source.
-- [ ] Confirm Client preview, settings, Explorer body, Explorer title, dialog, and HTML action registrations occur once.
-- [ ] Confirm unauthenticated `/codecraft/api` reaches the authentication fence rather than a generic 404.
-- [ ] Confirm no new activation failure, blank page, reload loop, unhandled error, or crash.
+- [x] Record Git SHA, package version, DSH Desktop version, platform, profile, expected source, and absolute repository path.
+- [x] Apply exactly one local CodeCraft source through DSH Plugin Manager and record its receipt.
+- [x] Fully restart Desktop after replacing Host or Client code.
+- [x] Confirm the Host row registers the exact API route once and has no obsolete Material icon prefix route.
+- [x] Confirm Config schema and `packageDir` resolve from the expected source.
+- [x] Confirm Client preview, settings, Explorer body, Explorer title, dialog, and HTML action registrations occur once.
+- [x] Confirm unauthenticated `/codecraft/api` reaches the authentication fence rather than a generic 404.
+- [x] Confirm no new activation failure, blank page, reload loop, unhandled error, or crash.
 
 ## Native Acceptance
 
@@ -77,31 +78,31 @@ Run independently on macOS and Windows against the current candidate.
 
 ### Default and failure behavior
 
-- [ ] With no matching cache, Desktop starts and Explorer rows/title use default glyphs without any automatic network request.
-- [ ] Open, edit, Undo/Redo, save, close, and reopen a supported file while icons are absent.
-- [ ] Disconnect networking, click Install Icons, and confirm a contained retryable error while defaults and all Explorer operations remain usable.
-- [ ] Restart while disconnected with no cache and confirm startup remains normal.
+- [x] With no matching cache, Desktop starts and Explorer rows/title use default glyphs without any automatic network request.
+- [x] Open, edit, Undo/Redo, save, close, and reopen a supported file while icons are absent.
+- [x] Disconnect networking, click Install Icons, and confirm a contained retryable error while defaults and all Explorer operations remain usable.
+- [x] Restart while disconnected with no cache and confirm startup remains normal.
 
 ### Installation and rendering
 
-- [ ] Settings shows Material Icon Theme `5.40.0`, installation status, and the Install Icons button.
-- [ ] In mainland China, the button succeeds through the reachable domestic/configured registry without requiring GitHub access.
-- [ ] The installed state appears without a full restart and reports 1,256 icons.
-- [ ] Python, Java, HTML, TypeScript, Rust, Go, README, package metadata, scripts, and data files show mapped icons; unknown files keep the built-in icon.
-- [ ] Named folders and expanded variants update, while unmatched folders keep the built-in icon without layout or selection movement.
-- [ ] The native Explorer tab title displays the workspace icon and localized title.
-- [ ] Restart offline after successful installation and confirm icons remain available with no external request.
-- [ ] Reinstall and confirm no blank rows, duplicate requests, stale mappings, or loss of the previous working set.
+- [x] Settings shows Material Icon Theme `5.40.0`, installation status, and the Install Icons button.
+- [x] In mainland China, the button succeeds through the reachable domestic/configured registry without requiring GitHub access.
+- [x] The installed state appears without a full restart and reports 1,256 icons.
+- [x] Python, Java, HTML, TypeScript, Rust, Go, README, package metadata, scripts, and data files show mapped icons; unknown files keep the built-in icon.
+- [x] Named folders and expanded variants update, while unmatched folders keep the built-in icon without layout or selection movement.
+- [x] The native Explorer tab title displays the workspace icon and localized title.
+- [x] Restart offline after successful installation and confirm icons remain available with no external request.
+- [x] Reinstall and confirm no blank rows, duplicate requests, stale mappings, or loss of the previous working set.
 
 ### Regression and platform coverage
 
-- [ ] Create, rename, copy, move, delete, refresh, drag/drop, multi-select, keyboard navigation, and dirty-file barriers retain v0.5.0 behavior.
-- [ ] Paths containing spaces, Chinese characters, mixed case, and Unicode remain safe.
-- [ ] Python, Java, and HTML editing assistance remains independent of icon installation.
-- [ ] Settings persistence, normal exit, and restart smoke pass.
-- [ ] macOS: Finder reveal, Trash, Command shortcuts, and offline restart pass.
-- [ ] Windows: Explorer reveal, Recycle Bin, Ctrl shortcuts, backslash paths, and offline restart pass.
+- [x] Create, rename, copy, move, delete, refresh, drag/drop, multi-select, keyboard navigation, and dirty-file barriers retain v0.5.0 behavior.
+- [x] Paths containing spaces, Chinese characters, mixed case, and Unicode remain safe.
+- [x] Python, Java, and HTML editing assistance remains independent of icon installation.
+- [x] Settings persistence, normal exit, and restart smoke pass.
+- [x] macOS: Finder reveal, Trash, Command shortcuts, and offline restart pass.
+- [x] Windows: Explorer reveal, Recycle Bin, Ctrl shortcuts, backslash paths, and offline restart pass.
 
 ## Release Gate
 
-Release remains blocked until automated/package gates pass, the local Desktop candidate is applied and inspected with authorization, and the user reports the required macOS and Windows native acceptance results. Publication still requires a separate explicit release request.
+Automated/package gates, the local Desktop candidate gate, and the user-confirmed macOS and Windows acceptance matrix pass. The user explicitly requested publication; refresh the release-metadata package identity and startup/open smoke before committing and tagging `v0.5.1`.

@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.4.2 adds validated offline HTML diagnostics, safe tag/ID rename, immediate saving, and normal Desktop exit on macOS and Windows.
+> **Status:** v0.5.1 adds validated, optional Material icons for CodeCraft's Explorer without bundling SVG assets.
 
 ## Features
 
@@ -96,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.4.2
+dsh plugin --profile desktop add dsh-codecraft@0.5.1
 ```
 
 Restart DSH Desktop after updating.
