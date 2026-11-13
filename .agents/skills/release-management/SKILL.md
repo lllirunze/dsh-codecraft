@@ -1,6 +1,6 @@
 ---
 name: release-management
-description: Finalize and publish a validated repository version by synchronizing release metadata, committing and pushing master, creating and pushing the matching Git tag, and drafting GitHub Release content. Use only after npm checks and required manual acceptance pass and the user explicitly asks to execute the release. Do not use for requirements design or validation planning.
+description: Finalize and publish a validated repository version by synchronizing release metadata, committing and pushing master, creating and pushing the matching Git tag, and drafting GitHub Release content. Use only after automated checks, local Desktop candidate validation, and required manual acceptance pass, and the user explicitly asks to execute the release. Do not use for requirements design or validation planning.
 ---
 
 # Release Management
@@ -9,7 +9,7 @@ Publish an already implemented and accepted version through the repository's Git
 
 ## Preconditions
 
-1. Read `AGENTS.md`, `docs/guide/releasing.md`, the target `docs/version/.../design.md` and `validation.md`, `package.json`, `package-lock.json`, `CHANGELOG.md`, and both root README files.
+1. Read `AGENTS.md`, `docs/guide/releasing.md`, the target `docs/version/.../design.md` and `validation.md`, `package.json`, `package-lock.json`, `CHANGELOG.md`, both root README files, and [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md).
 2. Determine the target version from the approved version record. Accept only:
 
    ```text
@@ -17,7 +17,7 @@ Publish an already implemented and accepted version through the repository's Git
    ```
 
    The first prerelease for a label uses `.0`. Preserve the complete suffix in every release identifier, for example `0.4.0-rc.0` and `v0.4.0-rc.0`.
-3. Require successful `npm run check` evidence and completed manual acceptance for every required platform. Release-execution items such as creating the tag may remain unchecked because this workflow completes them. Stop if any product requirement or required acceptance item remains incomplete.
+3. Require successful `npm run check` evidence, a packed-artifact identity check for the release commit, and a current local Desktop safety record: candidate SHA and version, DSH version and profile, exact installation source, Plugin Manager application, required restart, Host/Client/route inspection, and user-confirmed native acceptance for every required platform. A local agent-run smoke is not user acceptance. Stop if any product requirement or required acceptance item remains incomplete.
 4. Confirm the current repository is on `master`, the configured `origin` is the intended GitHub repository, and the worktree contains only changes that belong to the target release. Never merge another branch, discard user changes, or include ambiguous unrelated files without user direction.
 
 ## Publish in order
@@ -26,7 +26,7 @@ Publish an already implemented and accepted version through the repository's Git
 
 - Compare the target version with `package.json`, the root package entries in `package-lock.json`, the current `CHANGELOG.md` heading, version documentation, and README release claims.
 - If metadata still contains the previous version, update the required files to the target version before committing. Keep the package version, lockfile root versions, changelog version, and documented release identity consistent.
-- Run `npm run check` after the final metadata update, followed by `git diff --check`. Stop on any failure.
+- Run `npm run check` after the final metadata update, followed by `npm pack --dry-run --ignore-scripts --json` and `git diff --check`. Confirm the packed name/version/files, the installed candidate version, and startup/open smoke. A version-only metadata change may carry earlier behavioral acceptance only when no behavior or runtime contract changed; state that reasoning in the release record. Stop on any failure.
 - Fetch `origin` and verify that local `master` is not behind or diverged from `origin/master`. Do not automatically rebase, merge, or force-push a release branch.
 - Review `git status` and the complete diff. Stage only implementation, tests, and documentation belonging to this release. Do not use broad staging when unrelated user changes are present.
 - Create one focused Conventional Commit appropriate to the release and push it with:
@@ -79,3 +79,5 @@ After the branch and tag are confirmed, read [references/release-content-example
 - an English Markdown body with `## DSH CodeCraft <tag>`, one concise summary sentence, and three to six direct-verb bullets describing only verified changes.
 
 Do not create the GitHub Release unless the user separately asks for that external action. For a prerelease, tell the user to mark it as a GitHub Pre-release and follow the repository's configured prerelease npm dist-tag policy.
+
+If the candidate fails after release work begins, do not create or move the tag, do not create a GitHub Release, and do not move an npm dist-tag to the failed candidate. Preserve the failure evidence and restore the last known-good installation only with authorization.

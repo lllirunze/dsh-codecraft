@@ -72,7 +72,7 @@ Adapt the structure to the release while normally covering:
 - a complete requirement matrix preserving the source IDs;
 - user-visible behavior and exact settings or commands where specified;
 - architecture, module ownership, runtime boundaries, and data or settings flow;
-- failure handling, lifecycle, security, offline behavior, and language or feature isolation;
+- failure handling, activation/error boundaries, optional-service degradation, crash-safe teardown, lifecycle, security, offline behavior, and language or feature isolation;
 - explicit out-of-scope boundaries;
 - an implementation sequence grounded in the current codebase;
 - a definition of done that includes all mandatory requirements.
@@ -86,6 +86,7 @@ Create a planned evidence record tied to `design.md` and the same baseline. It s
 - evidence rules;
 - requirement traceability when the release has numbered requirements;
 - focused automated checks for behavior, validation failures, lifecycle, safety, and regressions;
+- candidate identity, packed-artifact inspection, authorized local Bundle application, required restart, Host/Client/route activation, and crash/exit/restart smoke following [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md);
 - independent macOS and Windows DSH Desktop acceptance when both platforms are in scope;
 - offline, packaging, dependency, and documentation checks where relevant;
 - a release gate describing conditions that block release.

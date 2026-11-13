@@ -14,7 +14,7 @@ Deliver one requested version or feature with traceable evidence. This skill own
 - **Resume after manual testing:** record only results the user actually reports, rerun stale automation if code changed, and state readiness accurately.
 - **Publish:** use `release-management` only after required automation and manual acceptance pass and the user explicitly asks to commit, push, and tag. Preparation or passing tests is not publication authority.
 
-For a complete version delivery, read [references/version-delivery-gates.md](references/version-delivery-gates.md). For a small isolated fix, compress the same reasoning into a short scope/plan/test loop instead of creating unnecessary documents.
+For a complete version delivery, read [references/version-delivery-gates.md](references/version-delivery-gates.md). For any release candidate or change that can affect plugin loading, activation, configuration, packaging, lifecycle, or DSH integration, also read and apply [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md). For a small isolated fix, compress the same reasoning into a short scope/plan/test loop instead of creating unnecessary documents.
 
 ## Establish the source of truth
 
@@ -45,10 +45,14 @@ Flag only decisions that would materially change scope, security, compatibility,
 - Follow repository TypeScript style, public contracts, security boundaries, and lifecycle ownership.
 - Keep generic editor behavior separate from language-specific behavior. Keep browser code free of Node filesystem/process APIs and Host code free of React, CodeMirror, and DOM objects.
 - Reuse the existing save, settings, protocol, intelligence, LSP, and native-tab infrastructure rather than duplicating it.
-- Add defensive handling for malformed inputs, disabled settings, unavailable optional services, stale asynchronous work, cleanup, and safe fallback where relevant.
-- Preserve ordinary editing and saving when optional assistance is disabled or fails.
-- Add or update flat Vitest files under `tests/` for success, validation failure, security boundaries, regressions, and sibling-module isolation as applicable.
+- Make activation and rendering crash-safe: no uncaught exceptions or unhandled rejections, a scoped error boundary for plugin-owned UI where a render failure could escape, validated settings/protocol/file input, and contained failure for optional services.
+- Bound asynchronous work and teardown: abort and discard stale work, cap retries and timeouts, avoid retry or process-respawn loops, and dispose routes, listeners, timers, subprocesses, and slot effects idempotently.
+- Preserve ordinary editing and saving when optional assistance is disabled or fails; never clear dirty state, overwrite newer disk content, or bypass checked-save/conflict handling on error.
+- Register each route, preview id, slot id, settings id, and process session once; keep the stable plugin identities unchanged by ordinary version bumps.
+- Add or update flat Vitest files under `tests/` for success, validation failure, security boundaries, regressions, sibling-module isolation, and the negative safety cases named in the local Desktop safety protocol.
 - Do not edit generated `lib/` by hand or weaken assertions to obtain a pass.
+
+Read the implementation rules in [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md) before changing activation, lifecycle, settings, routing, or registration code.
 
 When implementation reveals a real requirement or architecture gap, update the plan and affected version documentation truthfully. Do not silently expand the version.
 
@@ -61,6 +65,21 @@ When implementation reveals a real requirement or architecture gap, update the p
 5. Record exact commands, results, test counts, build evidence, failures, and environmental limitations. A command not run is not a pass.
 
 Update `docs/version/vX.Y.Z/validation.md` only with evidence actually produced. Leave native Desktop items unchecked until the user reports observed results. Do not let a library capability, unit test, or screenshot stand in for product integration evidence.
+
+## Validate the local Desktop candidate safely
+
+For a completed version and for changes to package metadata, entry points, `cordis.patch.yml`, Host/Client integration, settings, persistence, routes, slots, lifecycle, or dependencies, apply the local DSH Desktop safety protocol after automated regression and before native acceptance:
+
+1. Record the candidate Git SHA, package version, running DSH version, profile, and expected installation source.
+2. Require current `npm run check` evidence and inspect `npm pack --dry-run --ignore-scripts --json`; source-tree success alone does not prove the published package is complete.
+3. Preserve the stable package, Loader row, Host, Client, preview, and route identities. Treat any requested identity change as an explicit compatibility migration, not a routine version bump.
+4. Keep exactly one CodeCraft source selected in the Desktop profile. Never combine an npm installation with the local link or hand-edit profile package/patch files.
+5. Installing or replacing the local Bundle is a profile mutation and requires explicit user authorization. When authorized, use DSH Plugin Manager with the repository's absolute path, verify the receipt and exact link target, and leave unrelated profile configuration untouched.
+6. After replacing loaded Host or Client code, require a full DSH Desktop restart. HMR, an unchanged Slot id, or a successful build is not proof that the candidate generation is running.
+7. Inspect the active Host row, Config schema and `packageDir`, Client Slot registrations, and authenticated route fence after application and again after restart. A duplicate registration, failed fiber, wrong package source, generic route 404, or candidate-attributable startup/crash report blocks handoff.
+8. Hand native startup, open/edit/save, settings, exit, and restart smoke checks to the user together with the change-specific acceptance matrix.
+
+A version-only metadata change may retain earlier behavioral acceptance only when no behavior or runtime contract changed, but it still requires refreshed check, packed-artifact identity, installed-version, and startup/open smoke evidence. If profile mutation is not authorized, mark the local application portion `BLOCKED` or `NOT VERIFIED`; do not bypass or silently weaken it.
 
 ## Hand off manual experience testing
 

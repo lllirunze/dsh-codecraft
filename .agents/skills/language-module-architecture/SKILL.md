@@ -78,6 +78,7 @@ Before editing, produce a short placement plan that lists each capability, categ
 - Test activation, extension/path matching, behavior, invalid inputs, live settings, fallback, stale work, cleanup, and isolation from sibling languages as applicable.
 - When protocol or Host behavior changes, cover admission, request validation, workspace containment, stable public errors, and cancellation.
 - When build boundaries change, run `npm run check` and confirm the browser bundle has no Node or Host-only dependency.
+- When a language runtime, provider, or lifecycle path changes, apply [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md) for activation, optional-runtime failure, restart, Host/Client registration, and crash checks.
 - Report commands actually executed and native macOS/Windows scenarios still requiring manual acceptance. Use the separate regression-testing skill when the user asks for a full regression run.
 
 ## Architecture report

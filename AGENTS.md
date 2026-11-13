@@ -13,10 +13,10 @@ Load a skill with the `skill` tool using its exact name before acting on a match
 | `feature-development` | The user asks to build, implement, complete, or resume a planned version or substantial feature | End-to-end orchestration: scope, architecture plan, implementation, focused tests, regression handoff, manual checklist, delivery report | Publish, bump release metadata, or write changelog entries |
 | `version-documentation` | Requirements must move from `docs/planning/` into normalized `design.md` and `validation.md`, or a version number must be chosen | Version choice, requirement analysis, normalized English design and validation records, documentation index | Implement code, update package versions, commit, push, tag, or publish |
 | `language-module-architecture` | The work concerns a programming language, framework, or developer ecosystem | Placement, Client/Host responsibility split, registration, protocol, lifecycle, capability isolation | Change generic editor or release behavior unrelated to a language module |
-| `regression-testing` | The user asks to test, retest, verify, or audit current behavior | Impact-based automated verification, exact command evidence, DSH Desktop manual checklist | Implement fixes, edit tests to force a pass, install dependencies, or publish |
+| `regression-testing` | The user asks to test, retest, verify, or audit current behavior | Impact-based automated verification, exact command evidence, local Desktop candidate safety gate, DSH Desktop manual checklist | Implement fixes, edit tests to force a pass, install dependencies, mutate the Desktop profile without explicit authorization, or publish |
 | `release-management` | The user explicitly asks to publish a validated version after checks and manual acceptance pass | Release metadata sync, release commit, push `master`, annotated tag, push tag, GitHub Release content | Design requirements, plan validation, or publish without explicit authority |
 
-Detailed references: [version delivery gates](.agents/skills/feature-development/references/version-delivery-gates.md), [version numbering example](.agents/skills/version-documentation/references/version-number-example.md), [current language architecture](.agents/skills/language-module-architecture/references/current-architecture.md), [project regression test map](.agents/skills/regression-testing/references/project-test-map.md), and [release content example](.agents/skills/release-management/references/release-content-example.md).
+Detailed references: [version delivery gates](.agents/skills/feature-development/references/version-delivery-gates.md), [version numbering example](.agents/skills/version-documentation/references/version-number-example.md), [current language architecture](.agents/skills/language-module-architecture/references/current-architecture.md), [project regression test map](.agents/skills/regression-testing/references/project-test-map.md), [local DSH Desktop safety validation](.agents/skills/regression-testing/references/dsh-desktop-safety-validation.md), and [release content example](.agents/skills/release-management/references/release-content-example.md).
 
 ### End-to-end workflow
 
@@ -28,8 +28,9 @@ For a complete planned version, proceed through these gates and stop at G5 until
 | G1 Requirements | Normalized English `design.md`, requirement IDs, observable behavior, failure cases, and a planned `validation.md` | `version-documentation` | Every mandatory item is testable and later-version work is excluded |
 | G2 Architecture | Current-code investigation, requirement-to-file plan, Client/Host ownership, settings/protocol/lifecycle impacts, and test mapping | `feature-development`; `language-module-architecture` when applicable | The smallest feasible design uses real repository extension points |
 | G3 Implementation | Source changes, focused tests, and exact focused command results | `feature-development` | In-scope behavior exists and focused checks pass, or blockers are explicit |
-| G4 Regression | Impact scope, exact commands, `PASS`/`FAIL`/`INCOMPLETE`, and unverified areas | `regression-testing` | Required automation passes on the current code revision |
-| G5 Native acceptance | DSH Desktop steps and user-observed results per required platform | User, with an agent-provided checklist | Required manual cases pass; untested cases remain visibly unverified |
+| G4 Regression | Impact scope, exact commands, `PASS`/`FAIL`/`INCOMPLETE`, packed-artifact identity when packaging is in scope, and unverified areas | `regression-testing` | Required automation and package inspection pass on the current code revision |
+| G4b Local Desktop candidate | Candidate SHA and version, DSH version and profile, explicit authorization, Plugin Manager receipt, exact link or npm source, required restart, Host row/Config/`packageDir`, Client registrations, route fence, and no fresh candidate crash | `regression-testing` with `feature-development`; profile mutation requires explicit user authorization | Candidate is live from the expected source with no activation failure, or the gate is explicitly `BLOCKED`/`NOT VERIFIED` |
+| G5 Native acceptance | DSH Desktop startup, open/edit/save, settings, normal exit and restart smoke, plus user-observed results for the change-specific matrix per required platform | User, with an agent-provided checklist | Required manual cases pass; untested cases remain visibly unverified |
 | G6 Release handoff | Complete evidence, no critical blocker, and an explicit release request | `release-management` | Version metadata, commit, push, and tag follow the separate authorized workflow |
 
 A small isolated fix may compress this into a short scope, plan, and test loop instead of creating version documents, but it must still follow the same evidence and release boundaries.
@@ -43,10 +44,11 @@ A small isolated fix may compress this into a short scope, plan, and test loop i
 5. **Write a traceable plan.** Map every in-scope requirement ID to observable behavior and negative cases, owning modules and files, focused tests, and native Desktop scenarios. Flag only decisions that materially change scope, security, compatibility, or product behavior.
 6. **Implement the agreed scope.** Follow repository TypeScript style and public contracts, keep browser code free of Node APIs and Host code free of React, CodeMirror, and DOM objects, preserve ordinary editing and saving when optional assistance is disabled or fails, and add defensive handling for malformed input, stale async work, and teardown. Add or update flat Vitest files under `tests/`. Do not edit generated `lib/` by hand, weaken assertions, expand the version silently, or update release metadata.
 7. **Verify, fix, and reverify.** Run the smallest relevant Vitest files first, then the broader checks justified by the change. `feature-development` owns fixing in-scope defects; after any fix, rerun the affected focused checks and every broader result invalidated by that code change.
-8. **Run regression testing.** Load `regression-testing` when implementation stabilizes or the user asks for testing. Use its impact map to select focused files; for a completed feature or cross-module, settings, lifecycle, Host/protocol, file-safety, or packaging change, run the full gate. Report exact commands, test counts, and `PASS`/`FAIL`/`BLOCKED` evidence.
-9. **Hand off manual acceptance.** State explicitly that automated implementation and regression are complete and native DSH Desktop testing is required. Provide a checklist derived from `docs/version/vX.Y.Z/validation.md` and the changed behavior, covering editing and saving, new positive and negative cases, settings persistence, language isolation, paths with spaces and Chinese characters, offline behavior, and independent macOS and Windows checks when in scope. Leave items unchecked until the user reports observed results.
-10. **Report delivery.** State the target version, delivered scope and exclusions, requirement coverage, architecture and files changed, commands and results, validation document status, manual checks still required or user-confirmed outcomes, and remaining blockers or next actions.
-11. **Release only on explicit request.** After `npm run check` and required manual acceptance pass, load `release-management` and follow `docs/guide/releasing.md`. Publication requires a separate, explicit instruction to commit, push, and tag.
+8. **Run regression testing.** Load `regression-testing` when implementation stabilizes or the user asks for testing. Use its impact map to select focused files; for a completed feature or cross-module, settings, lifecycle, Host/protocol, file-safety, or packaging change, run the full gate. For a release candidate or packaging/integration change, also inspect `npm pack --dry-run --ignore-scripts --json` and apply the local Desktop safety gate. Report exact commands, test counts, artifact identity, and `PASS`/`FAIL`/`BLOCKED` evidence.
+9. **Validate the local Desktop candidate.** Apply [local DSH Desktop safety validation](.agents/skills/regression-testing/references/dsh-desktop-safety-validation.md) with explicit authorization for profile mutation. Verify the expected source and version, Plugin Manager receipt, required restart, Host row/Config/`packageDir`, Client registrations, and route fence; treat duplicate registration, wrong source, activation failure, or a fresh crash as blocking. If mutation is not authorized, record the gate as `BLOCKED` or `NOT VERIFIED`.
+10. **Hand off manual acceptance.** State explicitly that automated implementation and regression are complete and native DSH Desktop testing is required. Provide a checklist derived from `docs/version/vX.Y.Z/validation.md` and the changed behavior, covering editing and saving, new positive and negative cases, settings persistence, language isolation, paths with spaces and Chinese characters, offline behavior, and independent macOS and Windows checks when in scope. Leave items unchecked until the user reports observed results.
+11. **Report delivery.** State the target version, delivered scope and exclusions, requirement coverage, architecture and files changed, commands and results, validation document status, manual checks still required or user-confirmed outcomes, and remaining blockers or next actions.
+12. **Release only on explicit request.** After `npm run check` and required manual acceptance pass, load `release-management` and follow `docs/guide/releasing.md`. Publication requires a separate, explicit instruction to commit, push, and tag.
 
 ### Choosing the right skill
 
@@ -62,9 +64,12 @@ A small isolated fix may compress this into a short scope, plan, and test loop i
 ### Evidence rules
 
 - Use only these states: `PASS` (the check actually ran or behavior was observed and succeeded), `FAIL`, `BLOCKED` (a concrete dependency, environment, permission, or decision prevents execution), `NOT VERIFIED` (required manual or external scenario not observed), and `NOT APPLICABLE` (outside approved scope, with a reason).
+- A multi-check conclusion may be `INCOMPLETE` when some required checks are `BLOCKED` or `NOT VERIFIED`; each individual item still uses one of the five states above.
 - A command that was not run, is still running, or ran before the latest relevant code change is not a pass. Preserve the exact command, exit result, and key evidence.
-- Automated tests do not prove native DSH Desktop behavior, settings persistence across a restart, OS integration, or platform compatibility.
-- Requirement changes invalidate affected architecture, implementation, and test assumptions; production or test-code changes after regression invalidate relevant automated results; behavior changes after manual acceptance invalidate relevant manual results. Fix the earliest affected layer, then rerun dependent evidence.
+- Automated tests do not prove native DSH Desktop behavior, settings persistence across a restart, OS integration, or platform compatibility. Runtime registration inspection proves loading, not visible interaction.
+- Requirement changes invalidate affected architecture, implementation, and test assumptions; production or test-code changes after regression invalidate relevant automated results; behavior changes after manual acceptance invalidate relevant manual results.
+- Package metadata, entry point, build, manifest, patch, dependency, or supported DSH-version changes invalidate package identity, local candidate application, and Desktop activation evidence. A version-only release-metadata change may retain earlier behavioral acceptance only when no behavior or runtime contract changed; refresh the check, packed-artifact identity, installed version, and startup/open smoke.
+- Fix the earliest affected layer, then rerun dependent evidence.
 - Never present a design as implemented, automation as native acceptance, or release readiness as publication.
 
 ### Standard commands
@@ -78,9 +83,10 @@ npm test                               # full Vitest suite
 npm run build                          # bundle host and client entries into lib/
 npm run verify                         # validate generated package artifacts
 npm run check                          # canonical combined gate in CI order
+npm pack --dry-run --ignore-scripts --json  # inspect the package npm would publish
 ```
 
-`npm run check` runs typecheck, the full test suite, build, and artifact verification. It is the standard G4 evidence command for a completed version or any cross-module change.
+`npm run check` runs typecheck, the full test suite, build, and artifact verification. It is the standard G4 evidence command for a completed version or any cross-module change. `npm pack --dry-run --ignore-scripts --json` verifies package identity and included files without running lifecycle scripts. Neither command establishes real DSH Desktop behavior.
 
 ### Cross-skill handoff summary
 
@@ -92,6 +98,7 @@ In-scope requirement IDs:
 Changed modules and files:
 Architecture decisions:
 Automated commands and results:
+Desktop candidate / DSH version / install source:
 Manual status by platform:
 Known risks or blockers:
 Current gate:
@@ -112,7 +119,7 @@ Use Node.js 20 or later and install the locked dependency set with `npm ci`.
 - `npm run verify` validates the generated package artifacts.
 - `npm run check` runs all four checks in CI order; run this before opening a pull request.
 
-For a local DSH installation, run `dsh plugin --profile desktop add "$PWD"` after a successful build, then restart DSH Desktop.
+For a local DSH installation, after a successful build and `npm run check`, install the repository with explicit authorization through DSH Plugin Manager using the absolute path, or the version-verified CLI form `dsh plugin --profile desktop add "$PWD"`. Do not combine it with an npm installation or hand-edit the profile. Replacing loaded Host or Client code requires a full DSH Desktop restart. Follow [local DSH Desktop safety validation](.agents/skills/regression-testing/references/dsh-desktop-safety-validation.md) for source, version, runtime registration, route, and crash checks.
 
 ## Coding Style & Naming Conventions
 
@@ -128,4 +135,4 @@ History follows Conventional Commit prefixes such as `feat:`, `fix:`, and `ci:`.
 
 ## Release Guidelines
 
-Follow [`docs/guide/releasing.md`](docs/guide/releasing.md) whenever preparing a version, Git tag, or GitHub Release. Keep the package version, lockfile version, changelog entry, tag, Release title, and Release heading identical. Release notes use the repository's short single-section format; do not add installation, update, test-summary, compatibility, or other boilerplate sections unless the release itself changes those areas.
+Follow [`docs/guide/releasing.md`](docs/guide/releasing.md) whenever preparing a version, Git tag, or GitHub Release. Keep the package version, lockfile version, changelog entry, tag, Release title, and Release heading identical. A release also requires a current [local DSH Desktop safety validation](.agents/skills/regression-testing/references/dsh-desktop-safety-validation.md) record for the release commit. Release notes use the repository's short single-section format; do not add installation, update, test-summary, compatibility, or other boilerplate sections unless the release itself changes those areas.

@@ -17,7 +17,7 @@ Test the checked-out repository and report observable evidence. This skill is in
 
 ## Select coverage from impact
 
-Read [references/project-test-map.md](references/project-test-map.md) whenever mapping changed code to focused tests or preparing the manual handoff.
+Read [references/project-test-map.md](references/project-test-map.md) whenever mapping changed code to focused tests or preparing the manual handoff. For a release candidate or any change to package metadata, build output, entry points, Cordis configuration, Host/Client integration, settings, persistence, routes, slots, lifecycle, or dependencies, also read [references/dsh-desktop-safety-validation.md](references/dsh-desktop-safety-validation.md).
 
 1. Identify affected behavior, shared callers, settings, persistence, file safety, language isolation, Host/client boundaries, platform branches, and package entry points.
 2. Run the smallest relevant Vitest files first when they can localize a failure.
@@ -32,6 +32,21 @@ Read [references/project-test-map.md](references/project-test-map.md) whenever m
 5. Do not run redundant commands merely to increase the command count. If `npm run check` passes, its four component commands are already covered. If it fails, use the failing component or focused test to isolate the cause.
 
 Only claim coverage for behavior that actually ran. Automated tests do not prove native DSH Desktop behavior, settings persistence across a real restart, OS UI integration, or macOS/Windows compatibility.
+
+## Validate package and DSH integration safety
+
+For the safety-sensitive scopes named above:
+
+1. Record the Git SHA, worktree status, candidate package version, running DSH version, profile, and expected installation source.
+2. After `npm run check`, run `npm pack --dry-run --ignore-scripts --json` and inspect the reported name, version, and required runtime files. A source build alone is insufficient packaging evidence.
+3. Check that stable plugin identities have not changed unintentionally: package name, `codecraft` row id, Host/Client id, document-preview id, route, exports, patch, inject, and external contracts. An identity change requires explicit migration scope.
+4. Inspect the current Desktop bundle source before any application. Exactly one local link or npm package may be selected; a stale link, duplicate source, wrong path, or restored obsolete profile patch is a failure risk.
+5. Regression testing alone does not authorize profile mutation. If the user explicitly authorizes local Bundle application, use DSH Plugin Manager rather than direct profile edits, verify its receipt and resolved version/path, and preserve unrelated profile configuration. Otherwise report application evidence as `BLOCKED` or `NOT VERIFIED`.
+6. Replacing loaded Host/Client code requires a complete Desktop restart before final evidence. After restart, inspect Plugin Manager state, Host row/fiber, Config schema and `packageDir`, required Client Slots, and the `/codecraft/api` authentication fence.
+7. Treat duplicate registrations, missing or failed Host rows, unresolved schemas, wrong package source/version, absent Client contributions, generic route 404, new attributable startup failures, or crashes as `FAIL`. Do not continue toward release.
+8. Require user-observed startup, supported-file open/edit/save/reopen, settings, normal exit, and restart smoke checks plus the target version's change-specific matrix.
+
+Do not claim fresh runtime code merely because HMR applied, the Slot id is present, or `lib/` rebuilt. Absence of a crash log is supporting evidence, not native acceptance.
 
 ## Execute and communicate
 
