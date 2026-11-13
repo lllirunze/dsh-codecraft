@@ -1,4 +1,4 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -22,6 +22,39 @@ async function temporaryDirectory(): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), 'codecraft-material-icons-'))
   cleanups.push(directory)
   return directory
+}
+
+async function writeMaterialIconFixture(directory: string, version: string): Promise<void> {
+  const iconId = 'fixture-default'
+  const theme = {
+    iconDefinitions: {
+      [iconId]: { iconPath: `../icons/${iconId}.svg` },
+    },
+    file: iconId,
+    folder: iconId,
+    folderExpanded: iconId,
+    rootFolder: iconId,
+    rootFolderExpanded: iconId,
+    fileNames: {},
+    fileExtensions: {},
+    folderNames: {},
+    folderNamesExpanded: {},
+    rootFolderNames: {},
+    rootFolderNamesExpanded: {},
+  }
+  await Promise.all([
+    mkdir(path.join(directory, 'dist'), { recursive: true }),
+    mkdir(path.join(directory, 'icons'), { recursive: true }),
+  ])
+  await Promise.all([
+    writeFile(path.join(directory, 'package.json'), JSON.stringify({
+      name: 'material-icon-theme',
+      version,
+      license: 'MIT',
+    })),
+    writeFile(path.join(directory, 'dist/material-icons.json'), JSON.stringify(theme)),
+    writeFile(path.join(directory, `icons/${iconId}.svg`), '<svg><path d="M0 0"/></svg>'),
+  ])
 }
 
 describe('Material icon development synchronization', () => {
@@ -67,13 +100,21 @@ describe('Material icon development synchronization', () => {
     const base = await temporaryDirectory()
     const clientModule = path.join(base, 'client.ts')
     const hostModule = path.join(base, 'host.ts')
-    await synchronizeMaterialIcons({ ...state, clientModule, hostModule })
+    const unsafeSource = path.join(base, 'unsafe-upstream')
+    await writeMaterialIconFixture(unsafeSource, state.version)
+    await synchronizeMaterialIcons({
+      ...state,
+      sourceDirectory: unsafeSource,
+      clientModule,
+      hostModule,
+    })
     const beforeClient = sha256(await readFile(clientModule))
     const beforeHost = sha256(await readFile(hostModule))
 
-    const unsafeSource = path.join(base, 'unsafe-upstream')
-    await cp(state.sourceDirectory, unsafeSource, { recursive: true })
-    await writeFile(path.join(unsafeSource, 'icons/python.svg'), '<svg><script>alert(1)</script></svg>')
+    await writeFile(
+      path.join(unsafeSource, 'icons/fixture-default.svg'),
+      '<svg><script>alert(1)</script></svg>',
+    )
     await expect(synchronizeMaterialIcons({
       ...state,
       sourceDirectory: unsafeSource,
