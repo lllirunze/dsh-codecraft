@@ -1,6 +1,6 @@
 import { CompletionContext } from '@codemirror/autocomplete'
 import { history, insertNewlineAndIndent, toggleComment, undo } from '@codemirror/commands'
-import { foldable, indentUnit, syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, foldable, indentUnit, syntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState, Transaction, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, it } from 'vitest'
@@ -48,7 +48,9 @@ function commandHarness(state: EditorState): { view: EditorView, state: () => Ed
 describe('HTML parsing and completion', () => {
   it('parses HTML, comments, DOCTYPE, and nested CSS and JavaScript locally', () => {
     const state = htmlState('<!doctype html><style media="screen">body { color: red }</style><script>const value = 1</script><!-- note -->')
-    const tree = syntaxTree(state).toString()
+    const parsed = ensureSyntaxTree(state, state.doc.length, 1_000)
+    expect(parsed).not.toBeNull()
+    const tree = parsed?.toString() ?? ''
     expect(tree).toContain('DoctypeDecl')
     expect(tree).toContain('OpenTag')
     expect(tree).toContain('AttributeName')
