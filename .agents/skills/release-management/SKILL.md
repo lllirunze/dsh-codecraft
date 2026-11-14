@@ -1,11 +1,30 @@
 ---
 name: release-management
-description: Finalize and publish a validated repository version by synchronizing release metadata, committing and pushing master, creating and pushing the matching Git tag, and drafting GitHub Release content. Use only after automated checks, local Desktop candidate validation, and required manual acceptance pass, and the user explicitly asks to execute the release. Do not use for requirements design or validation planning.
+description: Finalize a validated repository version by synchronizing release metadata, committing and pushing master, creating and pushing the matching Git tag, and preparing the manual GitHub Release handoff. Use only after automated checks, local Desktop candidate validation, and required manual acceptance pass, and the user explicitly asks to execute the release. Do not create or publish the GitHub Release or publish npm.
 ---
 
 # Release Management
 
-Publish an already implemented and accepted version through the repository's Git workflow. This skill performs external mutations; a request to inspect, prepare, or review a release does not authorize commit, push, or tag creation. Proceed without another confirmation only when the user has clearly asked to execute and push the release.
+Finalize an already implemented and accepted version through the repository's Git workflow, then hand the GitHub Release content to the user for manual publication. This skill performs external Git mutations; a request to inspect, prepare, or review a release does not authorize commit, push, or tag creation. Proceed without another confirmation only when the user has clearly asked to execute and push the release.
+
+## Agent and human responsibilities
+
+The AI Agent owns the repository-side preparation:
+
+- verify release evidence, version consistency, and the packed artifact;
+- update and commit approved release metadata when necessary;
+- push `master` and the matching annotated tag when explicitly authorized;
+- provide the exact GitHub Release title, English Markdown body, target tag, and whether the user must mark it as a pre-release;
+- after the user publishes, inspect the resulting workflow or diagnose reported failures when asked.
+
+The user owns the GitHub Release publication:
+
+- open GitHub's Release interface and choose the already-pushed tag;
+- paste the title and body supplied by the Agent;
+- set the pre-release option when applicable and click the final publish action;
+- report the Release or npm workflow result when further verification or diagnosis is wanted.
+
+The Agent must not create, draft, edit, or publish a GitHub Release through the UI, API, CLI, connector, or plugin. It must not request GitHub credentials for that purpose and must not run `npm publish`. Treat requests such as “publish the release” as authority for the repository-side Git workflow and a request for the manual Release handoff, not as authority to perform the human GitHub publication step.
 
 ## Preconditions
 
@@ -69,7 +88,7 @@ git push origin vX.Y.Z[-label.N]
 
 Verify the remote tag resolves to the same release commit as `origin/master`. Never use `--force` or `--tags` for this workflow. If a remote operation fails after an earlier step succeeded, preserve the completed state, report it precisely, and resume only the incomplete safe step.
 
-### 4. Return GitHub Release content
+### 4. Hand off manual GitHub Release publication
 
 After the branch and tag are confirmed, read [references/release-content-example.md](references/release-content-example.md). Return:
 
@@ -77,7 +96,9 @@ After the branch and tag are confirmed, read [references/release-content-example
 - confirmation that `master` and the exact tag were pushed;
 - the GitHub Release title, which is exactly the tag;
 - an English Markdown body with `## DSH CodeCraft <tag>`, one concise summary sentence, and three to six direct-verb bullets describing only verified changes.
+- a direct link to create or inspect the Release when available;
+- an explicit statement that the user must publish the GitHub Release manually and that this action triggers the configured npm workflow.
 
-Do not create the GitHub Release unless the user separately asks for that external action. For a prerelease, tell the user to mark it as a GitHub Pre-release and follow the repository's configured prerelease npm dist-tag policy.
+Never create or publish the GitHub Release, even if the user uses wording such as “publish the Release.” For a prerelease, tell the user to mark it as a GitHub Pre-release and follow the repository's configured prerelease npm dist-tag policy.
 
 If the candidate fails after release work begins, do not create or move the tag, do not create a GitHub Release, and do not move an npm dist-tag to the failed candidate. Preserve the failure evidence and restore the last known-good installation only with authorization.
