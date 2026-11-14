@@ -14,6 +14,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   type DragEvent,
@@ -27,6 +28,11 @@ import type { TabInfo } from '../dsh.js'
 import type { WorkspaceEntry } from '../../protocol.js'
 import { FileIcon } from '../icons/FileIcon.js'
 import type { WorkspaceController } from './controller.js'
+import {
+  explorerConnectionFailure,
+  explorerDisconnectedView,
+  type ExplorerConnectionState,
+} from './explorer-connection.js'
 import { baseName, isInside, parentOf } from './paths.js'
 
 interface SessionsSnapshot {
@@ -57,7 +63,8 @@ export function createExplorerPage(
 ): (props: ExplorerProps) => ReactElement {
   return function ExplorerPage(props: ExplorerProps): ReactElement {
     const { sessionId, useSessions, useTabInfo, t } = props
-    const cwd = useSessions(state => state.byId[sessionId]?.cwd)
+    const session = useSessions(state => state.byId[sessionId])
+    const cwd = session?.cwd
     const { tab, panel } = useTabInfo()
     const ui = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot)
 
@@ -71,11 +78,24 @@ export function createExplorerPage(
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [menu, setMenu] = useState<MenuState | null>(null)
     const [dropTarget, setDropTarget] = useState<string | null>(null)
+    const [connection, setConnection] = useState<ExplorerConnectionState>({ phase: 'connected' })
+    const requestsRef = useRef(new Map<string, { generation: number; controller: AbortController }>())
+    const contextGenerationRef = useRef(0)
+    const workspaceAvailable = cwd !== undefined || rootPath !== ''
 
-    const load = useCallback(async (directory: string): Promise<void> => {
+    const load = useCallback(async (directory: string, recovery = false): Promise<boolean> => {
+      const previous = requestsRef.current.get(directory)
+      previous?.controller.abort()
+      const controller = new AbortController()
+      const generation = (previous?.generation ?? 0) + 1
+      const contextGeneration = contextGenerationRef.current
+      requestsRef.current.set(directory, { generation, controller })
       setLoading(previous => new Set(previous).add(directory))
       try {
-        const result = await listWorkspace({ sessionId, path: directory })
+        const result = await listWorkspace({ sessionId, path: directory }, controller.signal)
+        const current = requestsRef.current.get(directory)
+        if (controller.signal.aborted || contextGenerationRef.current !== contextGeneration
+          || current?.generation !== generation) return false
         setRootPath(result.root)
         setChildren(previous => ({ ...previous, [directory]: result.entries }))
         setErrors(previous => {
@@ -84,50 +104,74 @@ export function createExplorerPage(
           delete next[directory]
           return next
         })
+        if (directory === '') setConnection({ phase: 'connected' })
+        return true
       } catch (failure) {
+        if (controller.signal.aborted || contextGenerationRef.current !== contextGeneration) return false
+        const disconnected = directory === '' ? explorerConnectionFailure(failure, recovery) : undefined
+        if (disconnected !== undefined) {
+          setConnection(disconnected)
+          return false
+        }
+        if (directory === '' && recovery) setConnection({ phase: 'connected' })
         setErrors(previous => ({
           ...previous,
           [directory]: failure instanceof Error ? failure.message : String(failure),
         }))
+        return false
       } finally {
-        setLoading(previous => {
-          const next = new Set(previous)
-          next.delete(directory)
-          return next
-        })
+        const current = requestsRef.current.get(directory)
+        if (current?.generation === generation) {
+          requestsRef.current.delete(directory)
+          setLoading(previous => {
+            const next = new Set(previous)
+            next.delete(directory)
+            return next
+          })
+        }
       }
     }, [sessionId])
 
     useEffect(() => {
+      contextGenerationRef.current += 1
+      for (const request of requestsRef.current.values()) request.controller.abort()
+      requestsRef.current.clear()
+      setRootPath('')
       setChildren({})
       setExpanded(new Set())
       setSelected(new Set())
       setAnchor(null)
       setFocusPath(null)
       setErrors({})
+      setConnection({ phase: 'connected' })
       if (cwd !== undefined) void load('')
+      return () => {
+        contextGenerationRef.current += 1
+        for (const request of requestsRef.current.values()) request.controller.abort()
+        requestsRef.current.clear()
+      }
     }, [cwd, load])
 
     const refreshToken = ui.refresh[sessionId] ?? 0
     useEffect(() => {
-      if (cwd === undefined || refreshToken === 0) return
+      if (!workspaceAvailable || refreshToken === 0) return
       void load('')
       for (const directory of expanded) void load(directory)
       // Expanded is intentionally read at the moment a refresh is requested.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshToken])
+    }, [refreshToken, workspaceAvailable])
 
     useEffect(() => {
-      if (cwd === undefined) return
+      if (!workspaceAvailable || connection.phase !== 'connected') return
       const timer = setInterval(() => {
         void load('')
         for (const directory of expanded) void load(directory)
       }, 3000)
       return () => { clearInterval(timer) }
-    }, [cwd, expanded, load])
+    }, [workspaceAvailable, expanded, load, connection.phase])
 
     useEffect(() => {
-      if (cwd === undefined) return
+      if (!workspaceAvailable) return
       const close = (): void => { setMenu(null) }
       window.addEventListener('click', close)
       window.addEventListener('blur', close)
@@ -135,7 +179,7 @@ export function createExplorerPage(
         window.removeEventListener('click', close)
         window.removeEventListener('blur', close)
       }
-    }, [cwd])
+    }, [workspaceAvailable])
 
     const rows = useMemo(() => {
       const output: Row[] = []
@@ -216,6 +260,14 @@ export function createExplorerPage(
       if (panel.isFloating) tab.actions.openResource(address)
       else tab.actions.openResource(address, { paneId: panel.id })
     }, [panel.id, panel.isFloating, sessionId, tab.actions])
+
+    const refreshExplorer = useCallback(async (): Promise<void> => {
+      if (connection.phase === 'refreshing') return
+      setConnection({ phase: 'refreshing' })
+      const recovered = await load('', true)
+      if (!recovered) return
+      await Promise.all([...expanded].map(directory => load(directory)))
+    }, [connection.phase, expanded, load])
 
     const chooseRow = useCallback((event: ReactMouseEvent, row: Row): void => {
       if (event.shiftKey && anchor !== null) {
@@ -407,22 +459,41 @@ export function createExplorerPage(
       void controller.moveInto(sessionId, paths, directory)
     }
 
-    if (cwd === undefined) {
+    if (session !== undefined && cwd === undefined && rootPath === '') {
       return <div className="cc-explorer cc-explorer-empty">{t('explorer.noWorkspace')}</div>
     }
+
+    const disconnected = explorerDisconnectedView(session !== undefined, rootPath !== '', connection)
+    if (disconnected.visible) {
+      const { ended, refreshing } = disconnected
+      return (
+        <div className="cc-explorer cc-explorer-disconnected" role="status">
+          <div className="cc-explorer-disconnected-icon" aria-hidden="true">↻</div>
+          <h2>{ended ? t('explorer.disconnected.endedTitle') : t('explorer.disconnected.title')}</h2>
+          <p>{t(connection.detailKey ?? (ended
+            ? 'explorer.disconnected.ended'
+            : 'explorer.disconnected.detail'))}</p>
+          <button type="button" disabled={refreshing} onClick={() => { void refreshExplorer() }}>
+            {refreshing ? t('explorer.disconnected.refreshing') : t('explorer.disconnected.refresh')}
+          </button>
+        </div>
+      )
+    }
+
+    const displayRoot = rootPath !== '' ? rootPath : cwd ?? ''
 
     return (
       <div className="cc-explorer">
         <div className="cc-explorer-toolbar">
-          <div className="cc-explorer-root" title={rootPath === '' ? cwd : rootPath}>
+          <div className="cc-explorer-root" title={displayRoot}>
             <FileIcon
               className="cc-explorer-root-icon"
-              name={rootPath === '' ? baseName(cwd) : baseName(rootPath)}
+              name={baseName(displayRoot)}
               path=""
               kind="root"
               expanded
             />
-            <span>{rootPath === '' ? baseName(cwd) : baseName(rootPath)}</span>
+            <span>{baseName(displayRoot)}</span>
           </div>
           <div className="cc-explorer-actions">
             <button type="button" title={t('explorer.newFile')} onClick={() => controller.openCreate(sessionId, '', 'file')}>
@@ -432,8 +503,7 @@ export function createExplorerPage(
               {t('explorer.newFolder')}
             </button>
             <button type="button" title={t('explorer.refresh')} onClick={() => {
-              void load('')
-              for (const directory of expanded) void load(directory)
+              void refreshExplorer()
             }}>
               {t('explorer.refresh')}
             </button>

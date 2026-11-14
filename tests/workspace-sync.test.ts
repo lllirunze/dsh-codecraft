@@ -7,7 +7,7 @@ import {
   relocateDocuments,
   type OpenDocumentHandle,
 } from '../src/client/document/registry.js'
-import { absoluteOf, isInside, joinRelative, parentOf, relativeOf } from '../src/client/workspace/paths.js'
+import { absoluteOf, baseName, isInside, joinRelative, parentOf, relativeOf } from '../src/client/workspace/paths.js'
 
 const disposers: Array<() => void> = []
 
@@ -50,6 +50,7 @@ describe('workspace path helpers', () => {
     expect(relativeOf('C:\\Repo', 'C:\\Repo\\Src\\A.ts')).toBe('Src/A.ts')
     expect(absoluteOf('C:\\Repo', 'Src/A.ts')).toBe('C:\\Repo\\Src\\A.ts')
     expect(absoluteOf('/repo', 'src/a.ts')).toBe('/repo/src/a.ts')
+    expect(baseName('C:\\Repo\\工作 空间')).toBe('工作 空间')
   })
 })
 

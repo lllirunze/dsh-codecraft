@@ -25,6 +25,8 @@ import { ExplorerTitle } from '../workspace/ExplorerTitle.js'
 import { createDialogHost } from '../workspace/DialogHost.js'
 import { registerNativeMenus } from '../workspace/native-menus.js'
 import { materialIconState } from '../icons/material-icon-state.js'
+import { DocumentBreadcrumbs } from '../workspace/DocumentBreadcrumbs.js'
+import { bindDocumentBreadcrumbRuntime } from '../workspace/document-breadcrumbs.js'
 
 /** Browser services required before mounting. */
 export const inject = [
@@ -90,6 +92,9 @@ export function apply(ctx: ClientContext): void {
       return await revealPath(path)
     },
   })
+  ctx.effect(() => bindDocumentBreadcrumbRuntime(
+    sessionId => ctx.sessions.list.getSnapshot().byId[sessionId]?.cwd,
+  ), 'dsh-codecraft: document breadcrumb runtime')
 
   ctx.effect(() => ctx.sidebarRightTabs.register({
     id: EXPLORER_ID,
@@ -177,6 +182,13 @@ export function apply(ctx: ClientContext): void {
     order: 40,
     locale: LOCALE_NAMESPACE,
   }, PreviewInBrowserAction)), 'dsh-codecraft: HTML preview action')
+
+  ctx.effect(() => ctx.slots.inject('sidebar.right.tab.document.actions', () => ctx.slots.register({
+    name: 'sidebar.right.tab.document.actions',
+    id: 'dsh-codecraft-file-breadcrumbs',
+    order: 10,
+    locale: LOCALE_NAMESPACE,
+  }, DocumentBreadcrumbs)), 'dsh-codecraft: document breadcrumbs')
 
   // Preview uses DSH's public Session Remote path opener. A deployment without
   // the service keeps the editor and every other HTML feature.

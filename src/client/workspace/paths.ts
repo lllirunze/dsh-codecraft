@@ -38,5 +38,6 @@ export function isInside(parent: string, child: string): boolean {
 
 /** File name portion of a relative path. */
 export function baseName(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1)
+  const normalized = path.replaceAll('\\', '/')
+  return normalized.slice(normalized.lastIndexOf('/') + 1)
 }

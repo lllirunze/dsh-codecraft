@@ -51,6 +51,9 @@ if (!client.includes('id: "dsh-codecraft"')) {
 if (!client.includes('factory: (require) =>')) {
   throw new Error('client bundle is missing the factory(require) wrapper')
 }
+if (!client.includes('data-textpreview-path') || !client.includes('dsh-codecraft-file-breadcrumbs')) {
+  throw new Error('client bundle is missing the scoped native document-path replacement')
+}
 const required = [...client.matchAll(/\brequire\("([^"]+)"\)/g)].map(match => match[1])
 const unexpected = [...new Set(required)].filter(specifier => !ALLOWED_EXTERNALS.has(specifier))
 if (unexpected.length > 0) {
@@ -242,7 +245,7 @@ function verifyClientRegistration(code, platform) {
   assert(preview.priority === 'extension' && preview.loading === 'renderer', 'document preview uses the wrong priority or loading mode')
   assert(preview.extensions.includes('ts') && preview.extensions.includes('py'), 'document preview is missing source extensions')
   assert(!preview.extensions.includes('png') && !preview.extensions.includes('pdf'), 'document preview claims binary extensions')
-  assert(bodyRows.length === 6, `client registered ${bodyRows.length} slot contributions`)
+  assert(bodyRows.length === 7, `client registered ${bodyRows.length} slot contributions`)
   assert(
     tabDefinitions.length === 1 && tabDefinitions[0].id === 'dsh-codecraft-files' && tabDefinitions[0].kind === 'files',
     'client did not register the Files tab override',
@@ -253,7 +256,8 @@ function verifyClientRegistration(code, platform) {
   )
   const documentBody = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document')
   const settingsCard = bodyRows.find(row => row.options.name === 'plugins.item')
-  const previewAction = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document.actions')
+  const previewAction = bodyRows.find(row => row.options.id === 'dsh-codecraft-html-preview')
+  const breadcrumbs = bodyRows.find(row => row.options.id === 'dsh-codecraft-file-breadcrumbs')
   const explorerBody = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab')
   const explorerTitle = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab.title')
   const dialogHost = bodyRows.find(row => row.options.name === 'shell.overlay')
@@ -268,6 +272,11 @@ function verifyClientRegistration(code, platform) {
   assert(
     previewAction?.options.id === 'dsh-codecraft-html-preview',
     'client HTML preview action is registered in the wrong slot',
+  )
+  assert(
+    breadcrumbs?.options.name === 'sidebar.right.tab.document.actions'
+      && breadcrumbs.options.order === 10,
+    'client document breadcrumbs are registered in the wrong slot',
   )
   assert(
     explorerBody?.options.key === 'dsh-codecraft-files',

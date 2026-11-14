@@ -78,6 +78,7 @@ import { assessDiskChange } from '../document/conflicts.js'
 import { createSaveRequest, reconcileSaveSuccess } from '../document/save.js'
 import { LatestSaveQueue } from '../document/save-queue.js'
 import { registerOpenDocument } from '../document/registry.js'
+import { setDocumentBreadcrumbController } from '../workspace/document-breadcrumbs.js'
 import { editorStatusKey } from '../document/status.js'
 import { differsFromSavedText, initialDocumentState } from '../document/state.js'
 import { editorSettings } from '../settings/editor-settings.js'
@@ -1323,6 +1324,19 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       close: () => { tab.actions.close() },
     })
   }, [address, tab.id, tab.actions])
+
+  useEffect(() => {
+    const parsed = parseSessionFileAddress(address)
+    if (parsed === undefined || absolutePath === undefined) return
+    return setDocumentBreadcrumbController({
+      absolutePath,
+      sessionId: parsed.sessionId,
+      path: parsed.path,
+      openFile: path => tab.actions.openResource(sessionFileAddress(parsed.sessionId, path), {
+        revealIfOpened: true,
+      }),
+    })
+  }, [absolutePath, address, tab.actions])
 
   const continueEditing = useCallback(() => {
     conflictRef.current = null

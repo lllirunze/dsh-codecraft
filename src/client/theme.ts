@@ -762,6 +762,42 @@ body[data-ds-dark-theme] .dsh-codecraft {
   font-size: 12px;
   color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .48));
 }
+.cc-explorer-disconnected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.cc-explorer-disconnected-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .68));
+  font-size: 22px;
+}
+.cc-explorer-disconnected h2 { margin: 0; font-size: 15px; font-weight: 650; }
+.cc-explorer-disconnected p {
+  max-width: 360px;
+  margin: 0;
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .68));
+  font-size: 12px;
+  line-height: 1.55;
+}
+.cc-explorer-disconnected > button {
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 14px;
+  background: var(--dsw-alias-interactive-primary, #4a8cff);
+  color: #fff;
+  cursor: pointer;
+}
+.cc-explorer-disconnected > button:disabled { opacity: .55; cursor: default; }
 .cc-explorer-toolbar {
   display: flex;
   align-items: center;
@@ -879,6 +915,128 @@ body[data-ds-dark-theme] .dsh-codecraft {
 .cc-explorer-menu-item:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06)); }
 .cc-explorer-menu-item:disabled { opacity: .45; cursor: default; }
 .cc-explorer-menu-item.is-danger { color: var(--dsw-alias-state-error-primary, #d1242f); }
+
+/* DSH 0.2.2-rc.3 exposes document actions after its marked path label. Hide
+   that label only when CodeCraft's complete replacement is mounted beside it. */
+[data-textpreview-path]:has(~ .dsh-codecraft-file-breadcrumbs),
+[data-textpreview-path]:has(~ * .dsh-codecraft-file-breadcrumbs) { display: none; }
+.dsh-codecraft-file-breadcrumbs {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  order: -10;
+}
+.cc-file-breadcrumbs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: min(58vw, 680px);
+  overflow: hidden;
+}
+.cc-file-breadcrumb { display: inline-flex; align-items: center; min-width: 0; }
+.cc-file-breadcrumb-separator {
+  flex: 0 0 auto;
+  padding: 0 2px;
+  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45));
+}
+.cc-file-breadcrumb-button {
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  padding: 3px 5px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .68));
+  font: inherit;
+  font-size: 11px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cc-file-breadcrumb-button[data-current] {
+  color: var(--dsw-alias-label-primary, rgba(0, 0, 0, .9));
+  font-weight: 600;
+}
+.cc-file-breadcrumb-button:hover,
+.cc-file-breadcrumb-button:focus-visible {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+  outline: none;
+}
+.cc-file-breadcrumb-button:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--dsw-alias-state-focus, #4a8cff);
+}
+.cc-file-breadcrumb-menu {
+  position: fixed;
+  z-index: 10020;
+  left: var(--cc-breadcrumb-left);
+  top: var(--cc-breadcrumb-top);
+  display: flex;
+  flex-direction: column;
+  width: min(320px, calc(100vw - 16px));
+  max-height: min(360px, calc(100vh - var(--cc-breadcrumb-top) - 12px));
+  overflow: auto;
+  border: 1px solid var(--dsw-alias-divider, rgba(0, 0, 0, .12));
+  border-radius: 8px;
+  padding: 5px;
+  background: var(--dsw-alias-bg-elevated, #fff);
+  color: var(--dsw-alias-label-primary, rgba(0, 0, 0, .9));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+}
+.cc-file-breadcrumb-location {
+  overflow: hidden;
+  padding: 6px 8px 8px;
+  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .48));
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cc-file-breadcrumb-menu-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cc-file-breadcrumb-menu-item:hover,
+.cc-file-breadcrumb-menu-item:focus-visible,
+.cc-file-breadcrumb-menu-item[aria-current="true"] {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+  outline: none;
+}
+.cc-file-breadcrumb-menu-item:disabled { opacity: .48; cursor: default; }
+.cc-file-breadcrumb-menu-item > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cc-file-breadcrumb-icon { width: 16px; height: 16px; object-fit: contain; }
+.cc-file-breadcrumb-up { display: inline-flex; justify-content: center; }
+.cc-file-breadcrumb-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 8px;
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .68));
+  font-size: 12px;
+}
+.cc-file-breadcrumb-message.is-error { color: var(--dsw-alias-state-error-primary, #d1242f); }
+.cc-file-breadcrumb-message button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .cc-dialog-backdrop {
   position: fixed;
   inset: 0;
