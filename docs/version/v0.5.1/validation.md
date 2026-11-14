@@ -49,15 +49,15 @@
 
 | Check | Command | Status | Evidence |
 | --- | --- | --- | --- |
-| Focused icon pipeline | `npx vitest run tests/file-icons.test.ts tests/material-icon-client.test.ts tests/material-icons.test.ts tests/material-icon-install.test.ts tests/routes.test.ts` | PASS | 5 files, 34 tests |
+| Focused icon pipeline | `npx vitest run tests/file-icons.test.ts tests/material-icon-client.test.ts tests/material-icons.test.ts tests/material-icon-install.test.ts tests/routes.test.ts` | PASS | 5 files, 35 tests |
 | Workspace regression | `npx vitest run tests/workspace-operations.test.ts tests/workspace-sync.test.ts tests/routes.test.ts` | PASS | 3 files, 41 tests |
-| Canonical gate | `npm run check` | PASS | Typecheck; 28 files / 283 tests; build; generated metadata and build verification |
+| Canonical gate | `npm run check` | PASS | Typecheck; 28 files / 284 tests; build; generated metadata and build verification |
 | Deterministic mapping sync | `npm run icons:sync` with before/after generated-module hashes | PASS | Byte-identical combined hash `8da12cacae52aae2c93277ef8a9215ca97368ab25a2ef6899a1b4c43b9b2bfb9` |
-| Package inspection | `npm pack --dry-run --ignore-scripts --json` | PASS | Release identity `dsh-codecraft@0.5.1`; 95 files; 873,999 bytes packed; 3,357,943 unpacked; zero SVGs; required runtime files and notice present |
+| Package inspection | `npm pack --dry-run --ignore-scripts --json` | PASS | Release identity `dsh-codecraft@0.5.1`; 95 files; 871,643 bytes packed; 3,358,247 unpacked; zero SVGs; required runtime files and notice present |
 | Real registry smoke | Bundled current installer to a temporary module and installed the pinned package into a temporary cache | PASS | 1,256 icons; installed/status true; `python.svg` 773 bytes; temporary cache removed |
 | Installed-cache API source smoke | Bundled the current Host reader and read the existing DSH cache without mutation | PASS | Installed `5.40.0`, 1,256 icons; `python.svg` revalidated at 773 bytes; traversal name rejected |
 | Repository SVG inspection | `find` excluding `.git` and `node_modules` | PASS | Zero SVG files |
-| Release metadata refresh | `npm run check`; package inspection; desktop link identity inspection | PASS | `0.5.1`; 28 files / 283 tests; profile resolves the exact repository and reads installed package version `0.5.1` |
+| Release metadata refresh | `npm run check`; package inspection; desktop link identity inspection | PASS | `0.5.1`; 28 files / 284 tests; profile resolves the exact repository and reads installed package version `0.5.1` |
 
 ## Local DSH Desktop Candidate Gate
 

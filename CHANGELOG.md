@@ -19,6 +19,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Routed verified icon reads through CodeCraft's authenticated API so installed icons render immediately in DSH Desktop without relying on a separate custom-protocol image request.
+- Made generated Material Icon mappings deterministic across operating-system locales and tolerant of checkout line endings.
+- Stabilized the Material Icon synchronization and HTML refactoring checks on slower CI runners.
+- Moved macOS CI and publication jobs to the Apple Silicon `macos-latest` runner.
 
 ## [0.5.0] - 2026-11-13
 
