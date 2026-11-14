@@ -1,4 +1,5 @@
 import { history, undo } from '@codemirror/commands'
+import { ensureSyntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState, type Transaction, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, it } from 'vitest'
@@ -11,11 +12,15 @@ import {
 } from '../src/client/languages/html/features/refactoring.js'
 
 function state(doc: string, position = 0): EditorState {
-  return EditorState.create({
+  const created = EditorState.create({
     doc,
     selection: EditorSelection.cursor(position),
     extensions: [htmlEditorLanguage.createSupport(), history()],
   })
+  if (ensureSyntaxTree(created, created.doc.length, 1_000) === null) {
+    throw new Error('HTML test document did not finish parsing')
+  }
+  return created
 }
 
 function planOf(result: ReturnType<typeof planHtmlTagRename>): HtmlRefactorPlan {

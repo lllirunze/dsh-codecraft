@@ -12,6 +12,7 @@ export interface MaterialIconData {
 }
 
 export function stableJson(value: unknown): string
+export function generatedTextEquals(actual: string, expected: string): boolean
 export function assertExactVersion(version: unknown): string
 export function sha256(content: string | Buffer): string
 export function assertSafeSvg(svg: unknown, label?: string): void

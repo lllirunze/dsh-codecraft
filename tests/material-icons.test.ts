@@ -7,8 +7,12 @@ import {
   assertExactVersion,
   assertSafeSvg,
   buildMaterialIconData,
+  generatedTextEquals,
+  generateClientModule,
+  generateHostModule,
   readDependencyState,
   sha256,
+  stableJson,
   synchronizeMaterialIcons,
 } from '../scripts/material-icons.mjs'
 
@@ -74,6 +78,14 @@ describe('Material icon development synchronization', () => {
     expect(() => assertSafeSvg('<svg><image href="https://example.com/a.png"/></svg>')).toThrow(/disallowed/)
   })
 
+  it('keeps generation stable across locale and checkout line endings', () => {
+    expect(stableJson({ a: 1, A: 2, 'a-b': 3, 'a.b': 4, a_b: 5 })).toBe(
+      '{\n  "A": 2,\n  "a": 1,\n  "a-b": 3,\n  "a.b": 4,\n  "a_b": 5\n}\n',
+    )
+    expect(generatedTextEquals('first\r\nsecond\r\n', 'first\nsecond\n')).toBe(true)
+    expect(generatedTextEquals('first\nchanged\n', 'first\nsecond\n')).toBe(false)
+  })
+
   it('generates complete version-matched mappings and hashes without copying SVGs', async () => {
     const state = await readDependencyState()
     const data = await buildMaterialIconData(state)
@@ -81,14 +93,19 @@ describe('Material icon development synchronization', () => {
     expect(Object.keys(data.fileHashes)).toHaveLength(1256)
     expect(data.manifest.fileNames).toBeTypeOf('object')
     expect(data.manifest.folderNames).toBeTypeOf('object')
+    expect(generateClientModule(data)).not.toMatch(/import .*\.svg/)
+    expect(generateHostModule(data)).toContain(state.integrity)
 
     const base = await temporaryDirectory()
     const clientModule = path.join(base, 'client.ts')
     const hostModule = path.join(base, 'host.ts')
-    await synchronizeMaterialIcons({ ...state, clientModule, hostModule })
+    const sourceDirectory = path.join(base, 'fixture-upstream')
+    await writeMaterialIconFixture(sourceDirectory, state.version)
+    const fixtureState = { ...state, sourceDirectory }
+    await synchronizeMaterialIcons({ ...fixtureState, clientModule, hostModule })
     const firstClient = await readFile(clientModule, 'utf8')
     const firstHost = await readFile(hostModule, 'utf8')
-    await synchronizeMaterialIcons({ ...state, clientModule, hostModule })
+    await synchronizeMaterialIcons({ ...fixtureState, clientModule, hostModule })
     expect(await readFile(clientModule, 'utf8')).toBe(firstClient)
     expect(await readFile(hostModule, 'utf8')).toBe(firstHost)
     expect(firstClient).not.toMatch(/import .*\.svg/)
