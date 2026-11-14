@@ -5,7 +5,7 @@
 **在 DSH 原生文件 Tab 中使用 CodeMirror 6 安全、精确地编辑代码。**
 
 [![npm version](https://img.shields.io/npm/v/dsh-codecraft?logo=npm&label=npm)](https://www.npmjs.com/package/dsh-codecraft)
-[![DSH compatibility](https://img.shields.io/badge/DSH-0.2.1--rc.5-5b5bd6)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.5)
+[![DSH compatibility](https://img.shields.io/badge/DSH-0.2.2--rc.3-5b5bd6)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.2-rc.3)
 [![CI](https://github.com/lllirunze/dsh-codecraft/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/lllirunze/dsh-codecraft/actions/workflows/ci.yml)
 [![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows-4c8bf5)](#环境要求)
 [![license](https://img.shields.io/github/license/lllirunze/dsh-codecraft)](LICENSE)
@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.5.1 为 CodeCraft 文件管理器提供已验证的可选 Material 图标，且不在插件包中内置 SVG 资源。
+> **当前状态：** v0.5.2 已在 macOS 和 Windows 上完成 DSH Desktop 0.2.2-rc.3 兼容性验证，无需修改运行时代码。
 
 ## 功能
 
@@ -60,7 +60,7 @@
 | Python 智能编程 | macOS 或 Windows |
 | Java 编辑 | v0.3.0 支持 macOS 或 Windows；无需 JDK |
 | HTML 编辑 | v0.4.2 支持 macOS 或 Windows；完全离线 |
-| DSH Desktop | `0.2.1-rc.5` |
+| DSH Desktop | `0.2.2-rc.3` |
 | Node.js | 从源码构建时需要 20 或更高版本 |
 
 ## 安装
@@ -96,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.1
+dsh plugin --profile desktop add dsh-codecraft@0.5.2
 ```
 
 更新后重启 DSH Desktop。

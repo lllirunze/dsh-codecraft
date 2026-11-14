@@ -5,7 +5,7 @@
 **A precise, safe CodeMirror 6 editor inside DSH's native file tabs.**
 
 [![npm version](https://img.shields.io/npm/v/dsh-codecraft?logo=npm&label=npm)](https://www.npmjs.com/package/dsh-codecraft)
-[![DSH compatibility](https://img.shields.io/badge/DSH-0.2.1--rc.5-5b5bd6)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.1-rc.5)
+[![DSH compatibility](https://img.shields.io/badge/DSH-0.2.2--rc.3-5b5bd6)](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.2.2-rc.3)
 [![CI](https://github.com/lllirunze/dsh-codecraft/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/lllirunze/dsh-codecraft/actions/workflows/ci.yml)
 [![platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows-4c8bf5)](#requirements)
 [![license](https://img.shields.io/github/license/lllirunze/dsh-codecraft)](LICENSE)
@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.5.1 adds validated, optional Material icons for CodeCraft's Explorer without bundling SVG assets.
+> **Status:** v0.5.2 validates CodeCraft on DSH Desktop 0.2.2-rc.3 across macOS and Windows without runtime compatibility changes.
 
 ## Features
 
@@ -60,7 +60,7 @@
 | Python Intelligence | macOS or Windows |
 | Java editing | macOS or Windows in v0.3.0; no JDK required |
 | HTML editing | macOS or Windows in v0.4.2; fully offline |
-| DSH Desktop | `0.2.1-rc.5` |
+| DSH Desktop | `0.2.2-rc.3` |
 | Node.js | 20 or later when building from source |
 
 ## Install
@@ -96,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.1
+dsh plugin --profile desktop add dsh-codecraft@0.5.2
 ```
 
 Restart DSH Desktop after updating.

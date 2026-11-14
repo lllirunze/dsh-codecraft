@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Source audit and automated validation complete; local candidate and native validation pending |
+| Status | Implemented and validated; release metadata finalized for v0.5.2 |
 | Target version | 0.5.2 |
 | Baseline | 0.5.1 (`v0.5.1` tag `9fa96ac`) |
 | Release type | Patch / Host compatibility update |

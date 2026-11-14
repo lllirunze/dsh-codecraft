@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.2] - 2026-11-14
+
+### Changed
+
+- Validated the complete CodeCraft editing, workspace, settings, icon, Python, Java, and HTML experience on DSH Desktop `0.2.2-rc.3` across macOS and Windows.
+- Narrowed the declared DSH compatibility range to `>=0.2.2-rc.3 <0.2.3` and recorded `0.2.2-rc.3` as the validated release.
+- Strengthened build verification for stable bundle identity, Host routes and exports, Client injection and external boundaries, native menu contributions, and single plugin registration.
+- Confirmed the DSH Windows in-app update to rc.3 completes replacement, automatically relaunches Desktop, and preserves CodeCraft activation.
+
 ## [0.5.1] - 2026-11-13
 
 ### Added
