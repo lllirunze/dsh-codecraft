@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Diagnosis & Resolution"
+  short_description: "Diagnose and resolve existing behavior defects"
+  default_prompt: "Use $bug-fixing to diagnose this reported failure, identify the root cause, apply the smallest safe fix, and verify the result."

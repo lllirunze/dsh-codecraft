@@ -1,11 +1,13 @@
 ---
 name: feature-development
-description: Implement and coordinate normal versioned feature work in this repository from approved requirements through architecture, code, focused tests, automated regression, and manual DSH Desktop handoff. Use when asked to build or complete a planned version or substantial feature. Do not publish releases without a separate explicit request.
+description: Implement new product features, planned versions, and explicitly requested functional enhancements in dsh-codecraft through architecture, code, focused tests, regression, and manual DSH Desktop handoff. Do not use for independently reported defects in existing behavior; use bug-fixing. Do not publish without a separate explicit request.
 ---
 
 # Feature Development
 
 Deliver one requested version or feature with traceable evidence. This skill owns implementation and coordination; specialized skills retain their own responsibilities.
+
+Existing-functionality failures, crashes, regressions, and black-box bug reports belong to `bug-fixing`. Defects discovered while completing the active feature remain part of this workflow when resolving them is necessary to deliver that feature.
 
 ## Determine the requested outcome
 
@@ -14,7 +16,7 @@ Deliver one requested version or feature with traceable evidence. This skill own
 - **Resume after manual testing:** record only results the user actually reports, rerun stale automation if code changed, and state readiness accurately.
 - **Publish:** use `release-management` only after required automation and manual acceptance pass and the user explicitly asks to commit, push, and tag. Preparation or passing tests is not publication authority.
 
-For a complete version delivery, read [references/version-delivery-gates.md](references/version-delivery-gates.md). For any release candidate or change that can affect plugin loading, activation, configuration, packaging, lifecycle, or DSH integration, also read and apply [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md). For a small isolated fix, compress the same reasoning into a short scope/plan/test loop instead of creating unnecessary documents.
+For a complete version delivery, read [references/version-delivery-gates.md](references/version-delivery-gates.md). For any release candidate or change that can affect plugin loading, activation, configuration, packaging, lifecycle, or DSH integration, also read and apply [local DSH Desktop safety validation](../regression-testing/references/dsh-desktop-safety-validation.md). For a small isolated enhancement, compress the same reasoning into a short scope/plan/test loop instead of creating unnecessary documents.
 
 ## Establish the source of truth
 
