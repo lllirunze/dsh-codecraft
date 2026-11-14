@@ -26,6 +26,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.4.2 | [Design](version/v0.4.2/design.md) | [Validation](version/v0.4.2/validation.md) | Validated offline HTML diagnostics, problem navigation, safe tag/ID rename, immediate saving, and normal Desktop exit on macOS and Windows |
 | v0.5.0 | [Design](version/v0.5.0/design.md) | [Validation](version/v0.5.0/validation.md) | Implemented workspace file management and state synchronization; automated validation passed, native acceptance pending |
 | v0.5.1 | [Design](version/v0.5.1/design.md) | [Validation](version/v0.5.1/validation.md) | Validated optional, version-matched Material Explorer icons on macOS and Windows without bundled SVG assets |
+| v0.5.2 | [Design](version/v0.5.2/design.md) | [Validation](version/v0.5.2/validation.md) | Planned DSH Desktop 0.2.2-rc.3 compatibility audit and dual-platform validation |
 
 ## Project Guides
 

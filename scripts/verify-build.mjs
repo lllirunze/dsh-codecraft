@@ -61,6 +61,37 @@ function assert(condition, message) {
   if (!condition) throw new Error(message)
 }
 
+const manifest = JSON.parse(await readFile('package.json', 'utf8'))
+const cordisPatch = await readFile('cordis.patch.yml', 'utf8')
+const expectedClientInject = [
+  '@deepseek-ai/dsh-api-remotes',
+  '@deepseek-ai/dsh-api-session-controller',
+  '@deepseek-ai/dsh-client-locale',
+  '@deepseek-ai/dsh-client-ui-context-menu',
+  '@deepseek-ai/dsh-client-ui-layout',
+  '@deepseek-ai/dsh-client-ui-session',
+  '@deepseek-ai/dsh-client-ui-settings',
+  '@deepseek-ai/dsh-client-ui-settings-plugins',
+  '@deepseek-ai/dsh-client-ui-sidebar-right',
+  '@deepseek-ai/dsh-client-ui-sidebar-documentpreview',
+]
+assert(manifest.name === 'dsh-codecraft', 'package name must retain the stable dsh-codecraft identity')
+assert(manifest.dsh?.bundle?.patch === './cordis.patch.yml', 'manifest must retain the CodeCraft bundle patch')
+assert(manifest.dsh?.client?.platform === 'web', 'CodeCraft client must retain the web platform')
+assert(
+  expectedClientInject.every(name => manifest.dsh?.client?.inject?.includes(name)),
+  'manifest is missing a required DSH Client integration package',
+)
+assert(
+  manifest.dsh.client.external.length === ALLOWED_EXTERNALS.size
+    && manifest.dsh.client.external.every(name => ALLOWED_EXTERNALS.has(name)),
+  'manifest Client externals do not match the build boundary',
+)
+assert(manifest.exports?.['.']?.default === './lib/index.js', 'Host export no longer points to lib/index.js')
+assert(manifest.exports?.['./client']?.default === './lib/client.js', 'Client export no longer points to lib/client.js')
+assert((cordisPatch.match(/\bid:\s*codecraft\b/g) ?? []).length === 1, 'bundle patch must register codecraft exactly once')
+assert((cordisPatch.match(/\bname:\s*dsh-codecraft\b/g) ?? []).length === 1, 'bundle patch must mount dsh-codecraft exactly once')
+
 function verifyClientRegistration(code, platform) {
   const moduleRows = []
   const appendedStyles = []
@@ -156,7 +187,16 @@ function verifyClientRegistration(code, platform) {
   })
   assert(typeof plugin.apply === 'function', 'client bundle does not export apply()')
   assert(
-    Array.isArray(plugin.inject) && ['documentPreviews', 'slots', 'locale', 'configForms', 'sidebarRight'].every(name => plugin.inject.includes(name)),
+    Array.isArray(plugin.inject) && [
+      'documentPreviews',
+      'slots',
+      'locale',
+      'configForms',
+      'sidebarRight',
+      'sidebarRightTabs',
+      'sessions',
+      'contextMenus',
+    ].every(name => plugin.inject.includes(name)),
     'client bundle is missing required service injections',
   )
 
@@ -164,6 +204,7 @@ function verifyClientRegistration(code, platform) {
   const bodyRows = []
   const localeRows = []
   const tabDefinitions = []
+  const menuContributions = []
   const context = {
     documentPreviews: { register: definition => { previews.push(definition); return () => {} } },
     slots: {
@@ -190,7 +231,7 @@ function verifyClientRegistration(code, platform) {
     sidebarRight: { openResource() {}, close() {} },
     sidebarRightTabs: { register: definition => { tabDefinitions.push(definition); return () => {} } },
     sessions: { list: { getSnapshot: () => ({ byId: {} }) } },
-    contextMenus: { register: () => () => {} },
+    contextMenus: { register: contribution => { menuContributions.push(contribution); return () => {} } },
     effect: callback => { callback() },
   }
   plugin.apply(context)
@@ -240,6 +281,12 @@ function verifyClientRegistration(code, platform) {
     dialogHost?.options.id === 'dsh-codecraft-dialogs',
     'client dialog host is registered in the wrong slot',
   )
+  assert(
+    menuContributions.length === 2
+      && menuContributions.some(row => row.id === 'codecraft.file' && row.target === 'file')
+      && menuContributions.some(row => row.id === 'codecraft.directory' && row.target === 'directory'),
+    'client did not register the native file and directory menu contributions',
+  )
   assert(localeRows.length === 1 && localeRows[0].namespace === 'sidebarCodeCraft', 'client locale registration is missing')
   assert(appendedStyles.length === 1, `client appended ${appendedStyles.length} style elements`)
 }
@@ -254,6 +301,7 @@ if (!/from\s+["']@deepseek-ai\/schemastery["']/.test(hostCode)) {
 
 const host = await import(pathToFileURL(resolve('lib/index.js')).href)
 if (host.name !== 'dsh-codecraft') throw new Error(`unexpected host plugin name: ${String(host.name)}`)
+if (host.CODECRAFT_ROUTE !== '/codecraft/api') throw new Error(`unexpected Host route: ${String(host.CODECRAFT_ROUTE)}`)
 if (typeof host.apply !== 'function') throw new Error('host bundle does not export apply()')
 if (!Array.isArray(host.inject) || !['webServer', 'subprocess'].every(name => host.inject.includes(name))) {
   throw new Error('host bundle does not declare the webServer and subprocess injections')
