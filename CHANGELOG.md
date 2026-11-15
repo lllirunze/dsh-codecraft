@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.3] - 2026-11-15
+
+### Added
+
+- Added a recoverable Explorer disconnected and ended-Session view with a centered, bounded refresh action that preserves open and unsaved editor state.
+- Replaced the native document path on the validated DSH Desktop host with an interactive breadcrumb showing at most three real workspace nodes, lazy one-directory menus, keyboard navigation, and native-tab file opening.
+
+### Changed
+
+- Kept breadcrumb state synchronized with active tabs, workspace operations, dirty-document behavior, and stale async invalidation while preserving the existing workspace and save boundaries.
+- Matched breadcrumb typography to the native **Preview in Browser** action and retained Material icons, light/dark themes, Python, Java, and HTML behavior across macOS and Windows validation.
+
 ## [0.5.2] - 2026-11-14
 
 ### Changed

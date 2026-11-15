@@ -9,7 +9,7 @@
 | Release type | Patch release refining existing workspace file management |
 | Platforms | Currently supported DSH Desktop on macOS and Windows |
 | Target Host contract | DSH Desktop / DeepSeek Harness `0.2.2-rc.3` |
-| Status | Implemented; automated validation passed, native Desktop acceptance pending |
+| Status | Implemented and validated on macOS and Windows; release authorized |
 | Planning source | [`../../planning/DSH-CodeCraft-v0.5.3-Workspace-File-Management-UI-Refinement.md`](../../planning/DSH-CodeCraft-v0.5.3-Workspace-File-Management-UI-Refinement.md) |
 | Validation plan | [`validation.md`](validation.md) |
 
@@ -52,7 +52,7 @@ This adapter is intentionally limited to the declared DSH `0.2.2-rc.3` compatibi
 | FILE-053-03 | The active file is the rightmost of at most three real nodes, never above the workspace root; long labels remain inspectable | No invented nodes, name-based identity, unbounded header growth, or path-security decision in the display layer | Implemented through `DocumentBreadcrumbs` and the scoped rc.3 path-marker adapter |
 | FILE-053-04 | Every visible node opens an accessible one-level directory menu with parent navigation, stable sorting, Material icons, loading/error/empty states, keyboard operation, and native file opening | No recursive workspace scan, cross-root traversal, stale async result, folder-as-tab behavior, or duplicate tab system | Implemented with lazy `workspace-list` calls and native `openResource` |
 | FILE-053-05 | Breadcrumb state follows the active native tab and existing rename, move, delete, workspace-switch, and dirty-state semantics | No silent save/discard, stale-path opening, forced file-tree expansion, or second editor/tab registry | Implemented through the live document registry and existing relocation/native-tab flow |
-| FILE-053-06 | Automated safety/regression checks and independent macOS/Windows native acceptance cover the complete release | Automation cannot substitute for Desktop behavior; one OS cannot establish the other | Automated gate passed; macOS and Windows native acceptance remain pending |
+| FILE-053-06 | Automated safety/regression checks and independent macOS/Windows native acceptance cover the complete release | Automation cannot substitute for Desktop behavior; one OS cannot establish the other | Automated and user-confirmed macOS/Windows acceptance passed |
 
 All six requirements remain mandatory. This record does not silently reduce FILE-053-03, FILE-053-04, or FILE-053-05 to an extra toolbar inside the renderer body.
 

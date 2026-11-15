@@ -14,7 +14,7 @@
 
 </div>
 
-> **Status:** v0.5.2 validates CodeCraft on DSH Desktop 0.2.2-rc.3 across macOS and Windows without runtime compatibility changes.
+> **Status:** v0.5.3 validates recoverable Explorer Sessions and interactive native-path breadcrumbs on DSH Desktop 0.2.2-rc.3 across macOS and Windows.
 
 ## Features
 
@@ -96,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.2
+dsh plugin --profile desktop add dsh-codecraft@0.5.3
 ```
 
 Restart DSH Desktop after updating.
