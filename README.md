@@ -18,39 +18,14 @@
 
 ## Features
 
-- Uses DSH's native workspace explorer and file tabs.
-- Provides syntax highlighting, line numbers, folding, search, line comments, indentation, undo/redo, and completion.
-- Provides project-aware Python completion for imports, cross-file symbols, inferred members, and packages from the selected environment on macOS and Windows.
-- Adds call parentheses and places the caret inside for clear Python invocation completions while preserving callback and other callable references.
-- Synchronizes unsaved Python content with a workspace-scoped Pyright language server managed through DSH's subprocess service.
-- Shows Pyright signatures, types, Docstrings, and source locations when hovering over Python identifiers.
-- Navigates from Python uses to definitions with `Command+Click` on macOS or `Ctrl+Click` on Windows, and shows grouped references when invoked on a declaration.
-- Opens cross-file navigation targets in DSH native tabs and provides exact-range Back and Forward history.
-- Automatically closes common brackets and quotes, including selection wrapping, paired deletion, and language-aware backticks or Python triple quotes.
-- Provides configurable two- or four-space indentation, generic bracket expansion on Enter, and aligned single- or multiline Tab operations.
-- Uses Python syntax context for block, branch, multiline-expression, and closing-delimiter indentation.
-- Generates Google Style Docstring placeholders after `"""` + Enter only at the first statement of a Python function, method, async function, or class.
-- Provides local Java keyword, common-type, snippet, and current-document completion without a language server.
-- Generates Structured Javadoc for Java methods and constructors from declarations already present in the document.
-- Supports Java brackets, indentation, line comments, folding, and common declaration or control-flow snippets entirely offline.
-- Provides offline HTML5 parsing, highlighting, contextual tag and attribute completion, enumerated values, entities, tag closing, comments, and explicitly selected snippets for `.html` and `.htm` files.
-- Uses syntax-aware HTML Enter behavior with the configured two- or four-space indentation and standards-aware handling for void and optional-end elements.
-- Shows offline HTML reference Hover for standard tags, attributes, and known values, with a nested Outline, DOM ancestor breadcrumbs, and current-element scope highlighting.
-- Folds HTML elements and multiline comments, jumps between matching start and end tags, and expands or shrinks selections through attribute value, attribute, start tag, and complete element.
-- Navigates relative local `src`/`href` resources inside the workspace and same-document `#id` targets in native tabs, with explicit feedback when a target is missing or ambiguous.
-- Formats whole HTML documents or complete selected lines with the shared two- or four-space setting while preserving `pre`, `textarea`, and inline text whitespace.
-- Expands the required Emmet markup subset and inserts an HTML5 document template only through explicit completion or command actions.
-- Adds a native **Preview in Browser** action for the active HTML editor, saving confirmed edits first and opening the saved file in the operating system default browser.
-- Reports conservative offline HTML structure, attribute, link, document, accessibility, and deprecation problems with exact-range navigation.
-- Previews and safely applies paired-tag or current-document ID rename as one Undoable edit while rejecting stale, conflicting, or ambiguous changes.
-- Cancels stale completion work, bounds Pyright recovery, and retires idle workspace language-server sessions.
-- Saves every writable document change immediately through the conflict-checked write path while keeping the normal footer stable as `In sync`.
-- Retains `Cmd+S` on macOS and `Ctrl+S` on Windows, and reports save failures, conflicts, external changes, and read-only states.
-- Detects external changes and refuses stale writes.
-- Reopens files from their authoritative disk state without durable browser drafts or recovery prompts.
-- Preserves LF/CRLF, UTF-8 BOM, and POSIX file mode where supported.
-- Safely rejects files that are too large, binary, non-UTF-8, mixed-line-ending, or otherwise unsafe to edit.
-- Performs editing locally without model calls, telemetry, or file uploads.
+- Integrates with DSH's native workspace explorer and file tabs, including file operations, breadcrumbs, and Material file icons.
+- Provides CodeMirror editing with highlighting, folding, search, comments, completion, bracket handling, Undo/Redo, and configurable two- or four-space indentation.
+- Saves writable changes immediately with conflict checks while preserving line endings, UTF-8 BOM, and supported file modes; unsafe files fall back safely.
+- Adds project-aware Python completion, Hover, definition/reference navigation, navigation history, syntax-aware indentation, and Google Style Docstrings through managed Pyright.
+- Adds fully local Java completion, snippets, Structured Javadoc, indentation, comments, and folding without requiring a JDK or language server.
+- Adds offline HTML completion, diagnostics, Outline, navigation, formatting, Emmet, safe tag/ID rename, and native browser preview.
+- Provides persistent per-language settings with always-visible master switches and collapsible Python details.
+- Keeps editing local, with no model calls, telemetry, or file uploads.
 
 ## Requirements
 
@@ -123,25 +98,15 @@ Restart DSH Desktop. Native file previews are restored automatically.
 ## Usage
 
 1. Open a supported source or text file from DSH's workspace explorer.
-2. DSH opens its native file tab and selects the CodeCraft renderer.
-3. Edit the file; CodeCraft saves each writable change immediately through its conflict-checked save path. `Cmd+S` on macOS and `Ctrl+S` on Windows remain available.
+2. Edit normally in the native tab. Writable changes save immediately through the conflict-checked path; the footer reports read-only, external-change, conflict, or save failures.
+3. Open **Settings → CodeCraft** to choose two- or four-space indentation and configure the Python, Java, or HTML assistance switches. Disabling assistance never disables ordinary editing or saving.
 4. Use the viewer menu above the tab to switch to DSH's native Code or Plain Text preview when needed.
 
-Immediate saving is always enabled for writable documents. The normal footer remains `In sync`; read-only, external-change, conflict, and save-failure states remain visible. Periodic AutoSave controls and durable draft recovery are no longer used.
+Language-specific highlights:
 
-New indentation always uses spaces. In the same settings section, choose a width of two or four spaces; the change applies to open editors without rewriting existing file content. Python files additionally use syntax-aware Enter indentation for blocks, branches, and multiline expressions.
-
-To generate a Google Style Docstring, type `"""` as the first statement in a Python function, method, async function, or class, then press Enter inside the paired quotes. CodeCraft creates editable summary, `Args`, `Returns`, or `Yields` placeholders only when syntax context is conclusive. Triple quotes at module scope, in assignments, nested blocks, later statements, or prefixed strings remain ordinary multiline strings.
-
-Python Intelligence is enabled by default for Python files on macOS and Windows. CodeCraft uses its bundled Pyright server and first selects an explicit interpreter or workspace `.venv`/`venv`; PATH fallback prefers `python3` on macOS and `python` on Windows. Open **Settings → CodeCraft → Python Intelligence** to disable semantic completion or provide absolute interpreter and language-server paths. The status bar reports `Starting`, `Ready`, or `Unavailable`; an unavailable server never disables normal editing or saving.
-
-Semantic completion opens automatically while typing, including after member-access dots such as `service.`. Accepting a method, function, or constructor in a clear invocation context inserts `()` and leaves the caret inside when Pyright supplies a plain callable name. Assignment values, callback arguments, containers, imports, decorators, existing snippets, and existing parentheses remain unchanged. CodeCraft does not bind macOS `Option` combinations because they may produce composed input characters. `Ctrl+Space` remains available where the operating system does not reserve it.
-
-Hover over a Python identifier to see information supplied by Pyright. Use `Command+Click` on macOS or `Ctrl+Click` on Windows to navigate from a use to its definition; use the same gesture on a declaration to open its grouped reference list. Cross-file targets open in DSH native tabs. The arrow controls in the editor status bar, or `Command/Ctrl+Alt+Left/Right`, move through successful navigation history.
-
-Java support activates automatically for `.java` files. Completion includes Java keywords, common standard-library type names, snippets such as `psvm` and `sout`, and identifiers found in the current document. Type `/**` above a complete method or constructor and press Enter to generate CodeCraft Structured Javadoc. Use **Settings → CodeCraft → Java Editing Assistance** to disable or restore these Java-specific features immediately for open and future Java tabs; the setting is enabled by default and persists across restarts. Ordinary editing and saving remain available while it is disabled. These features run locally without a JDK, JDT LS, a Java process, downloads, or network access. Java completion is lexical rather than project-aware: it does not resolve imports, dependencies, inferred members, or cross-file symbols.
-
-HTML support activates automatically for `.html` and `.htm` files. Completion covers standard tags, element-specific and global attributes, common enumerated values and entities, and explicitly selected HTML5 document, metadata, stylesheet, and form snippets. Eligible tags close locally, while void and optional-end elements follow HTML rules. Enter uses the configured two- or four-space indentation. Conservative diagnostics report definite structure, attribute, link, document, accessibility, and deprecation problems. Paired-tag and unique current-document ID rename always show a preview and refuse unsafe or stale changes. Use **Settings → CodeCraft → HTML Editing Assistance** to disable or restore all HTML-specific behavior immediately for open and future HTML tabs; ordinary text editing and saving remain available while it is disabled. The status bar reports `HTML: Ready`, `HTML: Disabled`, or `HTML: Error`. No HTML language server, subprocess, runtime download, or network connection is used.
+- **Python:** bundled Pyright provides completion and Hover. Use `Command+Click` on macOS or `Ctrl+Click` on Windows for definitions and references; configure interpreter or server paths in the expanded Python settings.
+- **Java:** `.java` files receive local lexical completion and snippets. Type `/**` above a method or constructor and press Enter to generate Structured Javadoc.
+- **HTML:** `.html` and `.htm` files receive offline completion, diagnostics, navigation, formatting, refactoring, and **Preview in Browser** without a language server or network connection.
 
 ### Keyboard shortcuts
 
