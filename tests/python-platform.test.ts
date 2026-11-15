@@ -18,6 +18,25 @@ function unusedSubprocess(): ManagedSubprocessService {
 }
 
 describe('Python Intelligence platform policy', () => {
+  it('reads an accepted Python enable change without remounting the Host plugin', async () => {
+    const subprocess = unusedSubprocess()
+    let enabled = false
+    const manager = new IntelligenceManager(subprocess, () => ({
+      ...DEFAULT_PYTHON_INTELLIGENCE_SETTINGS,
+      enabled,
+    }), 'linux')
+
+    await expect(manager.status('/workspace', 'main.py')).resolves.toEqual({ status: 'disabled' })
+    enabled = true
+    await expect(manager.status('/workspace', 'main.py')).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'unsupported-platform',
+      message: unsupportedPythonPlatformMessage('linux'),
+    })
+    expect(subprocess.resolveExecutable).not.toHaveBeenCalled()
+    expect(subprocess.spawn).not.toHaveBeenCalled()
+  })
+
   it('supports macOS and Windows without widening support to Linux', () => {
     expect(supportsPythonIntelligence('darwin')).toBe(true)
     expect(supportsPythonIntelligence('win32')).toBe(true)

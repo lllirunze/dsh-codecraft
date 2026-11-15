@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
+import { isVolatile } from '@deepseek-ai/cosmokit'
+import { Config } from '../src/config.js'
 import { EditorSettingsStore, type ConfigForm } from '../src/client/settings/editor-settings.js'
 import { en, zh } from '../src/client/locales.js'
 import {
@@ -50,6 +52,28 @@ describe('resolveIndentationSettings', () => {
 })
 
 describe('resolvePythonIntelligenceSettings', () => {
+  it('exposes Python settings as a DSH-editable volatile field', () => {
+    const config = Config({
+      editor: DEFAULT_EDITOR_SETTINGS,
+      pythonIntelligence: {
+        enabled: false,
+        completion: true,
+        interpreterPath: ' /workspace/python ',
+        serverPath: '',
+      },
+      javaEditingAssistance: DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS,
+      htmlEditingAssistance: DEFAULT_HTML_EDITING_ASSISTANCE_SETTINGS,
+    })
+
+    expect(isVolatile(config.pythonIntelligence)).toBe(true)
+    expect(resolvePythonIntelligenceSettings(config)).toEqual({
+      enabled: false,
+      completion: true,
+      interpreterPath: '/workspace/python',
+      serverPath: '',
+    })
+  })
+
   it('uses bundled and auto-discovered defaults for malformed values', () => {
     expect(resolvePythonIntelligenceSettings(undefined)).toEqual(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
     expect(resolvePythonIntelligenceSettings({
@@ -126,6 +150,28 @@ describe('resolveHtmlEditingAssistanceSettings', () => {
 })
 
 describe('EditorSettingsStore', () => {
+  it('preserves mixed legacy language values without changing their keys', () => {
+    const form: ConfigForm = {
+      getSnapshot: () => ({
+        status: 'ready',
+        writable: true,
+        value: {
+          pythonIntelligence: { enabled: false },
+          javaEditingAssistance: { enabled: true },
+          htmlEditingAssistance: { enabled: false },
+        },
+      }),
+      subscribe: () => () => {},
+      mutate: async () => true,
+    }
+    const store = new EditorSettingsStore()
+    store.bind(form)
+
+    expect(store.getSnapshot().pythonIntelligence.enabled).toBe(false)
+    expect(store.getSnapshot().javaEditingAssistance.enabled).toBe(true)
+    expect(store.getSnapshot().htmlEditingAssistance.enabled).toBe(false)
+  })
+
   it('tracks accepted Host settings and writes nested fields immediately', async () => {
     let listener = (): void => {}
     const mutate = vi.fn(async () => true)
@@ -214,6 +260,30 @@ describe('EditorSettingsStore', () => {
 
       await expect(store.setJavaEditingAssistanceEnabled(false)).resolves.toBe(false)
       expect(store.getSnapshot().javaEditingAssistance.enabled).toBe(true)
+      expect(store.getSnapshot().error).toBe(true)
+    }
+  })
+
+  it('keeps the accepted Python value and reports a rejected write', async () => {
+    const mutations = [
+      vi.fn(async () => false),
+      vi.fn(async () => { throw new Error('write failed') }),
+    ]
+    for (const mutate of mutations) {
+      const form: ConfigForm = {
+        getSnapshot: () => ({
+          status: 'ready',
+          writable: true,
+          value: { pythonIntelligence: { enabled: true } },
+        }),
+        subscribe: () => () => {},
+        mutate,
+      }
+      const store = new EditorSettingsStore()
+      store.bind(form)
+
+      await expect(store.setPythonIntelligenceEnabled(false)).resolves.toBe(false)
+      expect(store.getSnapshot().pythonIntelligence.enabled).toBe(true)
       expect(store.getSnapshot().error).toBe(true)
     }
   })

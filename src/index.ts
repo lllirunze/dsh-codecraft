@@ -50,10 +50,9 @@ export const inject = ['webServer', 'connection', 'sessions', 'subprocess']
  * @param ctx - Host context carrying the web server, admission fence, and Sessions.
  */
 export function apply(ctx: HostContext, config: CodeCraftSettings): void {
-  const settings = resolveCodeCraftSettings(config)
   const intelligence = new IntelligenceManager(
     ctx.subprocess,
-    settings.pythonIntelligence,
+    () => resolveCodeCraftSettings(config).pythonIntelligence,
     process.platform,
   )
   const materialIcons = new MaterialIconManager()

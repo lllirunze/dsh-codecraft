@@ -532,12 +532,6 @@ body[data-ds-dark-theme] .dsh-codecraft {
   gap: 12px;
   color: var(--dsw-alias-label-primary, #1f2328);
 }
-.dsh-codecraft-settings-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.dsh-codecraft-settings-title { font-size: 16px; font-weight: 500; line-height: 24px; }
 .dsh-codecraft-settings-group {
   display: flex;
   flex-direction: column;
@@ -548,7 +542,6 @@ body[data-ds-dark-theme] .dsh-codecraft {
   font-weight: 500;
   line-height: 20px;
 }
-.dsh-codecraft-settings-description,
 .dsh-codecraft-settings-hint {
   color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, .45));
   font-size: 12px;
@@ -570,6 +563,47 @@ body[data-ds-dark-theme] .dsh-codecraft {
 }
 .dsh-codecraft-settings-row + .dsh-codecraft-settings-row {
   border-top: .5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .1));
+}
+.dsh-codecraft-settings-language + .dsh-codecraft-settings-language,
+.dsh-codecraft-settings-language-details > .dsh-codecraft-settings-row {
+  border-top: .5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .1));
+}
+.dsh-codecraft-settings-language-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+.dsh-codecraft-settings-disclosure {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-md, 8px);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, .7));
+  cursor: pointer;
+}
+.dsh-codecraft-settings-disclosure:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, .06));
+}
+.dsh-codecraft-settings-disclosure:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary, #4078f2);
+  outline-offset: 1px;
+}
+.dsh-codecraft-settings-chevron {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 120ms ease;
+}
+.dsh-codecraft-settings-disclosure[aria-expanded='true'] .dsh-codecraft-settings-chevron {
+  transform: translateY(2px) rotate(225deg);
 }
 .dsh-codecraft-settings-row label {
   display: flex;

@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type ReactElement } from 'react'
+import { useState, useSyncExternalStore, type ReactElement } from 'react'
 import { Switch } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   INDENT_SIZE_OPTIONS,
@@ -6,6 +6,13 @@ import {
 } from '../../settings/schema.js'
 import { editorSettings } from './editor-settings.js'
 import { materialIconState } from '../icons/material-icon-state.js'
+import {
+  PROGRAMMING_LANGUAGE_ORDER,
+  SETTINGS_GROUP_ORDER,
+  languageHasDetails,
+  toggleExpandedLanguage,
+  type ProgrammingLanguageSetting,
+} from './settings-layout.js'
 
 interface SettingsCardProps {
   view: 'summary' | 'settings'
@@ -23,16 +30,163 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
     materialIconState.getSnapshot,
     materialIconState.getSnapshot,
   )
+  const [expandedLanguages, setExpandedLanguages] = useState<ReadonlySet<ProgrammingLanguageSetting>>(
+    () => new Set(),
+  )
   if (view === 'summary') return t('settings.description')
 
   const disabled = snapshot.status !== 'ready' || !snapshot.writable || snapshot.saving
+  const renderLanguageMasterSwitch = (language: ProgrammingLanguageSetting): ReactElement => {
+    if (language === 'python') {
+      const detailsId = 'dsh-codecraft-python-settings-details'
+      const expanded = expandedLanguages.has(language)
+      return (
+        <div
+          key={language}
+          className="dsh-codecraft-settings-language"
+          data-settings-language={language}
+        >
+          <div className="dsh-codecraft-settings-row">
+            <div>
+              <div className="dsh-codecraft-settings-label">{t('settings.python.enabled.label')}</div>
+              <div className="dsh-codecraft-settings-hint">{t('settings.python.enabled.hint')}</div>
+            </div>
+            <div className="dsh-codecraft-settings-language-actions">
+              <Switch
+                checked={snapshot.pythonIntelligence.enabled}
+                label={t('settings.python.enabled.label')}
+                disabled={disabled}
+                onChange={(enabled: boolean) => { void editorSettings.setPythonIntelligenceEnabled(enabled) }}
+              />
+              {languageHasDetails(language) && (
+                <button
+                  type="button"
+                  className="dsh-codecraft-settings-disclosure"
+                  aria-expanded={expanded}
+                  aria-controls={detailsId}
+                  aria-label={t(expanded
+                    ? 'settings.python.details.collapse'
+                    : 'settings.python.details.expand')}
+                  title={t(expanded
+                    ? 'settings.python.details.collapse'
+                    : 'settings.python.details.expand')}
+                  onClick={() => {
+                    setExpandedLanguages(current => toggleExpandedLanguage(current, language))
+                  }}
+                >
+                  <span className="dsh-codecraft-settings-chevron" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div
+            id={detailsId}
+            className="dsh-codecraft-settings-language-details"
+            hidden={!expanded}
+          >
+            <div className="dsh-codecraft-settings-row">
+              <div>
+                <div className="dsh-codecraft-settings-label">{t('settings.python.completion.label')}</div>
+                <div className="dsh-codecraft-settings-hint">{t('settings.python.completion.hint')}</div>
+              </div>
+              <Switch
+                checked={snapshot.pythonIntelligence.completion}
+                label={t('settings.python.completion.label')}
+                disabled={disabled || !snapshot.pythonIntelligence.enabled}
+                onChange={(enabled: boolean) => { void editorSettings.setSemanticCompletionEnabled(enabled) }}
+              />
+            </div>
+            <div className="dsh-codecraft-settings-row">
+              <label htmlFor="dsh-codecraft-python-path">
+                <span className="dsh-codecraft-settings-label">{t('settings.python.interpreter.label')}</span>
+                <span className="dsh-codecraft-settings-hint">{t('settings.python.interpreter.hint')}</span>
+              </label>
+              <input
+                key={snapshot.pythonIntelligence.interpreterPath}
+                id="dsh-codecraft-python-path"
+                className="dsh-codecraft-settings-input"
+                defaultValue={snapshot.pythonIntelligence.interpreterPath}
+                placeholder={t('settings.python.path.auto')}
+                disabled={disabled}
+                onBlur={(event) => {
+                  if (event.target.value.trim() !== snapshot.pythonIntelligence.interpreterPath) {
+                    void editorSettings.setPythonInterpreterPath(event.target.value)
+                  }
+                }}
+              />
+            </div>
+            <div className="dsh-codecraft-settings-row">
+              <label htmlFor="dsh-codecraft-pyright-path">
+                <span className="dsh-codecraft-settings-label">{t('settings.python.server.label')}</span>
+                <span className="dsh-codecraft-settings-hint">{t('settings.python.server.hint')}</span>
+              </label>
+              <input
+                key={snapshot.pythonIntelligence.serverPath}
+                id="dsh-codecraft-pyright-path"
+                className="dsh-codecraft-settings-input"
+                defaultValue={snapshot.pythonIntelligence.serverPath}
+                placeholder={t('settings.python.path.bundled')}
+                disabled={disabled}
+                onBlur={(event) => {
+                  if (event.target.value.trim() !== snapshot.pythonIntelligence.serverPath) {
+                    void editorSettings.setPyrightServerPath(event.target.value)
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )
+    }
+    if (language === 'java') {
+      return (
+        <div
+          key={language}
+          className="dsh-codecraft-settings-language"
+          data-settings-language={language}
+        >
+          <div className="dsh-codecraft-settings-row">
+            <div>
+              <div className="dsh-codecraft-settings-label">{t('settings.java.enabled.label')}</div>
+              <div className="dsh-codecraft-settings-hint">{t('settings.java.enabled.hint')}</div>
+            </div>
+            <Switch
+              checked={snapshot.javaEditingAssistance.enabled}
+              label={t('settings.java.enabled.label')}
+              disabled={disabled}
+              onChange={(enabled: boolean) => { void editorSettings.setJavaEditingAssistanceEnabled(enabled) }}
+            />
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div
+        key={language}
+        className="dsh-codecraft-settings-language"
+        data-settings-language={language}
+      >
+        <div className="dsh-codecraft-settings-row">
+          <div>
+            <div className="dsh-codecraft-settings-label">{t('settings.html.enabled.label')}</div>
+            <div className="dsh-codecraft-settings-hint">{t('settings.html.enabled.hint')}</div>
+          </div>
+          <Switch
+            checked={snapshot.htmlEditingAssistance.enabled}
+            label={t('settings.html.enabled.label')}
+            disabled={disabled}
+            onChange={(enabled: boolean) => { void editorSettings.setHtmlEditingAssistanceEnabled(enabled) }}
+          />
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="dsh-codecraft-settings">
-      <div className="dsh-codecraft-settings-heading">
-        <div className="dsh-codecraft-settings-title">{t('settings.title')}</div>
-        <div className="dsh-codecraft-settings-description">{t('settings.description')}</div>
-      </div>
-      <section className="dsh-codecraft-settings-group">
+      <section
+        className="dsh-codecraft-settings-group"
+        data-settings-group={SETTINGS_GROUP_ORDER[0]}
+      >
         <div className="dsh-codecraft-settings-group-title">{t('settings.group.materialIcons')}</div>
         <div className="dsh-codecraft-settings-card">
           <div className="dsh-codecraft-settings-row">
@@ -67,7 +221,10 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
           </div>
         )}
       </section>
-      <section className="dsh-codecraft-settings-group">
+      <section
+        className="dsh-codecraft-settings-group"
+        data-settings-group={SETTINGS_GROUP_ORDER[1]}
+      >
         <div className="dsh-codecraft-settings-group-title">{t('settings.group.indentation')}</div>
         <div className="dsh-codecraft-settings-card">
           <div className="dsh-codecraft-settings-row">
@@ -98,105 +255,13 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
           </div>
         </div>
       </section>
-      <section className="dsh-codecraft-settings-group">
-        <div className="dsh-codecraft-settings-group-title">{t('settings.group.pythonIntelligence')}</div>
+      <section
+        className="dsh-codecraft-settings-group"
+        data-settings-group={SETTINGS_GROUP_ORDER[2]}
+      >
+        <div className="dsh-codecraft-settings-group-title">{t('settings.group.programmingLanguages')}</div>
         <div className="dsh-codecraft-settings-card">
-          <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.python.enabled.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.python.enabled.hint')}</div>
-            </div>
-            <Switch
-              checked={snapshot.pythonIntelligence.enabled}
-              label={t('settings.python.enabled.label')}
-              disabled={disabled}
-              onChange={(enabled: boolean) => { void editorSettings.setPythonIntelligenceEnabled(enabled) }}
-            />
-          </div>
-          <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.python.completion.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.python.completion.hint')}</div>
-            </div>
-            <Switch
-              checked={snapshot.pythonIntelligence.completion}
-              label={t('settings.python.completion.label')}
-              disabled={disabled || !snapshot.pythonIntelligence.enabled}
-              onChange={(enabled: boolean) => { void editorSettings.setSemanticCompletionEnabled(enabled) }}
-            />
-          </div>
-          <div className="dsh-codecraft-settings-row">
-            <label htmlFor="dsh-codecraft-python-path">
-              <span className="dsh-codecraft-settings-label">{t('settings.python.interpreter.label')}</span>
-              <span className="dsh-codecraft-settings-hint">{t('settings.python.interpreter.hint')}</span>
-            </label>
-            <input
-              key={snapshot.pythonIntelligence.interpreterPath}
-              id="dsh-codecraft-python-path"
-              className="dsh-codecraft-settings-input"
-              defaultValue={snapshot.pythonIntelligence.interpreterPath}
-              placeholder={t('settings.python.path.auto')}
-              disabled={disabled}
-              onBlur={(event) => {
-                if (event.target.value.trim() !== snapshot.pythonIntelligence.interpreterPath) {
-                  void editorSettings.setPythonInterpreterPath(event.target.value)
-                }
-              }}
-            />
-          </div>
-          <div className="dsh-codecraft-settings-row">
-            <label htmlFor="dsh-codecraft-pyright-path">
-              <span className="dsh-codecraft-settings-label">{t('settings.python.server.label')}</span>
-              <span className="dsh-codecraft-settings-hint">{t('settings.python.server.hint')}</span>
-            </label>
-            <input
-              key={snapshot.pythonIntelligence.serverPath}
-              id="dsh-codecraft-pyright-path"
-              className="dsh-codecraft-settings-input"
-              defaultValue={snapshot.pythonIntelligence.serverPath}
-              placeholder={t('settings.python.path.bundled')}
-              disabled={disabled}
-              onBlur={(event) => {
-                if (event.target.value.trim() !== snapshot.pythonIntelligence.serverPath) {
-                  void editorSettings.setPyrightServerPath(event.target.value)
-                }
-              }}
-            />
-          </div>
-        </div>
-      </section>
-      <section className="dsh-codecraft-settings-group">
-        <div className="dsh-codecraft-settings-group-title">{t('settings.group.javaEditingAssistance')}</div>
-        <div className="dsh-codecraft-settings-card">
-          <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.java.enabled.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.java.enabled.hint')}</div>
-            </div>
-            <Switch
-              checked={snapshot.javaEditingAssistance.enabled}
-              label={t('settings.java.enabled.label')}
-              disabled={disabled}
-              onChange={(enabled: boolean) => { void editorSettings.setJavaEditingAssistanceEnabled(enabled) }}
-            />
-          </div>
-        </div>
-      </section>
-      <section className="dsh-codecraft-settings-group">
-        <div className="dsh-codecraft-settings-group-title">{t('settings.group.htmlEditingAssistance')}</div>
-        <div className="dsh-codecraft-settings-card">
-          <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.html.enabled.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.html.enabled.hint')}</div>
-            </div>
-            <Switch
-              checked={snapshot.htmlEditingAssistance.enabled}
-              label={t('settings.html.enabled.label')}
-              disabled={disabled}
-              onChange={(enabled: boolean) => { void editorSettings.setHtmlEditingAssistanceEnabled(enabled) }}
-            />
-          </div>
+          {PROGRAMMING_LANGUAGE_ORDER.map(renderLanguageMasterSwitch)}
         </div>
       </section>
       {snapshot.status === 'unavailable' && <div className="dsh-codecraft-settings-error">{t('settings.unavailable')}</div>}

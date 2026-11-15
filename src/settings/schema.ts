@@ -91,10 +91,22 @@ export function isIndentSize(value: unknown): value is IndentSize {
 }
 
 function editorValue(value: unknown): Record<string, unknown> {
-  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
-  return typeof root.editor === 'object' && root.editor !== null
-    ? root.editor as Record<string, unknown>
-    : {}
+  const root = recordValue(value)
+  return recordValue(root.editor)
+}
+
+/** Read the current snapshot of a Schemastery volatile field when present. */
+function recordValue(value: unknown): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null) return {}
+  const get = (value as { get?: unknown }).get
+  if (typeof get === 'function') {
+    try {
+      return recordValue(get.call(value))
+    } catch {
+      return {}
+    }
+  }
+  return value as Record<string, unknown>
 }
 
 /** Resolve missing or malformed Host settings to the safe defaults. */
@@ -135,10 +147,8 @@ export function resolveEditorSettings(value: unknown): EditorSettings {
 
 /** Resolve Python intelligence settings without accepting non-string paths. */
 export function resolvePythonIntelligenceSettings(value: unknown): PythonIntelligenceSettings {
-  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
-  const intelligence = typeof root.pythonIntelligence === 'object' && root.pythonIntelligence !== null
-    ? root.pythonIntelligence as Record<string, unknown>
-    : {}
+  const root = recordValue(value)
+  const intelligence = recordValue(root.pythonIntelligence)
   return {
     enabled: typeof intelligence.enabled === 'boolean'
       ? intelligence.enabled
@@ -157,10 +167,8 @@ export function resolvePythonIntelligenceSettings(value: unknown): PythonIntelli
 
 /** Resolve the browser-local Java feature gate without accepting truthy wire values. */
 export function resolveJavaEditingAssistanceSettings(value: unknown): JavaEditingAssistanceSettings {
-  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
-  const assistance = typeof root.javaEditingAssistance === 'object' && root.javaEditingAssistance !== null
-    ? root.javaEditingAssistance as Record<string, unknown>
-    : {}
+  const root = recordValue(value)
+  const assistance = recordValue(root.javaEditingAssistance)
   return {
     enabled: typeof assistance.enabled === 'boolean'
       ? assistance.enabled
@@ -170,10 +178,8 @@ export function resolveJavaEditingAssistanceSettings(value: unknown): JavaEditin
 
 /** Resolve the browser-local HTML feature gate without accepting truthy wire values. */
 export function resolveHtmlEditingAssistanceSettings(value: unknown): HtmlEditingAssistanceSettings {
-  const root = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
-  const assistance = typeof root.htmlEditingAssistance === 'object' && root.htmlEditingAssistance !== null
-    ? root.htmlEditingAssistance as Record<string, unknown>
-    : {}
+  const root = recordValue(value)
+  const assistance = recordValue(root.htmlEditingAssistance)
   return {
     enabled: typeof assistance.enabled === 'boolean'
       ? assistance.enabled

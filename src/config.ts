@@ -54,7 +54,8 @@ export const Config = z.object({
     indentation: IndentationSchema.default(DEFAULT_INDENTATION_SETTINGS),
   }).default(DEFAULT_EDITOR_SETTINGS).volatile(),
   pythonIntelligence: PythonIntelligenceSchema
-    .default(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS),
+    .default(DEFAULT_PYTHON_INTELLIGENCE_SETTINGS)
+    .volatile(),
   javaEditingAssistance: JavaEditingAssistanceSchema
     .default(DEFAULT_JAVA_EDITING_ASSISTANCE_SETTINGS)
     .volatile(),

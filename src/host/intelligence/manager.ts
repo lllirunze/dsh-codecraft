@@ -111,7 +111,7 @@ export class IntelligenceManager {
 
   constructor(
     readonly subprocess: ManagedSubprocessService,
-    pythonSettings: PythonIntelligenceSettings,
+    pythonSettings: PythonIntelligenceSettings | (() => PythonIntelligenceSettings),
     readonly platform: NodeJS.Platform = process.platform,
   ) {
     this.#providers = [pythonIntelligenceProvider(pythonSettings)]
