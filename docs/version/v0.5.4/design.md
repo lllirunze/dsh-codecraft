@@ -7,7 +7,7 @@
 | Release type | Patch release: plugin-settings information architecture and compatibility refinement |
 | Platforms | DSH Desktop on macOS and Windows |
 | DSH compatibility baseline | `>=0.2.2-rc.3 <0.2.3`; native acceptance targets DSH Desktop `0.2.2-rc.3` |
-| Status | Revised implementation complete; automated validation passed; Desktop candidate application and native acceptance pending |
+| Status | Implementation, automated validation, Desktop candidate checks, and native macOS/Windows acceptance passed |
 | Planning source | [`DSH-CodeCraft-v0.5.4-Plugin-Settings-UI-Refinement.md`](../../planning/DSH-CodeCraft-v0.5.4-Plugin-Settings-UI-Refinement.md) |
 
 ## Purpose

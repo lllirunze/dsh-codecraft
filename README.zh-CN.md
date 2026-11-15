@@ -14,7 +14,7 @@
 
 </div>
 
-> **当前状态：** v0.5.3 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成可恢复的文件管理 Session 与交互式原生路径面包屑验证。
+> **当前状态：** v0.5.4 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成按语言划分的设置布局、可折叠 Python 详细配置和实时 Python 智能编程设置验证。
 
 ## 功能
 
@@ -96,7 +96,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.3
+dsh plugin --profile desktop add dsh-codecraft@0.5.4
 ```
 
 更新后重启 DSH Desktop。

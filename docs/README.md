@@ -28,7 +28,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.5.1 | [Design](version/v0.5.1/design.md) | [Validation](version/v0.5.1/validation.md) | Validated optional, version-matched Material Explorer icons on macOS and Windows without bundled SVG assets |
 | v0.5.2 | [Design](version/v0.5.2/design.md) | [Validation](version/v0.5.2/validation.md) | Validated DSH Desktop 0.2.2-rc.3 compatibility on macOS and Windows without runtime changes |
 | v0.5.3 | [Design](version/v0.5.3/design.md) | [Validation](version/v0.5.3/validation.md) | Validated Explorer recovery and native-path breadcrumb navigation on macOS and Windows |
-| v0.5.4 | [Design](version/v0.5.4/design.md) | [Validation](version/v0.5.4/validation.md) | Implemented plugin-settings hierarchy with per-language blocks and collapsible Python details; automated validation passed, native acceptance pending |
+| v0.5.4 | [Design](version/v0.5.4/design.md) | [Validation](version/v0.5.4/validation.md) | Validated per-language settings, collapsible Python details, and live Python configuration on macOS and Windows |
 
 ## Project Guides
 

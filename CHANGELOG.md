@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.4] - 2026-11-15
+
+### Changed
+
+- Reorganized CodeCraft settings into distinct Python, Java, and HTML blocks under a peer Programming Languages section while removing the duplicate internal heading.
+- Added an accessible disclosure control that keeps Python's master switch visible and expands or collapses its existing detailed settings.
+
+### Fixed
+
+- Made Python Intelligence settings live-editable through DSH Config Forms and ensured the Host reads accepted enable changes without a plugin remount.
+
 ## [0.5.3] - 2026-11-15
 
 ### Added
