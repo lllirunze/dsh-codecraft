@@ -6,7 +6,7 @@
 | Baseline | 0.5.4 at `db89bbc780dbe1866f7ae84eaeda9509b604d192` |
 | Release type | Patch: shared editor syntax-color refinement |
 | Platforms | DSH Desktop `0.2.2-rc.3` on macOS and Windows |
-| Status | Syntax and bracket colors implemented; automated regression passed; native Desktop acceptance pending |
+| Status | Syntax and bracket colors implemented; automated regression and native macOS/Windows acceptance passed; release authorized |
 | Scope | GitHub Light/Dark Default syntax and bracket colors for every CodeCraft language |
 | Long-lived color guide | [GitHub Default syntax colors](../../guide/github-syntax-colors.md) |
 | Validation | [validation.md](validation.md) |

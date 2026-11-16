@@ -5,13 +5,13 @@
 | Target version | 0.5.5 |
 | Baseline | 0.5.4 at `db89bbc780dbe1866f7ae84eaeda9509b604d192` |
 | Platforms | DSH Desktop `0.2.2-rc.3` on macOS and Windows |
-| Status | Syntax and bracket implementation plus automated regression PASS; native acceptance pending |
+| Status | Syntax and bracket implementation, automated regression, and user-confirmed native acceptance PASS; release authorized |
 | Design | [design.md](design.md) |
 | Color guide | [GitHub Default syntax colors](../../guide/github-syntax-colors.md) |
 
 ## Evidence rules
 
-Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for individual evidence. Automation proves fixed values, source structure, parser coverage, types, and build behavior; it cannot prove native color perception, live DSH rendering, state preservation, or platform compatibility. Native items remain unchecked until reported from the applied final candidate.
+Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for individual evidence. Automation proves fixed values, source structure, parser coverage, types, and build behavior; it cannot prove native color perception, live DSH rendering, state preservation, or platform compatibility. The user reported the complete native matrix passed on 2026-11-16.
 
 ## Current gates
 
@@ -21,18 +21,18 @@ Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for individua
 | G1 Requirements | PASS | `design.md` normalizes `EVR-055-06`, `EVR-055-07`, bracket-only `EVR-055-08`, the supplied palettes, architecture, and exclusions |
 | G2 Architecture | PASS | One language-neutral Client palette/mapping reuses the registry, editor pipeline, Lezer tags, and DSH marker; no Host/settings path |
 | G3 Implementation | PASS | Pinned syntax/bracket palettes, shared mapping, parser-aware bracket levels, scoped exceptions, registered-language guard, and guide implemented |
-| G4 Automated regression | PASS | Focused regression passed 5 files / 79 tests; `npm run check` passed typecheck, 31 files / 311 tests, build, and verification |
-| G4b Local Desktop candidate | NOT VERIFIED | Applying the candidate requires explicit profile-mutation authorization |
-| G5 Native acceptance | NOT VERIFIED | Independent macOS and Windows Light/Dark acceptance is pending |
-| G6 Release | NOT APPLICABLE | Publication was not requested |
+| G4 Automated regression | PASS | Focused regression passed 5 files / 79 tests; current `npm run check` passed typecheck, 31 files / 313 tests, build, and verification |
+| G4b Local Desktop candidate | PASS | DSH Desktop `0.2.2-rc.3` profile `desktop` uses the linked local repository; the user reported the complete candidate validation passed |
+| G5 Native acceptance | PASS | The user reported the complete macOS and Windows Light/Dark acceptance matrix passed on 2026-11-16 |
+| G6 Release | PASS | The user explicitly authorized the v0.5.5 repository release workflow on 2026-11-16; GitHub Release publication remains manual |
 
 ## Requirement traceability
 
 | Requirement | Automated evidence | Native evidence | State |
 | --- | --- | --- | --- |
-| `EVR-055-06` | PASS: exact palettes/tag roles, all 17 registered adapter parsers, scoped exception count, editor and language tests | Representative syntax/diagnostic checks in both appearances | NOT VERIFIED |
-| `EVR-055-07` | PASS: DSH marker, CodeCraft scope, no global body rule, existing DSH typography variables | Live switching and state preservation on both platforms | NOT VERIFIED |
-| `EVR-055-08` | PASS: exact palettes, six-level cycling, invalid pairs, comment/literal exclusion, HTML angles, comparison exclusion, and existing bracket regressions | Native bracket colors, match feedback, overlap, and platform rendering | NOT VERIFIED |
+| `EVR-055-06` | PASS: exact palettes/tag roles, all 17 registered adapter parsers, scoped exception count, editor and language tests | PASS: user reported the complete representative Light/Dark syntax and diagnostic matrix passed | PASS |
+| `EVR-055-07` | PASS: DSH marker, CodeCraft scope, no global body rule, existing DSH typography variables | PASS: user reported live switching and state preservation passed on both platforms | PASS |
+| `EVR-055-08` | PASS: exact palettes, six-level cycling, invalid pairs, comment/literal exclusion, HTML angles, comparison exclusion, and existing bracket regressions | PASS: user reported the complete bracket, match-feedback, overlap, and platform matrix passed | PASS |
 
 ## Automated checklist
 
@@ -56,39 +56,39 @@ Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for individua
 
 ### macOS
 
-- [ ] T055-01: Python, Java, HTML, JSON, Markdown, JavaScript/TypeScript, CSS, YAML, and another registered language show the documented semantic roles in Light mode.
-- [ ] T055-02: Repeat the same files in Dark mode; foreground, comments, keywords, strings, constants, functions, definitions, properties, tags, and invalid syntax remain readable.
-- [ ] T055-03: JSON keys are green, HTML/XML tags are green with neutral attribute names and blue values, and ordinary variables are not broadly orange.
-- [ ] T055-04: Switch Light/Dark with a dirty document; content, dirty state, Undo/Redo, cursor, selection, scrolling, folds, and tab identity remain unchanged.
-- [ ] T055-05: Diagnostics, Hover, completion, navigation, folding, editing, saving, close/reopen, and restart remain functional.
-- [ ] T055-05a: Round, square, curly, and HTML/XML angle brackets show six repeating levels; crossed/unmatched pairs use the invalid color and cursor matching uses the documented green background/border.
+- [x] T055-01: Python, Java, HTML, JSON, Markdown, JavaScript/TypeScript, CSS, YAML, and another registered language show the documented semantic roles in Light mode.
+- [x] T055-02: Repeat the same files in Dark mode; foreground, comments, keywords, strings, constants, functions, definitions, properties, tags, and invalid syntax remain readable.
+- [x] T055-03: JSON keys are green, HTML/XML tags are green with neutral attribute names and blue values, and ordinary variables are not broadly orange.
+- [x] T055-04: Switch Light/Dark with a dirty document; content, dirty state, Undo/Redo, cursor, selection, scrolling, folds, and tab identity remain unchanged.
+- [x] T055-05: Diagnostics, Hover, completion, navigation, folding, editing, saving, close/reopen, and restart remain functional.
+- [x] T055-05a: Round, square, curly, and HTML/XML angle brackets show six repeating levels; crossed/unmatched pairs use the invalid color and cursor matching uses the documented green background/border.
 
 ### Windows
 
-- [ ] T055-06: Repeat the representative language and role checks in Light mode.
-- [ ] T055-07: Repeat the representative language and role checks in Dark mode.
-- [ ] T055-08: Confirm JSON, HTML/XML, Java, Markdown, and ordinary-variable distinctions match the guide.
-- [ ] T055-09: Live Light/Dark switching preserves dirty state, Undo/Redo, cursor, selection, scrolling, folds, and tab identity.
-- [ ] T055-10: Diagnostics, language features, editing, saving, close/reopen, and restart remain functional.
-- [ ] T055-10a: Repeat the complete bracket-shape, nesting, invalid-pair, and match-feedback checks on Windows.
+- [x] T055-06: Repeat the representative language and role checks in Light mode.
+- [x] T055-07: Repeat the representative language and role checks in Dark mode.
+- [x] T055-08: Confirm JSON, HTML/XML, Java, Markdown, and ordinary-variable distinctions match the guide.
+- [x] T055-09: Live Light/Dark switching preserves dirty state, Undo/Redo, cursor, selection, scrolling, folds, and tab identity.
+- [x] T055-10: Diagnostics, language features, editing, saving, close/reopen, and restart remain functional.
+- [x] T055-10a: Repeat the complete bracket-shape, nesting, invalid-pair, and match-feedback checks on Windows.
 
 ### Shared boundaries and safety
 
-- [ ] T055-11: DSH Desktop's native font and font-size controls still govern CodeCraft and no duplicate CodeCraft controls appear.
-- [ ] T055-12: DSH page, editor container background, sidebar, workspace tree, tabs, panels, buttons, and other plugins retain native styling.
-- [ ] T055-13: Chinese comments, Unicode punctuation, symbols, and emoji remain readable through the existing DSH/system font path.
-- [ ] T055-14: Paths containing spaces and Chinese characters open, edit, save, close, and reopen normally.
-- [ ] T055-15: Offline operation triggers no theme/font network request and does not change colors or editing behavior.
-- [ ] T055-16: Main text and primary syntax colors meet the intended readability target against the actual DSH Light/Dark backgrounds; any necessary adaptation is documented before release.
-- [ ] T055-17: Brackets inside strings/comments remain uncolored, JavaScript comparisons remain ordinary operators, and selection/search/diagnostic overlays remain readable with bracket colors.
+- [x] T055-11: DSH Desktop's native font and font-size controls still govern CodeCraft and no duplicate CodeCraft controls appear.
+- [x] T055-12: DSH page, editor container background, sidebar, workspace tree, tabs, panels, buttons, and other plugins retain native styling.
+- [x] T055-13: Chinese comments, Unicode punctuation, symbols, and emoji remain readable through the existing DSH/system font path.
+- [x] T055-14: Paths containing spaces and Chinese characters open, edit, save, close, and reopen normally.
+- [x] T055-15: Offline operation triggers no theme/font network request and does not change colors or editing behavior.
+- [x] T055-16: Main text and primary syntax colors meet the intended readability target against the actual DSH Light/Dark backgrounds; any necessary adaptation is documented before release.
+- [x] T055-17: Brackets inside strings/comments remain uncolored, JavaScript comparisons remain ordinary operators, and selection/search/diagnostic overlays remain readable with bracket colors.
 
 ## Local Desktop candidate gate
 
-- [ ] Obtain explicit authorization before applying the local repository through DSH Plugin Manager.
-- [ ] Record candidate identity, package version, DSH version, profile, and exact source.
-- [ ] Fully restart DSH Desktop after replacing Client code.
-- [ ] Confirm one enabled/running CodeCraft source, expected Client registrations, and the authenticated route fence.
-- [ ] Confirm no activation failure, blank page, reload loop, duplicate registration, or candidate-attributable crash.
+- [x] The `desktop` profile already uses the linked local repository; no additional profile mutation was required.
+- [x] Candidate behavior at `36c47ea07c2312e4f5d0b53a7f95dcc2589440d6`, DSH `0.2.2-rc.3`, profile `desktop`, source `/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft` was recorded before release metadata changes.
+- [x] The user reported the complete restart and native candidate matrix passed.
+- [x] The user reported the complete runtime registration and route matrix passed.
+- [x] The user reported no activation failure, blank page, reload loop, duplicate registration, or candidate-attributable crash.
 
 ## Current automated evidence
 
@@ -96,9 +96,10 @@ Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for individua
 | --- | --- | --- | --- |
 | Focused syntax/bracket/editor/language regression | `npx vitest run tests/syntax-theme.test.ts tests/editor.test.ts tests/languages.test.ts tests/java-lightweight.test.ts tests/python-docstrings.test.ts` | PASS | 5 files / 79 tests; palette, bracket behavior, all 17 adapters, Java, and Python covered |
 | Type contracts | `npm run typecheck` | PASS | Shared palette, language-scoped overrides, theme composition, and tests compile under strict TypeScript |
-| Canonical gate | `npm run check` | PASS | Typecheck; 31 files / 311 tests; build; 1,256 Material icons; Host exports and Client registration with 20 external requires |
+| Canonical gate | `npm run check` | PASS | v0.5.5 metadata; typecheck; 31 files / 313 tests; build; 1,256 Material icons; Host exports and Client registration with 20 external requires |
+| Package inspection | `npm pack --dry-run --ignore-scripts --json` | PASS | `dsh-codecraft@0.5.5`; 100 files; 871,111-byte archive; expected Host and Client entries included |
 | Scope and whitespace audit | `git diff --check` plus private-color search under `src/client/languages/` | PASS | No whitespace errors and no language-owned color literals or syntax/bracket variables |
 
 ## Release gate
 
-Release remains outside this request. It requires current canonical automation, authorized local candidate validation, user-confirmed macOS and Windows acceptance, and a separate explicit release instruction.
+The user explicitly authorized the v0.5.5 repository release workflow after reporting the complete native matrix passed. Release metadata, canonical automation, package inspection, commit, `master` push, and annotated tag follow the release-management workflow. The user still creates and publishes the GitHub Release manually, which triggers npm publication.

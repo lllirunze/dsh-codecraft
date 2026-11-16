@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.5] - 2026-11-16
+
+### Added
+
+- Added shared GitHub Light Default and Dark Default syntax colors across every registered CodeCraft language, including centralized JSON, HTML/XML, Java, and Markdown semantic mappings.
+- Added parser-aware six-level coloring for round, square, curly, and recognized angle brackets, including fixed unmatched and matching-feedback colors.
+
+### Changed
+
+- Made unmatched files and folders use Material Icon Theme's generic file, folder, and expanded-folder icons before falling back to built-in UI icons.
+- Documented the pinned GitHub color palette, extension contract, exclusions, and validated macOS and Windows behavior.
+
 ## [0.5.4] - 2026-11-15
 
 ### Changed

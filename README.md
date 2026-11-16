@@ -14,12 +14,12 @@
 
 </div>
 
-> **Status:** v0.5.4 validates the per-language settings layout, collapsible Python details, and live Python Intelligence settings on DSH Desktop 0.2.2-rc.3 across macOS and Windows.
+> **Status:** v0.5.5 validates shared GitHub Default syntax and six-level bracket colors across CodeCraft languages, plus generic Material icon fallbacks, on DSH Desktop 0.2.2-rc.3 across macOS and Windows.
 
 ## Features
 
 - Integrates with DSH's native workspace explorer and file tabs, including file operations, breadcrumbs, and Material file icons.
-- Provides CodeMirror editing with highlighting, folding, search, comments, completion, bracket handling, Undo/Redo, and configurable two- or four-space indentation.
+- Provides CodeMirror editing with GitHub Default Light/Dark syntax and six-level bracket colors, folding, search, comments, completion, Undo/Redo, and configurable two- or four-space indentation.
 - Saves writable changes immediately with conflict checks while preserving line endings, UTF-8 BOM, and supported file modes; unsafe files fall back safely.
 - Adds project-aware Python completion, Hover, definition/reference navigation, navigation history, syntax-aware indentation, and Google Style Docstrings through managed Pyright.
 - Adds fully local Java completion, snippets, Structured Javadoc, indentation, comments, and folding without requiring a JDK or language server.
@@ -71,7 +71,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.4
+dsh plugin --profile desktop add dsh-codecraft@0.5.5
 ```
 
 Restart DSH Desktop after updating.

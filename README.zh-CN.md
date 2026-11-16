@@ -14,12 +14,12 @@
 
 </div>
 
-> **当前状态：** v0.5.4 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成按语言划分的设置布局、可折叠 Python 详细配置和实时 Python 智能编程设置验证。
+> **当前状态：** v0.5.5 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成 CodeCraft 全语言 GitHub Default 语法配色、六级括号配色及 Material 通用图标回退验证。
 
 ## 功能
 
 - 集成 DSH 原生工作区文件树和文件 Tab，并提供文件操作、路径面包屑与 Material 文件图标。
-- 基于 CodeMirror 提供高亮、折叠、搜索、注释、补全、括号处理、撤销重做及 2 格或 4 格缩进。
+- 基于 CodeMirror 提供 GitHub Default 浅色/深色语法配色、六级括号配色、折叠、搜索、注释、补全、撤销重做及 2 格或 4 格缩进。
 - 对可写修改进行冲突检查并立即保存，同时保留换行符、UTF-8 BOM 和受支持的文件权限；不安全文件会安全回退。
 - 通过托管的 Pyright 提供项目级 Python 补全、Hover、定义/引用跳转、导航历史、语法缩进和 Google Style Docstring。
 - 完全本地提供 Java 补全、代码片段、Structured Javadoc、缩进、注释和折叠，无需 JDK 或语言服务器。
@@ -71,7 +71,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.4
+dsh plugin --profile desktop add dsh-codecraft@0.5.5
 ```
 
 更新后重启 DSH Desktop。
