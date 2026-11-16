@@ -9,25 +9,16 @@
  * @module dsh-codecraft/client/theme
  */
 
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import type { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { tags } from '@lezer/highlight'
+import type { FileLanguage } from './languages/index.js'
+import {
+  GITHUB_SYNTAX_PALETTE_CSS,
+  githubSyntaxThemeExtensions,
+} from './editor/syntax-theme.js'
 
-const SYNTAX_CSS = `
+const SYNTAX_CSS = `${GITHUB_SYNTAX_PALETTE_CSS}
 .dsh-codecraft {
-  --cc-syn-foreground: #30343b;
-  --cc-syn-keyword: #74549c;
-  --cc-syn-string: #39724d;
-  --cc-syn-number: #91613c;
-  --cc-syn-comment: #68727e;
-  --cc-syn-function: #376d9a;
-  --cc-syn-type: #776421;
-  --cc-syn-property: #536a88;
-  --cc-syn-meta: #74549c;
-  --cc-syn-link: #376d9a;
-  --cc-syn-invalid: #e45649;
-  --cc-syn-heading: #1f2328;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -36,20 +27,6 @@ const SYNTAX_CSS = `
   background: var(--dsw-alias-bg-base, #ffffff);
   color: var(--dsw-alias-label-primary, #1f2328);
   font-family: var(--dsw-font-family, system-ui, sans-serif);
-}
-body[data-ds-dark-theme] .dsh-codecraft {
-  --cc-syn-foreground: #d7dce3;
-  --cc-syn-keyword: #b8a3d5;
-  --cc-syn-string: #9ebf9c;
-  --cc-syn-number: #d4b087;
-  --cc-syn-comment: #9da7b4;
-  --cc-syn-function: #98b9d8;
-  --cc-syn-type: #c8bc93;
-  --cc-syn-property: #a5b5c8;
-  --cc-syn-meta: #b8a3d5;
-  --cc-syn-link: #98b9d8;
-  --cc-syn-invalid: #ff7b72;
-  --cc-syn-heading: #f0f0f0;
 }
 .dsh-codecraft-editor {
   flex: 1 1 auto;
@@ -715,12 +692,23 @@ body[data-ds-dark-theme] .dsh-codecraft {
   border-left-color: var(--dsw-alias-label-primary, #1f2328);
 }
 .dsh-codecraft .cm-matchingBracket {
-  background: var(--dsw-alias-state-business-tertiary, rgba(64, 120, 242, .14));
-  outline: 0.5px solid var(--dsw-alias-state-business-primary, #4078f2);
+  background: var(--cc-bracket-match-background);
+  outline: 1px solid var(--cc-bracket-match-border);
 }
 .dsh-codecraft .cm-nonmatchingBracket {
-  color: var(--dsw-alias-state-error-primary, #d1242f);
+  color: var(--cc-bracket-invalid);
 }
+.dsh-codecraft .dsh-codecraft-bracket-level-1 { color: var(--cc-bracket-level-1) !important; }
+.dsh-codecraft .dsh-codecraft-bracket-level-2 { color: var(--cc-bracket-level-2) !important; }
+.dsh-codecraft .dsh-codecraft-bracket-level-3 { color: var(--cc-bracket-level-3) !important; }
+.dsh-codecraft .dsh-codecraft-bracket-level-4 { color: var(--cc-bracket-level-4) !important; }
+.dsh-codecraft .dsh-codecraft-bracket-level-5 { color: var(--cc-bracket-level-5) !important; }
+.dsh-codecraft .dsh-codecraft-bracket-level-6 { color: var(--cc-bracket-level-6) !important; }
+.dsh-codecraft .dsh-codecraft-bracket-invalid { color: var(--cc-bracket-invalid) !important; }
+/* CodeMirror nests the syntax-token span inside the bracket mark span, and the
+   token span carries its own foreground color. Inherit the pair color so the
+   six levels and the invalid color stay visible on that inner span. */
+.dsh-codecraft .dsh-codecraft-bracket * { color: inherit !important; }
 .dsh-codecraft .cm-tooltip {
   background: var(--dsw-alias-bg-layer-2, #ffffff);
   border: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .12));
@@ -1161,10 +1149,10 @@ const editorTheme = EditorView.theme({
     backgroundColor: 'var(--dsw-alias-bg-document-selection, rgba(64, 120, 242, .22))',
   },
   '.cm-matchingBracket': {
-    backgroundColor: 'var(--dsw-alias-state-business-tertiary, rgba(64, 120, 242, .14))',
-    outline: '0.5px solid var(--dsw-alias-state-business-primary, #4078f2)',
+    backgroundColor: 'var(--cc-bracket-match-background)',
+    outline: '1px solid var(--cc-bracket-match-border)',
   },
-  '.cm-nonmatchingBracket': { color: 'var(--dsw-alias-state-error-primary, #d1242f)' },
+  '.cm-nonmatchingBracket': { color: 'var(--cc-bracket-invalid)' },
   '.cm-tooltip': {
     backgroundColor: 'var(--dsw-alias-bg-layer-2, #ffffff)',
     border: '0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, .12))',
@@ -1182,26 +1170,7 @@ const editorTheme = EditorView.theme({
   '.cm-searchMatch': { backgroundColor: 'var(--dsw-alias-state-warn-tertiary, rgba(255, 190, 70, .28))' },
 })
 
-const highlightStyle = HighlightStyle.define([
-  { tag: tags.keyword, color: 'var(--cc-syn-keyword)' },
-  { tag: [tags.controlKeyword, tags.moduleKeyword, tags.definitionKeyword], color: 'var(--cc-syn-keyword)' },
-  { tag: [tags.string, tags.special(tags.string), tags.regexp], color: 'var(--cc-syn-string)' },
-  { tag: [tags.number, tags.bool, tags.null, tags.atom], color: 'var(--cc-syn-number)' },
-  { tag: [tags.lineComment, tags.blockComment, tags.docComment], color: 'var(--cc-syn-comment)', fontStyle: 'italic' },
-  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName), tags.labelName], color: 'var(--cc-syn-function)' },
-  { tag: tags.variableName, color: 'var(--cc-syn-foreground)' },
-  { tag: [tags.propertyName, tags.attributeName], color: 'var(--cc-syn-property)' },
-  { tag: [tags.typeName, tags.className, tags.namespace, tags.tagName], color: 'var(--cc-syn-type)' },
-  { tag: [tags.operator, tags.punctuation, tags.bracket, tags.separator], color: 'var(--cc-syn-foreground)' },
-  { tag: [tags.meta, tags.annotation, tags.processingInstruction, tags.documentMeta], color: 'var(--cc-syn-meta)' },
-  { tag: [tags.heading, tags.heading1, tags.heading2, tags.heading3, tags.strong], color: 'var(--cc-syn-heading)', fontWeight: '600' },
-  { tag: [tags.link], color: 'var(--cc-syn-link)', textDecoration: 'underline' },
-  { tag: [tags.emphasis], fontStyle: 'italic' },
-  { tag: [tags.strikethrough], textDecoration: 'line-through' },
-  { tag: [tags.invalid], color: 'var(--cc-syn-invalid)' },
-])
-
 /** Extensions that give the editor DSH's visual language. */
-export function editorThemeExtensions(): Extension[] {
-  return [editorTheme, syntaxHighlighting(highlightStyle)]
+export function editorThemeExtensions(language: FileLanguage): Extension[] {
+  return [editorTheme, ...githubSyntaxThemeExtensions(language)]
 }

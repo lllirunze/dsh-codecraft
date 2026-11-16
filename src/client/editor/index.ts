@@ -171,7 +171,7 @@ export function buildEditorExtensions(options: EditorOptions): Extension[] {
       options.htmlEditingAssistanceEnabled ?? true,
     )),
     options.extraExtensions ?? [],
-    ...editorThemeExtensions(),
+    ...editorThemeExtensions(options.language),
   ]
 }
 

@@ -15,7 +15,11 @@ import {
   languageExtensions,
   setHtmlEditingAssistance,
 } from '../src/client/editor/index.js'
-import { bracketExtensions, closeBracketTokens } from '../src/client/editor/extensions/brackets.js'
+import {
+  bracketColorRanges,
+  bracketExtensions,
+  closeBracketTokens,
+} from '../src/client/editor/extensions/brackets.js'
 import { codeCraftCompletionKeymap } from '../src/client/editor/extensions/completion.js'
 import { offsetAt, semanticCompletionSource } from '../src/client/editor/extensions/semantic-completion.js'
 import {
@@ -534,6 +538,51 @@ describe('bracketExtensions', () => {
     expect(closeBracketTokens('plain')).not.toContain('`')
     expect(closeBracketTokens('python')).toEqual(expect.arrayContaining(["'''", '"""']))
     expect(closeBracketTokens('javascript')).not.toContain("'''")
+  })
+
+  it('assigns all standard bracket types to six repeating nesting levels', () => {
+    const state = bracketState('{[((((((()))))))]}')
+    const ranges = bracketColorRanges(state)
+    expect(ranges.map(range => range.character).join('')).toBe('{[((((((()))))))]}')
+    expect(ranges.slice(0, 8).map(range => range.level)).toEqual([1, 2, 3, 4, 5, 6, 1, 2])
+    expect(ranges.at(-1)?.level).toBe(1)
+  })
+
+  it('marks crossed and unmatched brackets invalid', () => {
+    const ranges = bracketColorRanges(bracketState('([)]'))
+    expect(ranges.map(range => [range.character, range.level])).toEqual([
+      ['(', 'invalid'],
+      ['[', 2],
+      [')', 'invalid'],
+      [']', 2],
+    ])
+  })
+
+  it('ignores bracket characters inside comments and strings', () => {
+    const language = languageForFile('main.js')
+    const state = EditorState.create({
+      doc: 'const text = "([{}])"; // ({[]})\nfunction run() { return [1] }',
+      extensions: [language.support ?? [], ...bracketExtensions(language)],
+    })
+    expect(bracketColorRanges(state).map(range => range.character).join(''))
+      .toBe('(){[]}')
+  })
+
+  it('colors parser-recognized angle brackets without treating comparisons as pairs', () => {
+    const html = languageForFile('index.html')
+    const htmlState = EditorState.create({
+      doc: '<main><span>Text</span></main>',
+      extensions: [html.support ?? [], ...bracketExtensions(html)],
+    })
+    expect(bracketColorRanges(htmlState).filter(range => range.character === '<' || range.character === '>'))
+      .toHaveLength(8)
+
+    const javascript = languageForFile('main.js')
+    const javascriptState = EditorState.create({
+      doc: 'const inside = left < value && value > right',
+      extensions: [javascript.support ?? [], ...bracketExtensions(javascript)],
+    })
+    expect(bracketColorRanges(javascriptState)).toEqual([])
   })
 })
 
