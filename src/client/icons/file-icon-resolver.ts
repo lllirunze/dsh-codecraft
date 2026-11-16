@@ -35,7 +35,11 @@ export function resolveFileIconId(input: FileIconInput): string | undefined {
   if (input.kind === 'directory') {
     const name = normalizedName(input)
     const closed = lookup(MATERIAL_ICON_MANIFEST.folderNames, name)
-    if (closed === undefined) return undefined
+    if (closed === undefined) {
+      return input.expanded === true
+        ? MATERIAL_ICON_MANIFEST.defaults.folderExpanded
+        : MATERIAL_ICON_MANIFEST.defaults.folder
+    }
     if (input.expanded !== true) return closed
     return lookup(MATERIAL_ICON_MANIFEST.folderNamesExpanded, name)
       ?? closed
@@ -49,10 +53,10 @@ export function resolveFileIconId(input: FileIconInput): string | undefined {
     const icon = lookup(MATERIAL_ICON_MANIFEST.fileExtensions, extension)
     if (icon !== undefined) return icon
   }
-  return undefined
+  return MATERIAL_ICON_MANIFEST.defaults.file
 }
 
-/** Resolve a mapped icon only; unmatched or incomplete entries use the built-in UI icon. */
+/** Resolve a mapped icon; ordinary files and folders fall back to the theme's generic icons. */
 export function resolveFileIcon(input: FileIconInput): ResolvedFileIcon {
   const id = resolveFileIconId(input)
   if (id === undefined) return { id: 'default', fileName: '' }

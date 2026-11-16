@@ -36,11 +36,20 @@ describe('Material file icon resolver', () => {
     expect(resolveFileIconId({ name: 'workspace', kind: 'root', expanded: true })).toBe('folder-root-open')
   })
 
-  it('uses the built-in icon without throwing when no rule matches', () => {
+  it('falls back to the generic theme icons for ordinary files and folders', () => {
+    expect(resolveFileIconId({ name: 'space and 中文.unknown', kind: 'file' })).toBe('file')
+    expect(resolveFileIcon({ name: 'space and 中文.unknown', kind: 'file' }))
+      .toEqual({ id: 'file', fileName: 'file.svg' })
+    expect(resolveFileIconId({ name: '普通目录', kind: 'directory' })).toBe('folder')
+    expect(resolveFileIcon({ name: '普通目录', kind: 'directory' }))
+      .toEqual({ id: 'folder', fileName: 'folder.svg' })
+    expect(resolveFileIconId({ name: '普通目录', kind: 'directory', expanded: true })).toBe('folder-open')
+    expect(resolveFileIcon({ name: '普通目录', kind: 'directory', expanded: true }))
+      .toEqual({ id: 'folder-open', fileName: 'folder-open.svg' })
+  })
+
+  it('uses the built-in icon without throwing for entry kinds without a theme icon', () => {
     const inputs = [
-      { name: 'space and 中文.unknown', kind: 'file' as const },
-      { name: '普通目录', kind: 'directory' as const },
-      { name: '普通目录', kind: 'directory' as const, expanded: true },
       { name: '链接', kind: 'symlink' as const },
       { name: 'socket', kind: 'other' as const },
     ]
