@@ -16,16 +16,16 @@ import { tags } from '@lezer/highlight'
 
 const SYNTAX_CSS = `
 .dsh-codecraft {
-  --cc-syn-keyword: #a626a4;
-  --cc-syn-string: #50a14f;
-  --cc-syn-number: #986801;
-  --cc-syn-comment: #9aa0a6;
-  --cc-syn-function: #4078f2;
-  --cc-syn-variable: #383a42;
-  --cc-syn-type: #c18401;
-  --cc-syn-operator: #0184bc;
-  --cc-syn-meta: #986801;
-  --cc-syn-link: #4078f2;
+  --cc-syn-foreground: #30343b;
+  --cc-syn-keyword: #74549c;
+  --cc-syn-string: #39724d;
+  --cc-syn-number: #91613c;
+  --cc-syn-comment: #68727e;
+  --cc-syn-function: #376d9a;
+  --cc-syn-type: #776421;
+  --cc-syn-property: #536a88;
+  --cc-syn-meta: #74549c;
+  --cc-syn-link: #376d9a;
   --cc-syn-invalid: #e45649;
   --cc-syn-heading: #1f2328;
   display: flex;
@@ -38,16 +38,16 @@ const SYNTAX_CSS = `
   font-family: var(--dsw-font-family, system-ui, sans-serif);
 }
 body[data-ds-dark-theme] .dsh-codecraft {
-  --cc-syn-keyword: #c678dd;
-  --cc-syn-string: #98c379;
-  --cc-syn-number: #d19a66;
-  --cc-syn-comment: #7f848e;
-  --cc-syn-function: #61afef;
-  --cc-syn-variable: #e6e6e6;
-  --cc-syn-type: #e5c07b;
-  --cc-syn-operator: #56b6c2;
-  --cc-syn-meta: #e5c07b;
-  --cc-syn-link: #7aaaff;
+  --cc-syn-foreground: #d7dce3;
+  --cc-syn-keyword: #b8a3d5;
+  --cc-syn-string: #9ebf9c;
+  --cc-syn-number: #d4b087;
+  --cc-syn-comment: #9da7b4;
+  --cc-syn-function: #98b9d8;
+  --cc-syn-type: #c8bc93;
+  --cc-syn-property: #a5b5c8;
+  --cc-syn-meta: #b8a3d5;
+  --cc-syn-link: #98b9d8;
   --cc-syn-invalid: #ff7b72;
   --cc-syn-heading: #f0f0f0;
 }
@@ -1149,7 +1149,7 @@ const editorTheme = EditorView.theme({
   '&': {
     height: '100%',
     backgroundColor: 'transparent',
-    color: 'var(--dsw-alias-label-primary, #1f2328)',
+    color: 'var(--cc-syn-foreground)',
   },
   '.cm-scroller': { overflow: 'auto' },
   '.cm-content': { caretColor: 'var(--dsw-alias-label-primary, #1f2328)' },
@@ -1189,9 +1189,10 @@ const highlightStyle = HighlightStyle.define([
   { tag: [tags.number, tags.bool, tags.null, tags.atom], color: 'var(--cc-syn-number)' },
   { tag: [tags.lineComment, tags.blockComment, tags.docComment], color: 'var(--cc-syn-comment)', fontStyle: 'italic' },
   { tag: [tags.function(tags.variableName), tags.function(tags.propertyName), tags.labelName], color: 'var(--cc-syn-function)' },
-  { tag: [tags.variableName, tags.propertyName, tags.attributeName], color: 'var(--cc-syn-variable)' },
+  { tag: tags.variableName, color: 'var(--cc-syn-foreground)' },
+  { tag: [tags.propertyName, tags.attributeName], color: 'var(--cc-syn-property)' },
   { tag: [tags.typeName, tags.className, tags.namespace, tags.tagName], color: 'var(--cc-syn-type)' },
-  { tag: [tags.operator, tags.punctuation, tags.bracket, tags.separator], color: 'var(--cc-syn-operator)' },
+  { tag: [tags.operator, tags.punctuation, tags.bracket, tags.separator], color: 'var(--cc-syn-foreground)' },
   { tag: [tags.meta, tags.annotation, tags.processingInstruction, tags.documentMeta], color: 'var(--cc-syn-meta)' },
   { tag: [tags.heading, tags.heading1, tags.heading2, tags.heading3, tags.strong], color: 'var(--cc-syn-heading)', fontWeight: '600' },
   { tag: [tags.link], color: 'var(--cc-syn-link)', textDecoration: 'underline' },
