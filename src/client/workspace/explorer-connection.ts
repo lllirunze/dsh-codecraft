@@ -1,4 +1,5 @@
 import { ApiCallError } from '../api.js'
+import type { MessageKey } from '../i18n/contract.js'
 
 export type ExplorerConnectionPhase =
   | 'connected'
@@ -9,7 +10,7 @@ export type ExplorerConnectionPhase =
 
 export interface ExplorerConnectionState {
   phase: ExplorerConnectionPhase
-  detailKey?: string
+  detailKey?: MessageKey
 }
 
 export interface ExplorerDisconnectedView {

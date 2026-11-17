@@ -16,6 +16,7 @@ import type { Extension } from '@codemirror/state'
 import type { CompletionSource } from '@codemirror/autocomplete'
 import { CODECRAFT_EDITABLE_EXTENSIONS } from '../../protocol.js'
 import type { EditorLanguageAdapter } from './EditorLanguageAdapter.js'
+import type { MessageKey } from '../i18n/contract.js'
 import { LanguageRegistry } from './registry.js'
 import { javaEditorLanguage } from './java/index.js'
 import { htmlEditorLanguage } from './html/index.js'
@@ -26,6 +27,7 @@ export const EDITOR_EXTENSIONS = CODECRAFT_EDITABLE_EXTENSIONS
 export interface FileLanguage {
   id: string
   label: string
+  labelKey?: MessageKey
   support: LanguageSupport | null
   editorExtensions: Extension
   completionSource?: CompletionSource
@@ -65,7 +67,13 @@ for (const adapter of [
   new CodeMirrorLanguageAdapter('yaml', 'YAML', ['yaml', 'yml'], yaml),
 ]) registry.register(adapter)
 
-const PLAIN: FileLanguage = { id: 'plain', label: '纯文本', support: null, editorExtensions: [] }
+const PLAIN: FileLanguage = {
+  id: 'plain',
+  label: 'Plain text',
+  labelKey: 'language.plain',
+  support: null,
+  editorExtensions: [],
+}
 
 function resolveAdapter(name: string): EditorLanguageAdapter | undefined {
   const lower = name.toLowerCase()

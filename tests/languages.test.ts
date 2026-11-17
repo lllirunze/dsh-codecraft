@@ -40,8 +40,8 @@ describe('languageForFile', () => {
     expect(languageForFile('legacy.htm').label).toBe('HTML')
     expect(languageForFile('config.yaml').label).toBe('YAML')
     expect(languageForFile('main.md').label).toBe('Markdown')
-    expect(languageForFile('main.txt').label).toBe('纯文本')
-    expect(languageForFile('Makefile').label).toBe('纯文本')
+    expect(languageForFile('main.txt')).toMatchObject({ label: 'Plain text', labelKey: 'language.plain' })
+    expect(languageForFile('Makefile')).toMatchObject({ label: 'Plain text', labelKey: 'language.plain' })
   })
 
   it('is case-insensitive', () => {

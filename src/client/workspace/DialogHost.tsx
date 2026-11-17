@@ -8,10 +8,11 @@
  */
 
 import { useEffect, useRef, useSyncExternalStore, type ReactElement } from 'react'
+import type { Translate } from '../i18n/contract.js'
 import type { WorkspaceController } from './controller.js'
 
 export interface DialogHostProps {
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 /** Build the modal host around the shared controller. */

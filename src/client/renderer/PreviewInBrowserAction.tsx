@@ -1,6 +1,7 @@
 /** Native document-header action that previews one saved HTML file. */
 
 import { useSyncExternalStore, type ReactElement } from 'react'
+import type { Translate } from '../i18n/contract.js'
 import {
   htmlPreviewController,
   isHtmlFilePath,
@@ -13,7 +14,7 @@ import {
 
 export interface PreviewInBrowserActionProps {
   absolutePath?: string
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 /**

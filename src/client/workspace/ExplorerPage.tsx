@@ -22,11 +22,12 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactElement,
 } from 'react'
-import { listWorkspace } from '../api.js'
+import { listWorkspace, localizedErrorMessage } from '../api.js'
 import { sessionFileAddress } from '../address.js'
 import type { TabInfo } from '../dsh.js'
 import type { WorkspaceEntry } from '../../protocol.js'
 import { FileIcon } from '../icons/FileIcon.js'
+import type { Translate } from '../i18n/contract.js'
 import type { WorkspaceController } from './controller.js'
 import {
   explorerConnectionFailure,
@@ -44,7 +45,7 @@ export interface ExplorerProps {
   sessionId: string
   useSessions: <T>(selector: (state: SessionsSnapshot) => T) => T
   useTabInfo: () => { tab: TabInfo; panel: { id: string; isFloating: boolean } }
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 interface Row {
@@ -116,7 +117,7 @@ export function createExplorerPage(
         if (directory === '' && recovery) setConnection({ phase: 'connected' })
         setErrors(previous => ({
           ...previous,
-          [directory]: failure instanceof Error ? failure.message : String(failure),
+          [directory]: localizedErrorMessage(failure, t),
         }))
         return false
       } finally {

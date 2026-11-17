@@ -13,7 +13,12 @@ import { CodeCraftBody } from '../renderer/CodeCraftBody.js'
 import { CodeCraftSettingsCard } from '../settings/CodeCraftSettingsCard.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import { EDITOR_EXTENSIONS } from '../languages/index.js'
-import { en, zh } from '../locales.js'
+import {
+  bindCodeCraftTranslator,
+  CODECRAFT_LOCALE_NAMESPACE,
+  en,
+  zh,
+} from '../i18n/index.js'
 import { codecraftCss } from '../theme.js'
 import { navigationCoordinator } from '../navigation/coordinator.js'
 import { PreviewInBrowserAction } from '../renderer/PreviewInBrowserAction.js'
@@ -44,9 +49,6 @@ export const inject = [
   'sessions',
   'contextMenus',
 ]
-
-/** Locale namespace bound to both the viewer label and the body copy. */
-const LOCALE_NAMESPACE = 'sidebarCodeCraft'
 
 /** Unique identity in DSH's preview registry and the keyed body slot. */
 const PREVIEW_ID = 'dsh-codecraft'
@@ -83,10 +85,10 @@ export function apply(ctx: ClientContext): void {
   }, 'dsh-codecraft: editor theme')
 
   ctx.effect(
-    () => ctx.locale.register(LOCALE_NAMESPACE, { zh, en }),
+    () => ctx.locale.register(CODECRAFT_LOCALE_NAMESPACE, { zh, en }),
     'dsh-codecraft: dictionaries',
   )
-  const t = ctx.locale.bind(LOCALE_NAMESPACE)
+  const t = bindCodeCraftTranslator(ctx.locale)
 
   // Reveal waits for DSH's public Session Remote instead of hard-depending on
   // it: the editor and every workspace operation still work without it.
@@ -124,13 +126,13 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
     name: 'sidebar.right.pane.tab',
     key: EXPLORER_ID,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, createExplorerPage(workspace))), 'dsh-codecraft: Explorer body')
 
   ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
     name: 'sidebar.right.pane.tab.title',
     key: EXPLORER_ID,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, ExplorerTitle)), 'dsh-codecraft: Explorer title')
 
   ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
@@ -139,14 +141,14 @@ export function apply(ctx: ClientContext): void {
     // Keyed slots are shadowing cells. A lower priority replaces DSH's generic
     // FileTypeIcon presentation while CodeCraft is active; disposal restores it.
     priority: -10,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, DocumentTabTitle)), 'dsh-codecraft: native file tab titles')
 
   ctx.effect(() => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'dsh-codecraft-dialogs',
     order: 100,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, createDialogHost(workspace))), 'dsh-codecraft: workspace dialogs')
 
   ctx.effect(
@@ -170,7 +172,7 @@ export function apply(ctx: ClientContext): void {
       id: PREVIEW_ID,
       order: 50,
       label: () => t('settings.title'),
-      locale: LOCALE_NAMESPACE,
+      locale: CODECRAFT_LOCALE_NAMESPACE,
     }, CodeCraftSettingsCard),
   )), 'dsh-codecraft: settings page')
 
@@ -188,7 +190,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.slots.inject('sidebar.right.tab.document', () => ctx.slots.register({
     name: 'sidebar.right.tab.document',
     key: PREVIEW_ID,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, CodeCraftBody)), 'dsh-codecraft: renderer body')
 
   // The native document header owns the file-level action area. The action
@@ -197,14 +199,14 @@ export function apply(ctx: ClientContext): void {
     name: 'sidebar.right.tab.document.actions',
     id: 'dsh-codecraft-html-preview',
     order: 40,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, PreviewInBrowserAction)), 'dsh-codecraft: HTML preview action')
 
   ctx.effect(() => ctx.slots.inject('sidebar.right.tab.document.actions', () => ctx.slots.register({
     name: 'sidebar.right.tab.document.actions',
     id: 'dsh-codecraft-file-breadcrumbs',
     order: 10,
-    locale: LOCALE_NAMESPACE,
+    locale: CODECRAFT_LOCALE_NAMESPACE,
   }, DocumentBreadcrumbs)), 'dsh-codecraft: document breadcrumbs')
 
   // Preview uses DSH's public Session Remote path opener. A deployment without

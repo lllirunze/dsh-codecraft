@@ -9,6 +9,7 @@
  */
 
 import type { ComponentType } from 'react'
+import type { Translate } from './i18n/contract.js'
 
 /** Locale dictionary registration and lookup. */
 export interface LocaleService {
@@ -262,5 +263,5 @@ export interface DocumentBodyProps {
   setResources: (addresses: string[]) => void
   useTabInfo: () => { tab: TabInfo }
   useResource: (address: string) => ResourceSnapshot
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }

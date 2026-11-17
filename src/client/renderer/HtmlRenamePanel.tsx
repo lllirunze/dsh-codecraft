@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react'
 import type { Text } from '@codemirror/state'
 import type { HtmlRefactorPlan } from '../languages/html/features/refactoring.js'
+import type { Translate } from '../i18n/contract.js'
 import { ROOT_CLASS } from '../theme.js'
 
 interface HtmlRenamePanelProps {
@@ -16,7 +17,7 @@ interface HtmlRenamePanelProps {
   onPreview: () => void
   onConfirm: () => void
   onCancel: () => void
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 function location(document: Text | undefined, from: number): string {

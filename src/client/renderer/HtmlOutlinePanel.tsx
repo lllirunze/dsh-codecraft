@@ -2,13 +2,14 @@
 
 import { useState, type ReactElement } from 'react'
 import type { HtmlOutlineNode } from '../languages/html/features/outline.js'
+import type { Translate } from '../i18n/contract.js'
 import { ROOT_CLASS } from '../theme.js'
 
 interface HtmlOutlinePanelProps {
   nodes: readonly HtmlOutlineNode[]
   onSelect: (node: HtmlOutlineNode) => void
   onClose: () => void
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 interface BranchProps {

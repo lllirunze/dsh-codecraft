@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react'
 import type { Text } from '@codemirror/state'
 import type { HtmlDiagnostic } from '../languages/html/features/diagnostics.js'
+import type { Translate } from '../i18n/contract.js'
 import { ROOT_CLASS } from '../theme.js'
 
 interface HtmlProblemsPanelProps {
@@ -10,7 +11,7 @@ interface HtmlProblemsPanelProps {
   document: Text | undefined
   onSelect: (diagnostic: HtmlDiagnostic) => void
   onClose: () => void
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 function location(document: Text | undefined, diagnostic: HtmlDiagnostic): string {

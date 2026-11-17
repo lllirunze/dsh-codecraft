@@ -6,6 +6,7 @@ import {
 } from '../../settings/schema.js'
 import { editorSettings } from './editor-settings.js'
 import { materialIconState } from '../icons/material-icon-state.js'
+import type { Translate } from '../i18n/contract.js'
 import {
   PROGRAMMING_LANGUAGE_ORDER,
   SETTINGS_GROUP_ORDER,
@@ -16,7 +17,7 @@ import {
 
 interface SettingsCardProps {
   view: 'summary' | 'settings'
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElement | string {

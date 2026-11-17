@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { isVolatile } from '@deepseek-ai/cosmokit'
 import { Config } from '../src/config.js'
 import { EditorSettingsStore, type ConfigForm } from '../src/client/settings/editor-settings.js'
-import { en, zh } from '../src/client/locales.js'
+import { en, zh } from '../src/client/i18n/index.js'
 import {
   DEFAULT_AUTO_SAVE_SETTINGS,
   DEFAULT_EDITOR_SETTINGS,

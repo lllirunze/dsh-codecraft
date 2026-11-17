@@ -27,18 +27,46 @@ import {
   type WorkspaceOperationResult,
   type WorkspacePreflightResult,
 } from '../protocol.js'
+import type { MessageKey, Translate, TranslationParams } from './i18n/contract.js'
+import { en } from './i18n/messages/en/index.js'
+
+function englishFallback(key: MessageKey, params?: TranslationParams): string {
+  return en[key].replace(/\{([^{}]+)\}/g, (_, name: string) => String(params?.[name] ?? `{${name}}`))
+}
 
 /** A typed failure answered by the Host, or a transport-level failure. */
 export class ApiCallError extends Error {
   readonly code: string
   readonly status: number
+  readonly messageKey: MessageKey | undefined
+  readonly messageParams: TranslationParams | undefined
 
-  constructor(code: string, message: string, status = 0) {
+  constructor(
+    code: string,
+    message: string,
+    status = 0,
+    messageKey?: MessageKey,
+    messageParams?: TranslationParams,
+  ) {
     super(message)
     this.name = 'ApiCallError'
     this.code = code
     this.status = status
+    this.messageKey = messageKey
+    this.messageParams = messageParams
   }
+}
+
+/** Translate Client-owned failures while preserving unknown Host diagnostics. */
+export function localizedErrorMessage(failure: unknown, t: Translate, fallback?: MessageKey): string {
+  if (failure instanceof ApiCallError) {
+    return failure.messageKey === undefined
+      ? failure.message
+      : t(failure.messageKey, failure.messageParams)
+  }
+  if (fallback !== undefined) return t(fallback)
+  if (failure instanceof Error && failure.message !== '') return failure.message
+  return String(failure)
 }
 
 function apiUrl(): string {
@@ -70,17 +98,34 @@ export async function callApi<T>(request: unknown, signal?: AbortSignal): Promis
     })
   } catch (error) {
     if (signal?.aborted) throw error
-    throw new ApiCallError('network', '无法连接 CodeCraft 服务。', 0)
+    throw new ApiCallError(
+      'network',
+      englishFallback('error.api.network'),
+      0,
+      'error.api.network',
+    )
   }
   let body: unknown
   try {
     body = await response.json()
   } catch {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
-    throw new ApiCallError('bad-response', `CodeCraft 服务返回了无效响应（HTTP ${response.status}）。`, response.status)
+    throw new ApiCallError(
+      'bad-response',
+      englishFallback('error.api.invalidResponse', { status: response.status }),
+      response.status,
+      'error.api.invalidResponse',
+      { status: response.status },
+    )
   }
   if (!isEnvelope(body)) {
-    throw new ApiCallError('bad-response', `保存服务返回了未知响应（HTTP ${response.status}）。`, response.status)
+    throw new ApiCallError(
+      'bad-response',
+      englishFallback('error.api.unknownResponse', { status: response.status }),
+      response.status,
+      'error.api.unknownResponse',
+      { status: response.status },
+    )
   }
   if (!body.ok) {
     throw new ApiCallError(body.error.code, body.error.message, response.status)

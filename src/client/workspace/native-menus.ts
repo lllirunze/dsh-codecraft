@@ -9,6 +9,7 @@
 
 import { sessionFileAddress } from '../address.js'
 import type { SidebarRightService } from '../dsh.js'
+import type { Translate } from '../i18n/contract.js'
 import type { WorkspaceController } from './controller.js'
 import { normalizePath } from './controller.js'
 
@@ -44,7 +45,7 @@ interface ContextMenuRegistrar {
 export interface NativeMenuServices {
   contextMenus: ContextMenuRegistrar
   sidebarRight: SidebarRightService
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 /** Register the file and directory menu sections. */

@@ -6,7 +6,7 @@ import {
   languageHasDetails,
   toggleExpandedLanguage,
 } from '../src/client/settings/settings-layout.js'
-import { en, zh } from '../src/client/locales.js'
+import { en, zh } from '../src/client/i18n/index.js'
 
 describe('CodeCraft settings layout', () => {
   it('keeps Programming Languages beside Indentation without a heading wrapper', () => {

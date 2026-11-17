@@ -27,6 +27,7 @@ import {
   saveFile,
   statFile,
   syncIntelligence,
+  localizedErrorMessage,
 } from '../api.js'
 import { fileNameOf, parseSessionFileAddress, sessionFileAddress } from '../address.js'
 import {
@@ -42,6 +43,7 @@ import {
   type HtmlEditingStatus,
 } from '../editor/index.js'
 import { semanticCompletionSource } from '../editor/extensions/semantic-completion.js'
+import type { MessageKey } from '../i18n/contract.js'
 import { languageForFile } from '../languages/index.js'
 import {
   pythonNavigationExtensions,
@@ -129,7 +131,7 @@ interface FeatureNotice {
 
 interface NavigationPanel {
   kind: 'loading' | 'locations' | 'message'
-  titleKey: string
+  titleKey: MessageKey
   source?: NavigationPoint
   locations?: IntelligenceLocation[]
   message?: string
@@ -179,7 +181,7 @@ function excerptParts(location: IntelligenceLocation): { before: string, match: 
   }
 }
 
-const HTML_REPORT_KEYS: Record<string, string> = {
+const HTML_REPORT_KEYS: Readonly<Record<string, MessageKey>> = {
   'missing-file': 'html.navigation.missingFile',
   'outside-workspace': 'html.navigation.outsideWorkspace',
   'root-relative': 'html.navigation.rootRelative',
@@ -194,7 +196,7 @@ const HTML_REPORT_KEYS: Record<string, string> = {
   'outside-selection': 'html.format.outsideSelection',
 }
 
-const HTML_REFACTOR_KEYS: Record<HtmlRefactorError, string> = {
+const HTML_REFACTOR_KEYS: Record<HtmlRefactorError, MessageKey> = {
   'not-tag': 'html.rename.error.notTag',
   'not-id': 'html.rename.error.notId',
   'invalid-name': 'html.rename.error.invalidName',
@@ -204,23 +206,21 @@ const HTML_REFACTOR_KEYS: Record<HtmlRefactorError, string> = {
   unchanged: 'html.rename.error.unchanged',
 }
 
-function messageOf(error: unknown): string {
-  if (error instanceof ApiCallError) return error.message
-  if (error instanceof Error) return error.message
-  return String(error)
+function messageOf(error: unknown, t: DocumentBodyProps['t']): string {
+  return localizedErrorMessage(error, t)
 }
 
 function unsupportedNotice(
   result: UnsupportedFileSnapshot,
   t: DocumentBodyProps['t'],
 ): Notice {
-  const reasonTitle: Record<UnsupportedFileSnapshot['reason'], string> = {
+  const reasonTitle: Record<UnsupportedFileSnapshot['reason'], MessageKey> = {
     'too-large': 'notice.tooLarge.title',
     binary: 'notice.binary.title',
     encoding: 'notice.encoding.title',
     newline: 'notice.newline.title',
   }
-  const reasonDetail: Record<UnsupportedFileSnapshot['reason'], string> = {
+  const reasonDetail: Record<UnsupportedFileSnapshot['reason'], MessageKey> = {
     'too-large': 'notice.tooLarge.detail',
     binary: 'notice.binary.detail',
     encoding: 'notice.encoding.detail',
@@ -328,7 +328,8 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   const [cursor, setCursor] = useState({ line: 1, column: 1 })
   const [indentSize, setIndentSize] = useState(indentationSettings.indentSize)
   const [readOnly, setReadOnly] = useState(false)
-  const [languageLabel, setLanguageLabel] = useState('纯文本')
+  const [languageLabel, setLanguageLabel] = useState('Plain text')
+  const [languageLabelKey, setLanguageLabelKey] = useState<MessageKey | undefined>('language.plain')
   const [fileWritable, setFileWritable] = useState(true)
   const [newlineStyle, setNewlineStyle] = useState<'lf' | 'crlf'>('lf')
   const [intelligenceStatus, setIntelligenceStatus] = useState<IntelligenceStatusKind>('disabled')
@@ -603,7 +604,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       if (!mountedRef.current || intelligenceDocumentIdRef.current !== documentId) return
       const apiFailure = failure instanceof ApiCallError ? failure : undefined
       setIntelligenceStatus(apiFailure?.code === 'intelligence-disabled' ? 'disabled' : 'unavailable')
-      setIntelligenceMessage(messageOf(failure))
+      setIntelligenceMessage(messageOf(failure, tRef.current))
     }
   }, [])
   syncIntelligenceDocumentRef.current = syncIntelligenceDocument
@@ -710,7 +711,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const view = viewRef.current
     const parsed = parsedRef.current
     if (session === null || session === undefined || plan === undefined || view === null || parsed === null) return
-    const fail = (key: string): void => {
+    const fail = (key: MessageKey): void => {
       setHtmlRename({
         kind: session.kind,
         position: session.position,
@@ -859,11 +860,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       } catch (failure) {
         if (!fresh()) return
         setIntelligenceStatus('unavailable')
-        setIntelligenceMessage(messageOf(failure))
+        setIntelligenceMessage(messageOf(failure, tRef.current))
         setNavigationPanel({
           kind: 'message',
           titleKey: 'navigation.title',
-          message: messageOf(failure),
+          message: messageOf(failure, tRef.current),
         })
       }
     })()
@@ -1020,6 +1021,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     setReadOnly(initial.readOnly)
     setFileWritable(!initial.readOnly)
     setLanguageLabel(language.label)
+    setLanguageLabelKey(language.labelKey)
     setHtmlStatus(language.id === 'html'
       ? !htmlEditingAssistanceRef.current.enabled
         ? 'disabled'
@@ -1107,7 +1109,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
   }, [createEditor])
 
   const handleLoadError = useCallback((failure: unknown, currentRequest: RendererRequest) => {
-    const message = messageOf(failure)
+    const message = messageOf(failure, tRef.current)
     currentRequest.failed()
     if (viewRef.current !== null) {
       setError({ kind: 'load', message })
@@ -1218,7 +1220,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
       requestRef.current?.loaded(metaVersionRef.current ?? '')
     } catch (failure) {
       if (!mountedRef.current) return
-      setError({ kind: 'load', message: messageOf(failure) })
+      setError({ kind: 'load', message: messageOf(failure, tRef.current) })
       setStatus('error')
     }
   }, [createEditor, destroyEditor])
@@ -1290,7 +1292,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
           conflictRef.current = nextConflict
           setConflict(nextConflict)
         } else {
-          setError({ kind: 'save', message: apiFailure?.message ?? messageOf(failure) })
+          setError({ kind: 'save', message: messageOf(apiFailure ?? failure, tRef.current) })
         }
         setStatus('error')
       } finally {
@@ -1838,7 +1840,11 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
             →
           </button>
         )}
-        {phase === 'editing' && <span className={`${ROOT_CLASS}-status-item`}>{languageLabel}</span>}
+        {phase === 'editing' && (
+          <span className={`${ROOT_CLASS}-status-item`}>
+            {languageLabelKey === undefined ? languageLabel : t(languageLabelKey)}
+          </span>
+        )}
         {phase === 'editing' && (
           <span className={`${ROOT_CLASS}-status-item`}>
             {t('status.cursor', { line: cursor.line, column: cursor.column })}

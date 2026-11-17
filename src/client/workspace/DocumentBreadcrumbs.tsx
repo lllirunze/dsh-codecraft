@@ -9,8 +9,9 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement,
 } from 'react'
-import { ApiCallError, listWorkspace } from '../api.js'
+import { listWorkspace, localizedErrorMessage } from '../api.js'
 import { FileIcon } from '../icons/FileIcon.js'
+import type { Translate } from '../i18n/contract.js'
 import type { WorkspaceEntry } from '../../protocol.js'
 import {
   activeDocumentBreadcrumb,
@@ -24,7 +25,7 @@ import { parentOf } from './paths.js'
 
 export interface DocumentBreadcrumbsProps {
   absolutePath?: string
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
 }
 
 interface MenuState {
@@ -82,9 +83,7 @@ export function DocumentBreadcrumbs(props: DocumentBreadcrumbsProps): ReactEleme
       })
     } catch (failure) {
       if (request.signal.aborted || requestRef.current.generation !== generation) return
-      const message = failure instanceof ApiCallError
-        ? failure.message
-        : props.t('breadcrumb.readFailed')
+      const message = localizedErrorMessage(failure, props.t, 'breadcrumb.readFailed')
       setMenu(previous => previous === null ? null : {
         ...previous,
         entries: [],

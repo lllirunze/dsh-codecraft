@@ -11,10 +11,12 @@
 
 import {
   listWorkspace,
+  localizedErrorMessage,
   preflightWorkspace,
   runWorkspaceOperation,
 } from '../api.js'
 import { dirtyDocumentsUnder, flushDocuments, relocateDocuments } from '../document/registry.js'
+import type { Translate } from '../i18n/contract.js'
 import { absoluteOf, joinRelative, parentOf, relativeOf } from './paths.js'
 import type {
   WorkspaceChangedPath,
@@ -33,7 +35,7 @@ export interface SessionsReader {
 
 export interface WorkspaceControllerOptions {
   sessions: SessionsReader
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: Translate
   reveal: (absolutePath: string) => Promise<unknown>
 }
 
@@ -439,7 +441,7 @@ export class WorkspaceController {
         return
       }
     } catch (failure) {
-      this.toast(messageOf(failure), 'error')
+      this.toast(localizedErrorMessage(failure, this.#options.t), 'error')
       return
     }
     await this.#execute(sessionId, operation, operation.kind === 'copy' ? 'copy' : 'move')
@@ -487,9 +489,9 @@ export class WorkspaceController {
     } catch (failure) {
       const dialog = this.#state.dialog
       if (dialog !== null) {
-        this.#set({ dialog: { ...dialog, busy: false, error: messageOf(failure) } })
+        this.#set({ dialog: { ...dialog, busy: false, error: localizedErrorMessage(failure, this.#options.t) } })
       } else {
-        this.toast(messageOf(failure), 'error')
+        this.toast(localizedErrorMessage(failure, this.#options.t), 'error')
       }
     }
   }
@@ -543,10 +545,6 @@ function changedTarget(changes: readonly WorkspaceChangedPath[]): string | undef
   const change = changes.find(item => item.kind === 'created' || item.kind === 'renamed' || item.kind === 'moved' || item.kind === 'copied')
   if (change === undefined) return undefined
   return change.to ?? change.from
-}
-
-function messageOf(failure: unknown): string {
-  return failure instanceof Error ? failure.message : String(failure)
 }
 
 /** Resolve the row kind from its path; used by native menu contributions. */
