@@ -7,10 +7,10 @@
 | Target | `0.5.6` |
 | Design | [design.md](design.md) |
 | Baseline | `0.5.5` at Git `61313a6245c4cb4dc6c137236009d854527677b1` |
-| Status | Automated validation passed; local Desktop application and native acceptance pending |
+| Status | Automated validation and user-confirmed macOS/Windows native acceptance passed; release authorized |
 | Platforms | macOS and Windows |
 
-Only a command that ran successfully against the current relevant code may be marked `PASS`. Automated checks do not prove native DSH behavior. Desktop and platform items remain unchecked until the user reports direct observations.
+Only a command that ran successfully against the current relevant code may be marked `PASS`. Automated checks do not prove native DSH behavior. The user reported the complete local Desktop safety and macOS/Windows native acceptance matrix passed on 2026-11-17.
 
 ## Requirement Traceability
 
@@ -35,49 +35,49 @@ Only a command that ran successfully against the current relevant code may be ma
 
 - [x] `npm run check` passed in CI order: typecheck, 33 test files / 323 tests, build, and artifact verification.
 - [x] The packaged 83,581-byte SVG data URL contains raw attribute quotes; `cssImageUrl` percent-encodes quotes, fragments, backslashes, and newlines, and `codecraftCss` substitutes the escaped URL into the Built-in icon rule, so the CSS `url()` is valid and the frame cannot render empty from malformed URL syntax.
-- [x] `npm pack --dry-run --ignore-scripts --json` reported `dsh-codecraft@0.5.5`, 103 entries, and included `assets/favicon.svg`, both READMEs, manifest, patch, Host/Client bundles, and declarations. The package version is intentionally unchanged until release management.
+- [x] Final `npm pack --dry-run --ignore-scripts --json` reported `dsh-codecraft@0.5.6`, 103 entries, a 1,005,034-byte archive, and included `assets/favicon.svg`, both READMEs, manifest, patch, Host/Client bundles, and declarations.
 - [x] Packed content contains one shared logo and no generated SVG assets under `lib/`.
 - [x] `git diff --check` passed and `.gitignore` remains unchanged.
 
 ## Local DSH Desktop Candidate Safety Gate
 
-- [x] Candidate recorded as dirty worktree on Git `61313a6245c4cb4dc6c137236009d854527677b1`, package `0.5.5`, DSH CLI/Desktop line `0.2.2-rc.3`, profile `desktop`, with exactly one selected source: `link:../../../Documents/dsh-creator-mode/dsh-codecraft` resolving to this repository.
-- [ ] With explicit user authorization, apply exactly one local-link candidate through DSH Plugin Manager and record the mutation receipt.
-- [ ] After the required full restart, verify the active `include:codecraft` Host row, Config schema and `packageDir`, Client document/settings/actions/title registrations, and expected source/version.
-- [ ] Verify unauthenticated `/codecraft/api` reaches CodeCraft's authentication fence rather than a generic 404.
-- [ ] Confirm no new candidate-attributable startup, activation, duplicate-registration, or crash diagnostic.
+- [x] Candidate behavior at Git `4806e2bf731ff4d58650f08ca7562fc4ae677454`, package `0.5.5`, DSH `0.2.2-rc.3`, profile `desktop`, and source `/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft` was recorded before release-only metadata changes.
+- [x] The `desktop` profile already used exactly one local link to this repository, so no additional profile mutation was required.
+- [x] The user reported the full-restart Host row, Config schema and `packageDir`, Client document/settings/actions/title registrations, and expected source matrix passed.
+- [x] The user reported the `/codecraft/api` authentication-fence check passed rather than returning a generic 404.
+- [x] The user reported no candidate-attributable startup, activation, duplicate-registration, blank-page, reload-loop, or crash diagnostic.
 
-If local profile mutation is not explicitly authorized, these application and runtime items are `NOT VERIFIED`; they are not waived or inferred from the build.
+The release-only metadata update does not change behavior or runtime contracts, so the accepted behavioral matrix remains current; package identity and automated evidence are refreshed before tagging.
 
 ## Native Acceptance — macOS
 
-- [ ] DSH Desktop starts, opens a workspace, and shows no CodeCraft-related blank page, reload loop, error dialog, or crash.
-- [ ] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart, and the package artwork meets its 48px card frame without clipping the tile border.
-- [ ] The Built-in plugin settings item card for `dsh-codecraft` and its detail page display the same logo filling the 48px frame, while every other item keeps its own artwork.
-- [ ] The Start-page CodeCraft Files guide displays the same logo filling its 26px icon box; clicking it still opens the Files workspace.
-- [ ] Python, Java, HTML, CSS, JavaScript, TypeScript, JSON, Markdown, YAML, XML, and TXT tabs match the same files in the workspace tree.
-- [ ] Exact-name mappings, compound extensions, an extensionless file, and an unknown extension match tree behavior and use the existing generic fallback when appropriate.
-- [ ] Multiple different file tabs retain their own icons while switching active tabs.
-- [ ] Rename with and without an extension change, move, close/reopen, and workspace restoration update or preserve the correct icon.
-- [ ] A path containing spaces and Chinese characters renders safely.
-- [ ] Offline restart retains brand and installed Material icons without a network dependency.
-- [ ] Light/dark themes, narrow/wide windows, and common display scaling do not crop, stretch, or misalign the new icons.
-- [ ] Open/edit/Undo/Redo/save/close/reopen, dirty-state display, settings persistence, normal exit, and restart remain correct.
+- [x] DSH Desktop starts, opens a workspace, and shows no CodeCraft-related blank page, reload loop, error dialog, or crash.
+- [x] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart, and the package artwork meets its 48px card frame without clipping the tile border.
+- [x] The Built-in plugin settings item card for `dsh-codecraft` and its detail page display the same logo filling the 48px frame, while every other item keeps its own artwork.
+- [x] The Start-page CodeCraft Files guide displays the same logo filling its 26px icon box; clicking it still opens the Files workspace.
+- [x] Python, Java, HTML, CSS, JavaScript, TypeScript, JSON, Markdown, YAML, XML, and TXT tabs match the same files in the workspace tree.
+- [x] Exact-name mappings, compound extensions, an extensionless file, and an unknown extension match tree behavior and use the existing generic fallback when appropriate.
+- [x] Multiple different file tabs retain their own icons while switching active tabs.
+- [x] Rename with and without an extension change, move, close/reopen, and workspace restoration update or preserve the correct icon.
+- [x] A path containing spaces and Chinese characters renders safely.
+- [x] Offline restart retains brand and installed Material icons without a network dependency.
+- [x] Light/dark themes, narrow/wide windows, and common display scaling do not crop, stretch, or misalign the new icons.
+- [x] Open/edit/Undo/Redo/save/close/reopen, dirty-state display, settings persistence, normal exit, and restart remain correct.
 
 ## Native Acceptance — Windows
 
-- [ ] DSH Desktop starts, opens a workspace, and shows no CodeCraft-related blank page, reload loop, error dialog, or crash.
-- [ ] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart, and the package artwork meets its 48px card frame without clipping the tile border.
-- [ ] The Built-in plugin settings item card for `dsh-codecraft` and its detail page display the same logo filling the 48px frame, while every other item keeps its own artwork.
-- [ ] The Start-page CodeCraft Files guide displays the same logo filling its 26px icon box; clicking it still opens the Files workspace.
-- [ ] Python, Java, HTML, CSS, JavaScript, TypeScript, JSON, Markdown, YAML, XML, and TXT tabs match the same files in the workspace tree.
-- [ ] Exact-name mappings, compound extensions, an extensionless file, and an unknown extension match tree behavior and use the existing generic fallback when appropriate.
-- [ ] Multiple different file tabs retain their own icons while switching active tabs.
-- [ ] Rename with and without an extension change, move, close/reopen, and workspace restoration update or preserve the correct icon.
-- [ ] A path containing spaces and Chinese characters renders safely with Windows path conventions.
-- [ ] Offline restart retains brand and installed Material icons without a network dependency.
-- [ ] Light/dark themes, narrow/wide windows, and common display scaling do not crop, stretch, or misalign the new icons.
-- [ ] Open/edit/Undo/Redo/save/close/reopen, dirty-state display, settings persistence, normal exit, and restart remain correct.
+- [x] DSH Desktop starts, opens a workspace, and shows no CodeCraft-related blank page, reload loop, error dialog, or crash.
+- [x] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart, and the package artwork meets its 48px card frame without clipping the tile border.
+- [x] The Built-in plugin settings item card for `dsh-codecraft` and its detail page display the same logo filling the 48px frame, while every other item keeps its own artwork.
+- [x] The Start-page CodeCraft Files guide displays the same logo filling its 26px icon box; clicking it still opens the Files workspace.
+- [x] Python, Java, HTML, CSS, JavaScript, TypeScript, JSON, Markdown, YAML, XML, and TXT tabs match the same files in the workspace tree.
+- [x] Exact-name mappings, compound extensions, an extensionless file, and an unknown extension match tree behavior and use the existing generic fallback when appropriate.
+- [x] Multiple different file tabs retain their own icons while switching active tabs.
+- [x] Rename with and without an extension change, move, close/reopen, and workspace restoration update or preserve the correct icon.
+- [x] A path containing spaces and Chinese characters renders safely with Windows path conventions.
+- [x] Offline restart retains brand and installed Material icons without a network dependency.
+- [x] Light/dark themes, narrow/wide windows, and common display scaling do not crop, stretch, or misalign the new icons.
+- [x] Open/edit/Undo/Redo/save/close/reopen, dirty-state display, settings persistence, normal exit, and restart remain correct.
 
 ## Documentation Review
 
@@ -87,5 +87,5 @@ If local profile mutation is not explicitly authorized, these application and ru
 
 ## Release Gate
 
-Release is blocked by any failed automated/package check, missing asset, unstable package/runtime identity, failed Desktop activation, new attributable crash, or required macOS/Windows acceptance item that is `FAIL`, `BLOCKED`, or `NOT VERIFIED`. Implementation completion does not authorize a version bump, commit, push, tag, npm publication, or GitHub Release.
+The user explicitly authorized the v0.5.6 repository release workflow after reporting the complete native and local Desktop safety matrix passed on 2026-11-17. Release metadata, refreshed automation and package inspection, commit, `master` push, and annotated tag follow the release-management workflow. The user still creates and publishes the GitHub Release manually, which triggers npm publication.
 

@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed; Desktop acceptance pending |
+| Status | Implemented and validated on macOS and Windows; release authorized |
 | Target | `0.5.6` |
 | Baseline | `0.5.5` at Git `61313a6245c4cb4dc6c137236009d854527677b1` |
 | Release type | Patch enhancement |

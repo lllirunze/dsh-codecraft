@@ -16,7 +16,7 @@
 
 </div>
 
-> **当前状态：** v0.5.5 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成 CodeCraft 全语言 GitHub Default 语法配色、六级括号配色及 Material 通用图标回退验证。
+> **当前状态：** v0.5.6 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成 CodeCraft 品牌 Logo 集成与原生文件 Tab Material 图标验证。
 
 ## 功能
 
@@ -73,7 +73,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.5
+dsh plugin --profile desktop add dsh-codecraft@0.5.6
 ```
 
 更新后重启 DSH Desktop。

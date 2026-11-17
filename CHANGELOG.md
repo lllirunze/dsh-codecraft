@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.6] - 2026-11-17
+
+### Added
+
+- Added the CodeCraft brand logo to package metadata, Plugin Manager and settings surfaces, the Start-page Files guide, and both root README files.
+- Added Material Icon Theme icons to native file tabs using the same exact-name, extension, and fallback resolution as the workspace tree.
+
+### Changed
+
+- Kept brand and file-type artwork fully offline through one packaged SVG logo and the existing verified local Material icon cache.
+
 ## [0.5.5] - 2026-11-16
 
 ### Added
