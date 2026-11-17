@@ -18,6 +18,7 @@ async function mustExist(path) {
 }
 
 await Promise.all([
+  mustExist('assets/favicon.svg'),
   mustExist('lib/index.js'),
   mustExist('lib/index.d.ts'),
   mustExist('lib/client.js'),
@@ -66,6 +67,7 @@ function assert(condition, message) {
 
 const manifest = JSON.parse(await readFile('package.json', 'utf8'))
 const cordisPatch = await readFile('cordis.patch.yml', 'utf8')
+const favicon = await readFile('assets/favicon.svg', 'utf8')
 const expectedClientInject = [
   '@deepseek-ai/dsh-api-remotes',
   '@deepseek-ai/dsh-api-session-controller',
@@ -79,6 +81,11 @@ const expectedClientInject = [
   '@deepseek-ai/dsh-client-ui-sidebar-documentpreview',
 ]
 assert(manifest.name === 'dsh-codecraft', 'package name must retain the stable dsh-codecraft identity')
+assert(manifest.files?.includes('assets'), 'package files must include the shared brand assets')
+assert(
+  favicon.includes('<svg') && favicon.includes('data:image/png;base64,'),
+  'favicon must remain a self-contained SVG asset',
+)
 assert(manifest.dsh?.bundle?.patch === './cordis.patch.yml', 'manifest must retain the CodeCraft bundle patch')
 assert(manifest.dsh?.client?.platform === 'web', 'CodeCraft client must retain the web platform')
 assert(
