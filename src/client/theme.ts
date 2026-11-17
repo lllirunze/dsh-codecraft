@@ -18,6 +18,34 @@ import {
 } from './editor/syntax-theme.js'
 
 const SYNTAX_CSS = `${GITHUB_SYNTAX_PALETTE_CSS}
+.dsh-codecraft-brand-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.dsh-codecraft-document-tab-title {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dsh-codecraft-document-tab-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.dsh-codecraft-document-tab-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.dsh-codecraft-document-tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .dsh-codecraft {
   display: flex;
   flex-direction: column;

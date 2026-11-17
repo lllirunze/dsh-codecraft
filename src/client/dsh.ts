@@ -8,6 +8,8 @@
  * @module dsh-codecraft/client/dsh
  */
 
+import type { ComponentType } from 'react'
+
 /** Locale dictionary registration and lookup. */
 export interface LocaleService {
   register(
@@ -37,6 +39,7 @@ export interface SlotRegisterOptions {
   key?: string
   id?: string
   order?: number
+  priority?: number
   label?: () => string
   locale?: string
   store?: unknown
@@ -108,6 +111,7 @@ export interface SidebarRightGuideEntry {
   title: () => string
   description?: () => string
   commandId?: string
+  icon?: ComponentType
 }
 
 export interface SidebarRightTabDefinition {
@@ -210,6 +214,7 @@ export interface TabInfo {
     close(): void
   }
   navigation: {
+    address: string
     revision: number
     params?: {
       line?: number

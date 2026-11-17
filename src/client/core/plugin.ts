@@ -27,6 +27,11 @@ import { registerNativeMenus } from '../workspace/native-menus.js'
 import { materialIconState } from '../icons/material-icon-state.js'
 import { DocumentBreadcrumbs } from '../workspace/DocumentBreadcrumbs.js'
 import { bindDocumentBreadcrumbRuntime } from '../workspace/document-breadcrumbs.js'
+import { CodeCraftLogo } from '../branding.js'
+import {
+  DOCUMENT_PREVIEW_TAB_ID,
+  DocumentTabTitle,
+} from '../renderer/DocumentTabTitle.js'
 
 /** Browser services required before mounting. */
 export const inject = [
@@ -108,6 +113,7 @@ export function apply(ctx: ClientContext): void {
       id: 'workspace',
       order: 10,
       commandId: 'workspace.files',
+      icon: CodeCraftLogo,
       title: () => t('explorer.title'),
       description: () => t('explorer.guideDescription'),
     }],
@@ -124,6 +130,15 @@ export function apply(ctx: ClientContext): void {
     key: EXPLORER_ID,
     locale: LOCALE_NAMESPACE,
   }, ExplorerTitle)), 'dsh-codecraft: Explorer title')
+
+  ctx.effect(() => ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab.title',
+    key: DOCUMENT_PREVIEW_TAB_ID,
+    // Keyed slots are shadowing cells. A lower priority replaces DSH's generic
+    // FileTypeIcon presentation while CodeCraft is active; disposal restores it.
+    priority: -10,
+    locale: LOCALE_NAMESPACE,
+  }, DocumentTabTitle)), 'dsh-codecraft: native file tab titles')
 
   ctx.effect(() => ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',

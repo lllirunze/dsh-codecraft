@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/favicon.svg" alt="dsh-codecraft logo" width="144" height="144">
+
 # DSH CodeCraft
 
 **A precise, safe CodeMirror 6 editor inside DSH's native file tabs.**

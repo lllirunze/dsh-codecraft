@@ -36,6 +36,9 @@ const client = await build({
   define: {
     'process.env.NODE_ENV': '"production"',
   },
+  loader: {
+    '.svg': 'dataurl',
+  },
   external: ['@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'],
 })
 

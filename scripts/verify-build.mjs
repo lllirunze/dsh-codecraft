@@ -67,7 +67,10 @@ function assert(condition, message) {
 
 const manifest = JSON.parse(await readFile('package.json', 'utf8'))
 const cordisPatch = await readFile('cordis.patch.yml', 'utf8')
-const favicon = await readFile('assets/favicon.svg', 'utf8')
+const faviconBytes = await readFile('assets/favicon.svg')
+const favicon = faviconBytes.toString('utf8')
+const readme = await readFile('README.md', 'utf8')
+const readmeZh = await readFile('README.zh-CN.md', 'utf8')
 const expectedClientInject = [
   '@deepseek-ai/dsh-api-remotes',
   '@deepseek-ai/dsh-api-session-controller',
@@ -82,10 +85,17 @@ const expectedClientInject = [
 ]
 assert(manifest.name === 'dsh-codecraft', 'package name must retain the stable dsh-codecraft identity')
 assert(manifest.files?.includes('assets'), 'package files must include the shared brand assets')
+assert(manifest.icon === 'assets/favicon.svg', 'package icon must reference the shared CodeCraft logo')
 assert(
-  favicon.includes('<svg') && favicon.includes('data:image/png;base64,'),
+  favicon.includes('<svg')
+    && favicon.includes('width="256" height="256" viewBox="0 0 256 256"')
+    && favicon.includes('data:image/png;base64,'),
   'favicon must remain a self-contained SVG asset',
 )
+assert(faviconBytes.byteLength <= 256 * 1024, 'package icon exceeds DSH\'s 256 KiB limit')
+assert(!/https?:\/\//.test(favicon.replace('http://www.w3.org/2000/svg', '')), 'favicon must not load remote assets')
+assert(readme.includes('src="assets/favicon.svg"'), 'English README does not reference the shared logo')
+assert(readmeZh.includes('src="assets/favicon.svg"'), 'Chinese README does not reference the shared logo')
 assert(manifest.dsh?.bundle?.patch === './cordis.patch.yml', 'manifest must retain the CodeCraft bundle patch')
 assert(manifest.dsh?.client?.platform === 'web', 'CodeCraft client must retain the web platform')
 assert(
@@ -252,7 +262,7 @@ function verifyClientRegistration(code, platform) {
   assert(preview.priority === 'extension' && preview.loading === 'renderer', 'document preview uses the wrong priority or loading mode')
   assert(preview.extensions.includes('ts') && preview.extensions.includes('py'), 'document preview is missing source extensions')
   assert(!preview.extensions.includes('png') && !preview.extensions.includes('pdf'), 'document preview claims binary extensions')
-  assert(bodyRows.length === 7, `client registered ${bodyRows.length} slot contributions`)
+  assert(bodyRows.length === 8, `client registered ${bodyRows.length} slot contributions`)
   assert(
     tabDefinitions.length === 1 && tabDefinitions[0].id === 'dsh-codecraft-files' && tabDefinitions[0].kind === 'files',
     'client did not register the Files tab override',
@@ -261,12 +271,19 @@ function verifyClientRegistration(code, platform) {
     tabDefinitions[0].guide?.[0]?.id === 'workspace',
     'client Files tab override has no guide entry to open it',
   )
+  assert(
+    tabDefinitions[0].guide?.[0]?.commandId === 'workspace.files'
+      && typeof tabDefinitions[0].guide?.[0]?.icon === 'function',
+    'client Files guide entry is missing its stable command or CodeCraft logo',
+  )
   const documentBody = bodyRows.find(row => row.options.name === 'sidebar.right.tab.document')
   const settingsCard = bodyRows.find(row => row.options.name === 'plugins.item')
   const previewAction = bodyRows.find(row => row.options.id === 'dsh-codecraft-html-preview')
   const breadcrumbs = bodyRows.find(row => row.options.id === 'dsh-codecraft-file-breadcrumbs')
   const explorerBody = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab')
   const explorerTitle = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab.title')
+  const documentTabTitle = bodyRows.find(row => row.options.name === 'sidebar.right.pane.tab.title'
+    && row.options.key === '@deepseek-ai/dsh-client-ui-sidebar-documentpreview')
   const dialogHost = bodyRows.find(row => row.options.name === 'shell.overlay')
   assert(
     documentBody?.options.key === 'dsh-codecraft',
@@ -292,6 +309,10 @@ function verifyClientRegistration(code, platform) {
   assert(
     explorerTitle?.options.key === 'dsh-codecraft-files',
     'client Explorer title is registered in the wrong keyed slot',
+  )
+  assert(
+    documentTabTitle?.options.priority === -10,
+    'client native file-tab title is registered in the wrong keyed slot',
   )
   assert(
     dialogHost?.options.id === 'dsh-codecraft-dialogs',

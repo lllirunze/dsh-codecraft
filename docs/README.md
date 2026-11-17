@@ -30,6 +30,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.5.3 | [Design](version/v0.5.3/design.md) | [Validation](version/v0.5.3/validation.md) | Validated Explorer recovery and native-path breadcrumb navigation on macOS and Windows |
 | v0.5.4 | [Design](version/v0.5.4/design.md) | [Validation](version/v0.5.4/validation.md) | Validated per-language settings, collapsible Python details, and live Python configuration on macOS and Windows |
 | v0.5.5 | [Design](version/v0.5.5/design.md) | [Validation](version/v0.5.5/validation.md) | Validated shared GitHub Default syntax and six-level bracket colors on macOS and Windows; release authorized |
+| v0.5.6 | [Design](version/v0.5.6/design.md) | [Validation](version/v0.5.6/validation.md) | Implemented brand-logo integration and native file-tab Material icon consistency; automated validation passed, native acceptance pending |
 
 ## Project Guides
 

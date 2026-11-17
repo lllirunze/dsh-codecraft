@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/favicon.svg" alt="dsh-codecraft logo" width="144" height="144">
+
 # DSH CodeCraft
 
 **在 DSH 原生文件 Tab 中使用 CodeMirror 6 安全、精确地编辑代码。**
