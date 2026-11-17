@@ -29,7 +29,7 @@ The user supplied the visual baseline as `favicon.png`. Because the planning dir
 
 | ID | Required behavior | Negative and failure behavior | Ownership |
 | --- | --- | --- | --- |
-| FR-01 | The installed `dsh-codecraft` package entry displays the formal logo in DSH Plugin Manager/configuration surfaces that honor package metadata. | Do not patch DSH-owned global artwork or affect another plugin. A host surface that does not expose package icons remains host-owned and must not be represented as verified. | `package.json`, `assets/favicon.svg`, package verification |
+| FR-01 | The installed `dsh-codecraft` package entry and its Built-in plugin settings item display the formal logo in DSH Plugin Manager/configuration surfaces. | The package-scoped artwork override must not affect DSH global artwork or another plugin, and must degrade to DSH's default item glyph when the host markup changes. | `package.json`, `assets/favicon.svg`, package verification, client stylesheet |
 | FR-02 | The Start-page CodeCraft Files guide button displays the same logo while preserving its title, description, command, layout, and interaction. | Missing or failed optional icon rendering must not alter the command or crash the guide page. Other guide entries remain unchanged. | Client branding component and Files guide definition |
 | FR-03 | Every supported native Session file tab displays the Material Icon Theme result for its own current filename/path, using exact-name precedence, compound-extension matching, and the existing generic-file fallback. | Non-file and malformed resource addresses retain the host title without a CodeCraft icon. The brand logo is never a file fallback. No network icon fetch or duplicate mapping is added. | Native document-preview title slot, shared `FileIcon`, existing address parser and icon resolver |
 | FR-04 | `README.md` and `README.zh-CN.md` show the same repository-relative logo above their titles with consistent dimensions and alternative text. | Existing badges, language navigation, content, and status claims are preserved. | Root README files and shared asset |
@@ -50,11 +50,13 @@ The user supplied the visual baseline as `favicon.png`. Because the planning dir
 
 ### Plugin Manager icon
 
-The top-level package manifest field `icon: "assets/favicon.svg"` uses DSH's package-icon contract. This is deliberately separate from the existing `plugins.item` settings contribution, whose surrounding card artwork and layout are host-owned. Stable plugin ids, bundle patch ids, Client injection ids, routes, and settings ids do not change.
+The top-level package manifest field `icon: "assets/favicon.svg"` uses DSH's package-icon contract. This is deliberately separate from the existing `plugins.item` settings contribution, whose surrounding card artwork is host-owned. DSH renders package artwork at 36px inside a 48px card frame (and 30px inside a 40px row); because the CodeCraft mark is full-bleed square artwork, a package-name-scoped stylesheet rule lets only this package's image meet that frame so it reads as one tile. DSH-owned glyphs and every other package keep the host sizing, and the rule degrades to the host default if that markup changes. Stable plugin ids, bundle patch ids, Client injection ids, routes, and settings ids do not change.
+
+DSH's Built-in plugin settings groups official items by their `plugins.item` registration and draws its own default glyph for each one; that item artwork is not part of the package-icon contract. The stylesheet therefore also targets only the stable `data-plugin-item="dsh-codecraft"` card and its `data-plugin-item-detail` page: it hides the host glyph and paints the same bundled logo into the existing 48px icon frame. The logo URL is substituted into the stylesheet at injection time, after percent-encoding the quotes, fragments, and newlines that would otherwise end the CSS `url()` string or truncate the image; the packaged SVG data URL contains raw attribute quotes, so skipping this step leaves the icon frame empty. If DSH changes those item attributes, the selectors stop matching and the host's own glyph returns; no other item, DSH artwork, or global layout is modified.
 
 ### Start-page Files guide icon
 
-A small Client-only `CodeCraftLogo` React component renders the bundled asset with fixed intrinsic dimensions and `object-fit: contain`. The existing Files guide entry receives this component through its public `icon` property. The guide entry's `workspace.files` command, labels, ordering, and Files tab registration remain intact.
+A small Client-only `CodeCraftLogo` React component renders the bundled asset with `object-fit: contain` and honors the glyph size DSH's guide passes to a registered icon (22 or 26, with 20 as the standalone default), so the mark fills the guide's fixed 26px icon box. The existing Files guide entry receives this component through its public `icon` property. The guide entry's `workspace.files` command, labels, ordering, and Files tab registration remain intact.
 
 ### Native file-tab icons
 
@@ -81,7 +83,7 @@ CodeCraft intentionally shadows DSH's occupied keyed presentation cell in `sideb
 ## Out of Scope
 
 - DSH Desktop's application icon, global logo, global navigation, layout, themes, or unrelated tabs.
-- Replacing DSH-owned artwork in surfaces that do not expose package icon metadata.
+- Replacing DSH-owned artwork in surfaces that do not expose package icon metadata, except the package-scoped Built-in item artwork override described above.
 - A Material Icon Theme upgrade, new mapping table, remote icon download, or brand-logo file fallback.
 - Changes to file opening, switching, closing, dirty state, saving, rename/move semantics, or workspace restoration.
 - Package version bump, changelog release entry, Git commit/tag/push, npm publication, or GitHub Release publication.

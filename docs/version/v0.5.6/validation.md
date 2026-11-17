@@ -16,7 +16,7 @@ Only a command that ran successfully against the current relevant code may be ma
 
 | Requirement | Automated evidence | Native evidence |
 | --- | --- | --- |
-| FR-01 / AT-01 / AT-02 | Manifest and build verification; packed-file inspection | Plugin Manager icon before and after restart on each platform |
+| FR-01 / AT-01 / AT-02 | Manifest and build verification; packed-file inspection; scoped Client stylesheet | Package card, Built-in item card/detail, and package detail icon before and after restart on each platform |
 | FR-02 / AT-03 | Client registration/build verification | Start-page Files guide appearance and unchanged click behavior |
 | FR-03 / AT-04 / AT-05 / AT-06 / AT-07 | File-tab title helper, shared icon resolver, build registration, and regression tests | Multi-tab, rename, move, restore, special-name, unknown-file, and offline checks |
 | FR-04 / AT-08 | README reference and packaged asset verification | GitHub rendering review for both README files |
@@ -24,15 +24,17 @@ Only a command that ran successfully against the current relevant code may be ma
 ## Focused Automated Checks
 
 - [x] `npx vitest run tests/document-tab-title.test.ts tests/file-icons.test.ts tests/address.test.ts` passed 3 files and 15 tests for representative extensions, exact filenames, unknown files, malformed addresses, multi-tab independence, and renamed/moved paths.
+- [x] `npx vitest run tests/branding.test.ts` passed 6 tests for the default 20px logo, the 22/26px size DSH guide capsules pass to registered icons, class merging, CSS URL escaping, and stylesheet logo substitution.
 - [x] Client registration coverage in `npm run verify` proved the CodeCraft Files guide has a logo component and retains the `workspace.files` command.
 - [x] Build verification proved `package.json.icon` is `assets/favicon.svg`, the 83,581-byte asset is self-contained and below 256 KiB, and both README files reference it.
 - [x] `npm run typecheck`, as part of the final `npm run check`, passed the updated DSH structural contracts and SVG import declaration.
 - [x] `npm run build`, as part of the final `npm run check`, produced current Host, Client, and declaration artifacts without adding undeclared Client externals.
-- [x] `npm run verify`, as part of the final `npm run check`, passed Material Icon Theme 5.40.0 integrity for 1,256 icons, stable plugin identities, slot registrations, and package asset rules.
+- [x] `npm run verify`, as part of the final `npm run check`, passed Material Icon Theme 5.40.0 integrity for 1,256 icons, stable plugin identities, slot registrations, and package asset rules. The Client entry also executed against the verification DOM stub; the logo is substituted into the injected stylesheet, so no separate custom-property write is required.
 
 ## Regression and Package Gate
 
-- [x] `npm run check` passed in CI order: typecheck, 32 test files / 317 tests, build, and artifact verification.
+- [x] `npm run check` passed in CI order: typecheck, 33 test files / 323 tests, build, and artifact verification.
+- [x] The packaged 83,581-byte SVG data URL contains raw attribute quotes; `cssImageUrl` percent-encodes quotes, fragments, backslashes, and newlines, and `codecraftCss` substitutes the escaped URL into the Built-in icon rule, so the CSS `url()` is valid and the frame cannot render empty from malformed URL syntax.
 - [x] `npm pack --dry-run --ignore-scripts --json` reported `dsh-codecraft@0.5.5`, 103 entries, and included `assets/favicon.svg`, both READMEs, manifest, patch, Host/Client bundles, and declarations. The package version is intentionally unchanged until release management.
 - [x] Packed content contains one shared logo and no generated SVG assets under `lib/`.
 - [x] `git diff --check` passed and `.gitignore` remains unchanged.
@@ -50,8 +52,9 @@ If local profile mutation is not explicitly authorized, these application and ru
 ## Native Acceptance — macOS
 
 - [ ] DSH Desktop starts, opens a workspace, and shows no CodeCraft-related blank page, reload loop, error dialog, or crash.
-- [ ] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart.
-- [ ] The Start-page CodeCraft Files guide displays the same logo; clicking it still opens the Files workspace.
+- [ ] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart, and the package artwork meets its 48px card frame without clipping the tile border.
+- [ ] The Built-in plugin settings item card for `dsh-codecraft` and its detail page display the same logo filling the 48px frame, while every other item keeps its own artwork.
+- [ ] The Start-page CodeCraft Files guide displays the same logo filling its 26px icon box; clicking it still opens the Files workspace.
 - [ ] Python, Java, HTML, CSS, JavaScript, TypeScript, JSON, Markdown, YAML, XML, and TXT tabs match the same files in the workspace tree.
 - [ ] Exact-name mappings, compound extensions, an extensionless file, and an unknown extension match tree behavior and use the existing generic fallback when appropriate.
 - [ ] Multiple different file tabs retain their own icons while switching active tabs.
@@ -64,8 +67,9 @@ If local profile mutation is not explicitly authorized, these application and ru
 ## Native Acceptance — Windows
 
 - [ ] DSH Desktop starts, opens a workspace, and shows no CodeCraft-related blank page, reload loop, error dialog, or crash.
-- [ ] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart.
-- [ ] The Start-page CodeCraft Files guide displays the same logo; clicking it still opens the Files workspace.
+- [ ] Plugin Manager/configuration displays the formal CodeCraft logo before and after a full restart, and the package artwork meets its 48px card frame without clipping the tile border.
+- [ ] The Built-in plugin settings item card for `dsh-codecraft` and its detail page display the same logo filling the 48px frame, while every other item keeps its own artwork.
+- [ ] The Start-page CodeCraft Files guide displays the same logo filling its 26px icon box; clicking it still opens the Files workspace.
 - [ ] Python, Java, HTML, CSS, JavaScript, TypeScript, JSON, Markdown, YAML, XML, and TXT tabs match the same files in the workspace tree.
 - [ ] Exact-name mappings, compound extensions, an extensionless file, and an unknown extension match tree behavior and use the existing generic fallback when appropriate.
 - [ ] Multiple different file tabs retain their own icons while switching active tabs.

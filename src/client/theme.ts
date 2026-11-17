@@ -17,12 +17,69 @@ import {
   githubSyntaxThemeExtensions,
 } from './editor/syntax-theme.js'
 
+/**
+ * Quotes a bundled image URL for a CSS `url()` value.
+ *
+ * The packaged SVG is an encoded data URL whose markup still carries raw
+ * quotes, and a raw `#` would start a URL fragment. Both would truncate the
+ * CSS string or the image payload, so percent-encode them here.
+ */
+export function cssImageUrl(url: string): string {
+  const encoded = url.replace(/["#\\\n]/g, (character) => {
+    if (character === '"') return '%22'
+    if (character === '#') return '%23'
+    if (character === '\n') return '%0A'
+    return '%5C'
+  })
+  return `url("${encoded}")`
+}
+
+/** Placeholder replaced with the packaged logo's CSS URL when the sheet is injected. */
+export const CODECRAFT_LOGO_TOKEN = '__DSH_CODECRAFT_LOGO__'
+
 const SYNTAX_CSS = `${GITHUB_SYNTAX_PALETTE_CSS}
 .dsh-codecraft-brand-logo {
   display: block;
-  width: 20px;
-  height: 20px;
+  flex: none;
   object-fit: contain;
+}
+/*
+ * Plugin Manager draws package artwork at 36px inside its 48px card frame and
+ * at 30px inside a 40px row frame. The CodeCraft mark is full-bleed square
+ * artwork, so meeting the frame reads as one tile instead of a sticker
+ * floating in it. The selectors name this package only; DSH-owned glyphs and
+ * every other plugin's artwork keep the host sizing.
+ */
+[data-plugin-package="dsh-codecraft"] img[width="36"],
+[data-plugin-detail="dsh-codecraft"] img[width="36"] {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--dsw-radius-lg, 12px);
+}
+[data-plugin-detail="dsh-codecraft"] img[width="30"] {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--dsw-radius-md, 8px);
+}
+/*
+ * DSH draws its own default glyph for an official item that registers a
+ * Built-in plugin settings card. Replace that host-owned artwork for this
+ * item only: hide the glyph and paint the shared brand mark into the same
+ * icon frame, so the Built-in card and its detail page match the package
+ * card. The logo token is replaced with the packaged logo's CSS URL before
+ * the client injects this sheet.
+ */
+[data-plugin-item="dsh-codecraft"] > div > span[aria-hidden="true"],
+[data-plugin-item-detail="dsh-codecraft"] [data-window-drag] > div > span[aria-hidden="true"] {
+  background-image: ${CODECRAFT_LOGO_TOKEN};
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-clip: padding-box;
+}
+[data-plugin-item="dsh-codecraft"] > div > span[aria-hidden="true"] svg,
+[data-plugin-item-detail="dsh-codecraft"] [data-window-drag] > div > span[aria-hidden="true"] svg {
+  display: none;
 }
 .dsh-codecraft-document-tab-title {
   min-width: 0;
@@ -1157,6 +1214,11 @@ const SYNTAX_CSS = `${GITHUB_SYNTAX_PALETTE_CSS}
 
 /** The stylesheet injected once per plugin lifetime. */
 export const CODECRAFT_CSS = SYNTAX_CSS
+
+/** Builds the injectable sheet with the packaged logo URL already escaped. */
+export function codecraftCss(logoUrl: string): string {
+  return CODECRAFT_CSS.replace(CODECRAFT_LOGO_TOKEN, cssImageUrl(logoUrl))
+}
 
 /** Marker used by the editor host element. */
 export const ROOT_CLASS = 'dsh-codecraft'

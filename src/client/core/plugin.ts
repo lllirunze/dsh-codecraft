@@ -14,7 +14,7 @@ import { CodeCraftSettingsCard } from '../settings/CodeCraftSettingsCard.js'
 import { editorSettings } from '../settings/editor-settings.js'
 import { EDITOR_EXTENSIONS } from '../languages/index.js'
 import { en, zh } from '../locales.js'
-import { CODECRAFT_CSS } from '../theme.js'
+import { codecraftCss } from '../theme.js'
 import { navigationCoordinator } from '../navigation/coordinator.js'
 import { PreviewInBrowserAction } from '../renderer/PreviewInBrowserAction.js'
 import { bindHtmlPreviewOpener } from '../languages/html/preview.js'
@@ -27,7 +27,7 @@ import { registerNativeMenus } from '../workspace/native-menus.js'
 import { materialIconState } from '../icons/material-icon-state.js'
 import { DocumentBreadcrumbs } from '../workspace/DocumentBreadcrumbs.js'
 import { bindDocumentBreadcrumbRuntime } from '../workspace/document-breadcrumbs.js'
-import { CodeCraftLogo } from '../branding.js'
+import { CodeCraftLogo, CODECRAFT_LOGO_URL } from '../branding.js'
 import {
   DOCUMENT_PREVIEW_TAB_ID,
   DocumentTabTitle,
@@ -75,9 +75,11 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.dshCodecraft = '0.1.4'
-    style.textContent = CODECRAFT_CSS
+    style.textContent = codecraftCss(CODECRAFT_LOGO_URL)
     document.head.appendChild(style)
-    return () => style.remove()
+    return () => {
+      style.remove()
+    }
   }, 'dsh-codecraft: editor theme')
 
   ctx.effect(
