@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.7] - 2026-11-17
+
+### Changed
+
+- Split the English and Simplified Chinese catalogs into matching core, workspace, settings, and HTML modules while retaining DSH Locale as the single runtime language service.
+- Added typed message keys plus automated key and placeholder parity checks across both catalogs.
+- Localized the plain-text status and Client-owned transport fallbacks while preserving unknown Host diagnostics and existing feature behavior.
+
 ## [0.5.6] - 2026-11-17
 
 ### Added

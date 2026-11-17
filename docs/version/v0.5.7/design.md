@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented; automated validation passed; native acceptance pending |
+| Status | Implemented and validated on macOS and Windows; release authorized |
 | Target | `0.5.7` |
 | Baseline | `0.5.6` at Git `2c9e6fc89a5c048786f0dc5549f3c913054ee51b` |
 | Release type | Patch refactoring |
@@ -124,5 +124,5 @@ Host protocol shapes and error codes remain unchanged in this refactor. Changing
 - Runtime tests prove exact key and placeholder parity.
 - Chinese and English locale switching covers the plain-text label and known transport fallbacks without a restart-specific stale label.
 - The full repository check passes with no feature or release metadata change.
-- Native DSH Desktop acceptance remains unchecked until the user reports observed results.
+- Native DSH Desktop safety and macOS/Windows acceptance are recorded only from the user's reported observations.
 

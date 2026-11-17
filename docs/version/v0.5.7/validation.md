@@ -7,10 +7,10 @@
 | Target | `0.5.7` |
 | Design | [design.md](design.md) |
 | Baseline | `0.5.6` at Git `2c9e6fc89a5c048786f0dc5549f3c913054ee51b` |
-| Status | Automated validation passed; native acceptance pending |
+| Status | Automated validation and user-confirmed macOS/Windows native acceptance passed; release authorized |
 | Platforms | macOS and Windows |
 
-Only checks actually run against the current relevant code may be marked `PASS`. Automated checks do not prove native DSH behavior. Every new item starts unchecked.
+Only checks actually run against the current relevant code may be marked `PASS`. Automated checks do not prove native DSH behavior. The user reported the complete local Desktop safety and macOS/Windows native acceptance matrix passed on 2026-11-17.
 
 ## Requirement Traceability
 
@@ -41,44 +41,44 @@ Only checks actually run against the current relevant code may be marked `PASS`.
 - [x] `npm run build`, as part of the final `npm run check`, produced current Host, Client, and declaration artifacts.
 - [x] `npm run verify`, as part of the final `npm run check`, verified Material Icon Theme 5.40.0 with 1,256 icons and Client registration with 22 external requires.
 - [x] `npm run check` passed in canonical CI order against the final runtime and test code.
-- [x] `npm pack --dry-run --ignore-scripts --json` reported unchanged `dsh-codecraft@0.5.6`, 114 entries, and included the manifest, patch, Host/Client entries and declarations, protocol declaration, READMEs, changelog, license, and required assets.
+- [x] `npm pack --dry-run --ignore-scripts --json` reported `dsh-codecraft@0.5.7`, 114 entries, a 1,021,368-byte archive, and included the manifest, patch, Host/Client entries and declarations, protocol declaration, READMEs, changelog, license, and required assets.
 - [x] `git diff --check` passed.
-- [x] `package.json`, `package-lock.json`, `CHANGELOG.md`, and `.gitignore` remain unchanged.
+- [x] Release metadata is synchronized across `package.json`, `package-lock.json`, `CHANGELOG.md`, README status claims, version records, and the release identifier; `.gitignore` remains unchanged.
 
 ## Local DSH Desktop Candidate Safety Gate
 
-- [ ] Record candidate Git SHA and dirty-worktree state, package version, DSH version, platform/profile, and expected source.
-- [ ] Confirm Plugin Manager reports one enabled CodeCraft source at the expected local path/version.
-- [ ] After the required full restart, confirm Host row, Config schema/`packageDir`, Client registrations, and route authentication fence.
-- [ ] Confirm no candidate-attributable startup error, duplicate registration, blank page, reload loop, or crash.
+- [x] Candidate behavior at Git `670d766acf1c70f27e8089eab5b4266506a05220`, pre-release package metadata `0.5.6`, DSH `0.2.2-rc.3`, profile `desktop`, and source `/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft` was recorded before release-only metadata changes.
+- [x] The user reported Plugin Manager showed one enabled CodeCraft source at the expected local repository path and version.
+- [x] The user reported the full-restart Host row, Config schema and `packageDir`, Client document/settings/actions registrations, and `/codecraft/api` authentication fence passed.
+- [x] The user reported no candidate-attributable startup error, duplicate registration, blank page, reload loop, hang, or crash.
 
-Profile mutation is not authorized by this request. If the existing local link is not already the expected source, report application as `BLOCKED` rather than modifying the Desktop profile.
+The release-only metadata update does not change behavior or runtime contracts, so the accepted behavioral matrix remains current; package identity and automated evidence are refreshed before tagging.
 
 ## Native Acceptance — macOS
 
-- [ ] DSH Desktop starts and restarts normally with no CodeCraft activation error or crash.
-- [ ] Switching DSH between Simplified Chinese and English updates Explorer, settings, editor notices/status, HTML tools, and dialog copy consistently.
-- [ ] A `.txt` or unknown text file shows the localized plain-text label in each language without stale copy after switching.
-- [ ] Representative interpolation values (cursor, indentation, selected count, icon count, and HTML rename count) render correctly in both languages.
-- [ ] A simulated/offline transport failure shows the active-language fallback and does not expose an untranslated key.
-- [ ] Unknown Host or external diagnostics remain contained and do not break the surrounding localized UI.
-- [ ] Open/edit/Undo/Redo/save/close/reopen and dirty/conflict handling remain unchanged.
-- [ ] Explorer create/rename/copy/move/delete, settings persistence, Python/Java/HTML feature gates, and normal exit remain unchanged.
-- [ ] Paths containing spaces and Chinese characters render safely in both locales.
-- [ ] Offline restart loads all catalogs and existing features without network localization requests.
+- [x] DSH Desktop starts and restarts normally with no CodeCraft activation error or crash.
+- [x] Switching DSH between Simplified Chinese and English updates Explorer, settings, editor notices/status, HTML tools, and dialog copy consistently.
+- [x] A `.txt` or unknown text file shows the localized plain-text label in each language without stale copy after switching.
+- [x] Representative interpolation values (cursor, indentation, selected count, icon count, and HTML rename count) render correctly in both languages.
+- [x] A simulated/offline transport failure shows the active-language fallback and does not expose an untranslated key.
+- [x] Unknown Host or external diagnostics remain contained and do not break the surrounding localized UI.
+- [x] Open/edit/Undo/Redo/save/close/reopen and dirty/conflict handling remain unchanged.
+- [x] Explorer create/rename/copy/move/delete, settings persistence, Python/Java/HTML feature gates, and normal exit remain unchanged.
+- [x] Paths containing spaces and Chinese characters render safely in both locales.
+- [x] Offline restart loads all catalogs and existing features without network localization requests.
 
 ## Native Acceptance — Windows
 
-- [ ] DSH Desktop starts and restarts normally with no CodeCraft activation error or crash.
-- [ ] Switching DSH between Simplified Chinese and English updates Explorer, settings, editor notices/status, HTML tools, and dialog copy consistently.
-- [ ] A `.txt` or unknown text file shows the localized plain-text label in each language without stale copy after switching.
-- [ ] Representative interpolation values (cursor, indentation, selected count, icon count, and HTML rename count) render correctly in both languages.
-- [ ] A simulated/offline transport failure shows the active-language fallback and does not expose an untranslated key.
-- [ ] Unknown Host or external diagnostics remain contained and do not break the surrounding localized UI.
-- [ ] Open/edit/Undo/Redo/save/close/reopen and dirty/conflict handling remain unchanged.
-- [ ] Explorer create/rename/copy/move/delete, settings persistence, Python/Java/HTML feature gates, and normal exit remain unchanged.
-- [ ] Paths containing spaces and Chinese characters render safely with Windows path conventions.
-- [ ] Offline restart loads all catalogs and existing features without network localization requests.
+- [x] DSH Desktop starts and restarts normally with no CodeCraft activation error or crash.
+- [x] Switching DSH between Simplified Chinese and English updates Explorer, settings, editor notices/status, HTML tools, and dialog copy consistently.
+- [x] A `.txt` or unknown text file shows the localized plain-text label in each language without stale copy after switching.
+- [x] Representative interpolation values (cursor, indentation, selected count, icon count, and HTML rename count) render correctly in both languages.
+- [x] A simulated/offline transport failure shows the active-language fallback and does not expose an untranslated key.
+- [x] Unknown Host or external diagnostics remain contained and do not break the surrounding localized UI.
+- [x] Open/edit/Undo/Redo/save/close/reopen and dirty/conflict handling remain unchanged.
+- [x] Explorer create/rename/copy/move/delete, settings persistence, Python/Java/HTML feature gates, and normal exit remain unchanged.
+- [x] Paths containing spaces and Chinese characters render safely with Windows path conventions.
+- [x] Offline restart loads all catalogs and existing features without network localization requests.
 
 ## Documentation Review
 
@@ -88,5 +88,5 @@ Profile mutation is not authorized by this request. If the existing local link i
 
 ## Release Gate
 
-Release is out of scope. After implementation and regression pass, native DSH Desktop acceptance remains required. Version metadata, changelog, commit, push, tag, npm publication, and GitHub Release publication require a later explicit release request and the `release-management` workflow.
+The user explicitly authorized the v0.5.7 repository release workflow after reporting the complete native and local Desktop safety matrix passed on 2026-11-17. Release metadata, refreshed automation and package inspection, commit, `master` push, and annotated tag follow the release-management workflow. The user still creates and publishes the GitHub Release manually, which triggers npm publication.
 

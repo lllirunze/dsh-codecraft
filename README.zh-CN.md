@@ -16,7 +16,7 @@
 
 </div>
 
-> **当前状态：** v0.5.6 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成 CodeCraft 品牌 Logo 集成与原生文件 Tab Material 图标验证。
+> **当前状态：** v0.5.7 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成 CodeCraft 模块化、类型安全的中英文国际化架构验证。
 
 ## 功能
 
@@ -73,7 +73,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.6
+dsh plugin --profile desktop add dsh-codecraft@0.5.7
 ```
 
 更新后重启 DSH Desktop。

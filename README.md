@@ -16,7 +16,7 @@
 
 </div>
 
-> **Status:** v0.5.6 validates CodeCraft brand-logo integration and native file-tab Material icons on DSH Desktop 0.2.2-rc.3 across macOS and Windows.
+> **Status:** v0.5.7 validates CodeCraft's modular, typed English and Simplified Chinese localization architecture on DSH Desktop 0.2.2-rc.3 across macOS and Windows.
 
 ## Features
 
@@ -73,7 +73,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.6
+dsh plugin --profile desktop add dsh-codecraft@0.5.7
 ```
 
 Restart DSH Desktop after updating.
