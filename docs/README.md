@@ -32,7 +32,7 @@ Each release has one directory under [`version/`](version/). `design.md` records
 | v0.5.5 | [Design](version/v0.5.5/design.md) | [Validation](version/v0.5.5/validation.md) | Validated shared GitHub Default syntax and six-level bracket colors on macOS and Windows; release authorized |
 | v0.5.6 | [Design](version/v0.5.6/design.md) | [Validation](version/v0.5.6/validation.md) | Validated brand-logo integration and native file-tab Material icon consistency on macOS and Windows; release authorized |
 | v0.5.7 | [Design](version/v0.5.7/design.md) | [Validation](version/v0.5.7/validation.md) | Validated bilingual catalog modularization, typed translation boundaries, and locale-consistent fallbacks on macOS and Windows; release authorized |
-| v0.5.8 | [Design](version/v0.5.8/design.md) | [Validation](version/v0.5.8/validation.md) | Planned eight-language localization plus installed-plugin copy, settings wording/layout, and Explorer disconnected-state corrections |
+| v0.5.8 | [Design](version/v0.5.8/design.md) | [Validation](version/v0.5.8/validation.md) | Validated eight-language localization and five UI corrections; automated and user-reported native acceptance passed; release authorized |
 
 ## Project Guides
 

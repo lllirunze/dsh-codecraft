@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.8] - 2026-11-19
+
+### Added
+
+- Localized CodeCraft-owned interface text and installed-plugin descriptions for all eight DSH Desktop languages, with offline catalogs and live host-language switching.
+- Added eight-language catalog, placeholder, and package-resource checks to the repository gate.
+
+### Changed
+
+- Simplified Material Icons help copy, removed the redundant indentation-character row, and showed indentation widths as numbers.
+- Aligned Python, Java, and HTML assistance descriptions and replaced Explorer's retry page with the ordinary disconnected-session state.
+
+### Fixed
+
+- Localized CodeCraft's HTML diagnostics and local completion descriptions while keeping technical identifiers and external provider text unchanged.
+
 ## [0.5.7] - 2026-11-17
 
 ### Changed

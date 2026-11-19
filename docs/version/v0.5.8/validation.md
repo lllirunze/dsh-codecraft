@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Automated implementation checks passed; native and translation-quality acceptance pending |
+| Status | Automated checks and user-reported native acceptance passed; release authorized |
 | Target | `0.5.8` |
 | Baseline | `0.5.7` at Git `68c7c275b7fff8455bdb8ee9f087f2989f75be8f` |
 | Design | [design.md](design.md) |
@@ -12,11 +12,13 @@ Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for each exec
 
 ## Current implementation evidence
 
-- `PASS` — `npm run check` exited 0 on the current implementation: i18n check covered eight catalogs with 300 keys each; typecheck passed; Vitest passed 34 files and 330 tests; build and artifact verification passed, including 22 Client externals.
-- `PASS` — `npm pack --dry-run --ignore-scripts --json` exited 0 and reported `dsh-codecraft@0.5.7`, 153 files, 1,125,989 bytes, all eight `locale/*.json` metadata files, Host/Client entries, manifest, and bundle patch. Package version stays at the 0.5.7 baseline until the separate release workflow.
+- `PASS` — After the version-only metadata update, `npm run check` exited 0: i18n check covered eight catalogs with 300 keys each; typecheck passed; Vitest passed 34 files and 330 tests; build and artifact verification passed, including 22 Client externals.
+- `PASS` — `npm pack --dry-run --ignore-scripts --json` exited 0 and reported `dsh-codecraft@0.5.8`, 153 files, 1,126,305 bytes, all eight `locale/*.json` metadata files, Host/Client entries, manifest, and bundle patch.
 - `PASS` — `git diff --check` exited 0. `dsh --version` reported `0.2.2-rc.5` for the installed CLI. This is not a Desktop activation receipt.
-- `NOT VERIFIED` — Eight-language copy was machine-assisted and needs human review for accuracy, terminology, plural grammar, and layout; automated key parity alone does not prove translation quality.
-- `NOT VERIFIED` — Complete source-string inventory, native locale switching, installed-plugin metadata presentation, and macOS/Windows Desktop matrices have not been observed. The source audit still needs to confirm that no CodeCraft-owned text bypasses the catalog.
+- `PASS` — On 2026-11-19 the user reported that the complete v0.5.8 acceptance passed. This is a user-reported result for both platform matrices and the translation review; no individual screenshots, logs, or device details were supplied.
+- `PASS` — On 2026-11-19, after the version-only `0.5.8` metadata update, the user explicitly confirmed that the local Desktop safety checks in the follow-up question passed: one enabled local CodeCraft source, full restart, Host/Config/`packageDir`, Client registrations, `/codecraft/api` authentication fence, no new crash, and startup/open smoke. The user supplied no individual logs or receipt text.
+- `PASS` — The local `desktop` profile currently points to one `link:/Users/lllirunze/Documents/dsh-creator-mode/dsh-codecraft` package and one `codecraft` bundle row. Local `dsh --version` returned `0.2.2-rc.5`; no DSH compatibility or CLI version change is included in this release.
+- `NOT APPLICABLE` — The exact Windows DSH CLI version is outside the approved v0.5.8 scope by the user's explicit direction; Windows native behavior was included in the user's complete acceptance report.
 
 ## Requirement traceability
 
@@ -44,7 +46,7 @@ Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for each exec
 - [ ] Test safe interpolation, Unicode paths, complex plural cases, technical identifiers, and no raw `{name}`, `undefined`, or `[object Object]` output.
 - [ ] Test locale switching with the same editor instance, dirty content, cursor, selection, Undo/Redo, settings values, active dialog target, and pending async operation.
 - [ ] Test registration disposal/reentry and no duplicate menu, notification, or locale listener.
-- [ ] Obtain human terminology and high-risk-copy review for all eight languages; inspect long text and accessible names.
+- [x] User reports the complete eight-language acceptance and translation review passed on 2026-11-19; individual review artifacts were not supplied.
 - [ ] Verify installed-plugin CodeCraft introduction uses localized package metadata in all eight languages, including after locale switch and Desktop restart.
 - [ ] Verify Material Icons help copy contains only the on-demand download statement, while installation progress, failure, and retry controls still work.
 - [ ] Verify the indentation-character row is absent, width options show numerals only, and selected/stored width still controls future edits without rewriting existing files.
@@ -61,23 +63,15 @@ Use `PASS`, `FAIL`, `BLOCKED`, `NOT VERIFIED`, or `NOT APPLICABLE` for each exec
 
 ## Local DSH Desktop candidate safety gate
 
-- [ ] Record candidate Git SHA, package version, DSH version, profile, exact install source, and explicit authorization before profile mutation.
-- [ ] Apply through Plugin Manager or the version-verified CLI path, record receipt and one expected source, then fully restart Desktop.
-- [ ] Verify Host row, Config, `packageDir`, Client registrations, authenticated route fence, and no fresh activation error/crash/duplicate registration.
+- [x] Candidate behavior is Git `b46fbb8ef68b218a0e9efb666d9ba43dfbbb43cc`, with release-only package metadata `0.5.8`, profile `desktop`, and the local link above; the user confirmed the post-version-update smoke passed.
+- [x] User confirmed one enabled local CodeCraft source and a full Desktop restart after the version-only metadata update; no receipt text was supplied.
+- [x] User confirmed Host row, Config, `packageDir`, Client registrations, authenticated route fence, startup/open smoke, and no fresh activation error/crash/duplicate registration; no individual logs were supplied.
 
 ## Native acceptance: perform separately on macOS and Windows
 
-For **each** platform, execute every row for `zh`, `en`, `ja`, `es`, `fr`, `de`, `ru`, and `pt`; record actual results by locale. The checklist remains open until both platform matrices are reported.
+For **each** platform, the intended matrix covers `zh`, `en`, `ja`, `es`, `fr`, `de`, `ru`, and `pt`. The user reported the complete matrix passed, without individual case observations.
 
-- [ ] macOS: eight locales across settings, editor/menu/hover, Explorer/dialogs, installation status, diagnostics/errors, tooltips/accessibility, and plugin metadata.
-- [ ] Windows: the same eight-locale matrix independently.
-- [ ] On each platform, switch locale while an edited file is dirty and a dialog/menu or installation task is active; preserve content, selection, Undo/Redo, target, task count, focus, and settings.
-- [ ] On each platform, open/edit/save/close/reopen, file create/rename/copy/move/delete, settings persistence, shortcuts, Python/Java/HTML assistance, and normal exit/restart remain functional.
-- [ ] On each platform, test file names and paths with spaces and Chinese, Japanese, Cyrillic, and accented characters; paths stay unchanged.
-- [ ] On each platform, inspect the minimum usable window size, long German/French strings, Cyrillic/CJK glyphs, keyboard navigation, and destructive-action readability.
-- [ ] On each platform, restart offline and confirm current host locale, bundled UI copy, and no localization network request.
-- [ ] On each platform, check FIX-058-01 through FIX-058-05 in each supported locale, including installation states, settings persistence, and Explorer reconnection.
-- [ ] Exercise planning cases T-058-01 through T-058-15, including injected unsupported locale and missing-key cases where feasible; record any unavailable injection as `BLOCKED`, not `PASS`.
+- [x] User reports complete macOS and Windows eight-language native acceptance on 2026-11-19, including the change-specific and existing-function matrices. Individual case observations were not supplied.
 
 ## Release gate
 

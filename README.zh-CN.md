@@ -16,7 +16,7 @@
 
 </div>
 
-> **当前状态：** v0.5.7 已在 macOS 和 Windows 的 DSH Desktop 0.2.2-rc.3 上完成 CodeCraft 模块化、类型安全的中英文国际化架构验证。
+> **当前状态：** v0.5.8 在 macOS 和 Windows 上支持 CodeCraft 自有界面的中文、英语、日语、西班牙语、法语、德语、俄语和巴西葡萄牙语。
 
 ## 功能
 
@@ -27,6 +27,7 @@
 - 完全本地提供 Java 补全、代码片段、Structured Javadoc、缩进、注释和折叠，无需 JDK 或语言服务器。
 - 离线提供 HTML 补全、诊断、大纲、导航、格式化、Emmet、安全标签/ID 重命名和浏览器预览。
 - 提供持久化的按语言设置；主开关始终可见，Python 详细配置可展开或收起。
+- 跟随 DSH Desktop 的语言设置提供八语言界面，无需单独设置 CodeCraft 语言。
 - 所有编辑均在本地完成，不调用模型、不增加遥测、不上传文件。
 
 ## 环境要求
@@ -73,7 +74,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 也可以安装指定版本来替换当前版本：
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.7
+dsh plugin --profile desktop add dsh-codecraft@0.5.8
 ```
 
 更新后重启 DSH Desktop。

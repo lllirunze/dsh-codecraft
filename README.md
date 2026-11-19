@@ -16,7 +16,7 @@
 
 </div>
 
-> **Status:** v0.5.7 validates CodeCraft's modular, typed English and Simplified Chinese localization architecture on DSH Desktop 0.2.2-rc.3 across macOS and Windows.
+> **Status:** v0.5.8 supports CodeCraft-owned UI in Chinese, English, Japanese, Spanish, French, German, Russian, and Brazilian Portuguese on macOS and Windows.
 
 ## Features
 
@@ -27,6 +27,7 @@
 - Adds fully local Java completion, snippets, Structured Javadoc, indentation, comments, and folding without requiring a JDK or language server.
 - Adds offline HTML completion, diagnostics, Outline, navigation, formatting, Emmet, safe tag/ID rename, and native browser preview.
 - Provides persistent per-language settings with always-visible master switches and collapsible Python details.
+- Follows the DSH Desktop language setting across eight languages without a separate CodeCraft language preference.
 - Keeps editing local, with no model calls, telemetry, or file uploads.
 
 ## Requirements
@@ -73,7 +74,7 @@ dsh plugin --profile desktop update --latest dsh-codecraft
 Alternatively, installing an explicit version replaces the currently selected version:
 
 ```bash
-dsh plugin --profile desktop add dsh-codecraft@0.5.7
+dsh plugin --profile desktop add dsh-codecraft@0.5.8
 ```
 
 Restart DSH Desktop after updating.

@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implementation in progress; automated checks pass, native and translation-quality acceptance pending |
+| Status | Implemented and validated by automation and user-reported native acceptance; release authorized |
 | Target | `0.5.8` |
 | Baseline | `0.5.7` at Git `68c7c275b7fff8455bdb8ee9f087f2989f75be8f` |
 | Release type | Planned patch feature exception, as explicitly defined by the planning source |
