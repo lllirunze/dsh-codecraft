@@ -15,25 +15,14 @@ export interface ExplorerConnectionState {
 
 export interface ExplorerDisconnectedView {
   visible: boolean
-  ended: boolean
-  refreshing: boolean
-  refreshable: boolean
 }
 
 /** Resolve the disconnected card without treating a recovered root as stale. */
 export function explorerDisconnectedView(
   sessionAvailable: boolean,
-  hasWorkspaceRoot: boolean,
   state: ExplorerConnectionState,
 ): ExplorerDisconnectedView {
-  const missingSession = !sessionAvailable && !hasWorkspaceRoot
-  const visible = missingSession || state.phase !== 'connected'
-  return {
-    visible,
-    ended: missingSession || state.phase === 'session-ended',
-    refreshing: state.phase === 'refreshing',
-    refreshable: visible,
-  }
+  return { visible: !sessionAvailable || state.phase !== 'connected' }
 }
 
 /** Classify only true channel/session failures as a disconnected Explorer. */

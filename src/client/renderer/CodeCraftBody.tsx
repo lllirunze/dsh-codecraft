@@ -18,6 +18,8 @@ import {
 } from 'react'
 import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
+import { forceLinting } from '@codemirror/lint'
+import { closeCompletion, completionStatus, startCompletion } from '@codemirror/autocomplete'
 import {
   ApiCallError,
   closeIntelligence,
@@ -354,6 +356,18 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     && htmlStatus !== 'error'
     && phase === 'editing'
 
+  const htmlLocaleMarker = `${t('html.problems')}:${t('settings.description')}`
+  useEffect(() => {
+    const view = viewRef.current
+    if (view === null) return
+    if (languageId === 'html') forceLinting(view)
+    if ((languageId === 'html' || languageId === 'java')
+      && completionStatus(view.state) === 'active') {
+      closeCompletion(view)
+      startCompletion(view)
+    }
+  }, [htmlLocaleMarker, languageId])
+
   const showFeatureNotice = useCallback((text: string, tone: FeatureNotice['tone'] = 'error'): void => {
     if (!mountedRef.current) return
     setFeatureNotice({ tone, text })
@@ -485,7 +499,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const view = viewRef.current
     const parsed = parsedRef.current
     if (view === null || parsed === null) return
-    const language = languageForFile(fileNameOf(parsed.path))
+    const language = languageForFile(fileNameOf(parsed.path), () => tRef.current)
     setJavaEditingAssistance(
       view,
       languageCompartmentRef.current,
@@ -498,7 +512,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const view = viewRef.current
     const parsed = parsedRef.current
     if (view === null || parsed === null) return
-    const language = languageForFile(fileNameOf(parsed.path))
+    const language = languageForFile(fileNameOf(parsed.path), () => tRef.current)
     const nextStatus = setHtmlEditingAssistance(
       view,
       languageCompartmentRef.current,
@@ -875,7 +889,7 @@ export function CodeCraftBody(props: DocumentBodyProps): ReactElement | null {
     const host = hostRef.current
     if (host === null) return false
     if (viewRef.current !== null) return true
-    const language = languageForFile(fileNameOf(parsedRef.current?.path ?? ''))
+    const language = languageForFile(fileNameOf(parsedRef.current?.path ?? ''), () => tRef.current)
     setLanguageId(language.id)
     const completionSource = language.id === 'python'
       ? semanticCompletionSource({

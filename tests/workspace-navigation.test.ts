@@ -110,23 +110,10 @@ describe('Explorer connection classification', () => {
       .toBeUndefined()
   })
 
-  it('keeps the ended-session card refreshable and accepts a recovered root', () => {
-    expect(explorerDisconnectedView(false, false, { phase: 'connected' })).toEqual({
-      visible: true,
-      ended: true,
-      refreshing: false,
-      refreshable: true,
-    })
-    expect(explorerDisconnectedView(false, false, { phase: 'refreshing' })).toMatchObject({
-      visible: true,
-      ended: true,
-      refreshing: true,
-      refreshable: true,
-    })
-    expect(explorerDisconnectedView(false, true, { phase: 'connected' })).toMatchObject({
-      visible: false,
-      refreshable: false,
-    })
+  it('shows the ordinary empty state until the Session reconnects', () => {
+    expect(explorerDisconnectedView(false, { phase: 'connected' })).toEqual({ visible: true })
+    expect(explorerDisconnectedView(false, { phase: 'refreshing' })).toEqual({ visible: true })
+    expect(explorerDisconnectedView(true, { phase: 'connected' })).toEqual({ visible: false })
   })
 
   it('uses the same 11px text size for breadcrumbs and Preview in Browser', () => {

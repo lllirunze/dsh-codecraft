@@ -325,6 +325,11 @@ function verifyClientRegistration(code, platform) {
     'client did not register the native file and directory menu contributions',
   )
   assert(localeRows.length === 1 && localeRows[0].namespace === 'sidebarCodeCraft', 'client locale registration is missing')
+  assert(
+    ['zh', 'en', 'ja', 'es', 'fr', 'de', 'ru', 'pt']
+      .every(language => Object.keys(localeRows[0].dictionaries[language] ?? {}).length > 0),
+    'client locale registration does not contain all eight dictionaries',
+  )
   assert(appendedStyles.length === 1, `client appended ${appendedStyles.length} style elements`)
 }
 

@@ -172,6 +172,12 @@ export function createExplorerPage(
     }, [workspaceAvailable, expanded, load, connection.phase])
 
     useEffect(() => {
+      if (session === undefined || cwd === undefined || connection.phase === 'connected') return
+      const timer = setInterval(() => { void load('') }, 3000)
+      return () => { clearInterval(timer) }
+    }, [session, cwd, connection.phase, load])
+
+    useEffect(() => {
       if (!workspaceAvailable) return
       const close = (): void => { setMenu(null) }
       window.addEventListener('click', close)
@@ -464,19 +470,11 @@ export function createExplorerPage(
       return <div className="cc-explorer cc-explorer-empty">{t('explorer.noWorkspace')}</div>
     }
 
-    const disconnected = explorerDisconnectedView(session !== undefined, rootPath !== '', connection)
+    const disconnected = explorerDisconnectedView(session !== undefined, connection)
     if (disconnected.visible) {
-      const { ended, refreshing } = disconnected
       return (
-        <div className="cc-explorer cc-explorer-disconnected" role="status">
-          <div className="cc-explorer-disconnected-icon" aria-hidden="true">↻</div>
-          <h2>{ended ? t('explorer.disconnected.endedTitle') : t('explorer.disconnected.title')}</h2>
-          <p>{t(connection.detailKey ?? (ended
-            ? 'explorer.disconnected.ended'
-            : 'explorer.disconnected.detail'))}</p>
-          <button type="button" disabled={refreshing} onClick={() => { void refreshExplorer() }}>
-            {refreshing ? t('explorer.disconnected.refreshing') : t('explorer.disconnected.refresh')}
-          </button>
+        <div className="cc-explorer cc-explorer-empty" role="status">
+          {t('explorer.sessionNotConnected')}
         </div>
       )
     }

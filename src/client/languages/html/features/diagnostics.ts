@@ -4,6 +4,7 @@ import { syntaxTree } from '@codemirror/language'
 import { linter, type Diagnostic } from '@codemirror/lint'
 import type { EditorState, Extension } from '@codemirror/state'
 import { getDefaultHTMLDataProvider } from 'vscode-html-languageservice'
+import type { MessageKey, Translate } from '../../../i18n/contract.js'
 
 type TreeNode = ReturnType<typeof syntaxTree>['topNode']
 
@@ -15,6 +16,47 @@ export interface HtmlDiagnostic {
   from: number
   to: number
   message: string
+}
+
+const DIAGNOSTIC_KEYS: Record<string, MessageKey> = {
+  'html.structure.mismatched-close': 'html.diagnostic.mismatchedClose',
+  'html.structure.syntax': 'html.diagnostic.syntax',
+  'html.attribute.duplicate': 'html.diagnostic.duplicateAttribute',
+  'html.attribute.unsupported': 'html.diagnostic.unsupportedAttribute',
+  'html.attribute.invalid-value': 'html.diagnostic.invalidValue',
+  'html.document.doctype': 'html.diagnostic.missingDoctype',
+  'html.document.doctype-invalid': 'html.diagnostic.invalidDoctype',
+  'html.id.duplicate': 'html.diagnostic.duplicateId',
+  'html.id.missing-fragment': 'html.diagnostic.missingFragment',
+  'html.a11y.missing-alt': 'html.diagnostic.missingAlt',
+  'html.a11y.missing-label-target': 'html.diagnostic.missingLabelTarget',
+  'html.deprecated.element': 'html.diagnostic.deprecatedElement',
+  'html.deprecated.attribute': 'html.diagnostic.deprecatedAttribute',
+  'html.structure.invalid-parent': 'html.diagnostic.invalidParent',
+}
+
+/** Localize only CodeCraft-authored diagnostic text; rule IDs stay stable. */
+export function localizedHtmlDiagnostic(diagnostic: HtmlDiagnostic, t: Translate): string {
+  const key = diagnostic.ruleId === 'html.structure.invalid-parent'
+    && !diagnostic.message.includes('inside <')
+    ? 'html.diagnostic.invalidParentDocument'
+    : diagnostic.ruleId.startsWith('html.document.missing-')
+    ? 'html.diagnostic.missingElement'
+    : diagnostic.ruleId.startsWith('html.document.duplicate-')
+      ? 'html.diagnostic.duplicateElement'
+      : DIAGNOSTIC_KEYS[diagnostic.ruleId]
+  if (key === undefined) return diagnostic.message
+  const quoted = [...diagnostic.message.matchAll(/“([^”]+)”/gu)].map(match => match[1] ?? '')
+  const tags = [...diagnostic.message.matchAll(/<([^>]+)>/gu)].map(match => match[1] ?? '')
+  const name = quoted[0] ?? ''
+  const value = quoted[0] ?? ''
+  const parent = diagnostic.ruleId === 'html.structure.invalid-parent'
+    ? (tags[1] === undefined ? 'the document' : `<${tags[1]}>`)
+    : ''
+  const invalidValueName = diagnostic.ruleId === 'html.attribute.invalid-value'
+    ? / for ([^.]*)\.$/u.exec(diagnostic.message)?.[1] ?? ''
+    : name
+  return t(key, { name: invalidValueName, value, tag: tags[0] ?? '', parent })
 }
 
 interface HtmlAttributeRecord {
@@ -319,13 +361,15 @@ export function analyzeHtml(state: EditorState): HtmlDiagnostic[] {
 }
 
 /** CodeMirror ranges, tooltips, and lint navigation for the active HTML editor. */
-export function htmlDiagnosticExtensions(): Extension[] {
+export function htmlDiagnosticExtensions(getTranslate?: () => Translate): Extension[] {
   return [
     linter(view => analyzeHtml(view.state).map((diagnostic): Diagnostic => ({
       from: diagnostic.from,
       to: diagnostic.to,
       severity: diagnostic.severity,
-      message: diagnostic.message,
+      message: getTranslate === undefined
+        ? diagnostic.message
+        : localizedHtmlDiagnostic(diagnostic, getTranslate()),
       source: diagnostic.ruleId,
     })), { delay: 300 }),
   ]

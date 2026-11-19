@@ -229,13 +229,6 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
         <div className="dsh-codecraft-settings-group-title">{t('settings.group.indentation')}</div>
         <div className="dsh-codecraft-settings-card">
           <div className="dsh-codecraft-settings-row">
-            <div>
-              <div className="dsh-codecraft-settings-label">{t('settings.indentCharacter.label')}</div>
-              <div className="dsh-codecraft-settings-hint">{t('settings.indentCharacter.hint')}</div>
-            </div>
-            <span className="dsh-codecraft-settings-value">{t('settings.indentCharacter.spaces')}</span>
-          </div>
-          <div className="dsh-codecraft-settings-row">
             <label htmlFor="dsh-codecraft-indent-size">
               <span className="dsh-codecraft-settings-label">{t('settings.indentSize.label')}</span>
               <span className="dsh-codecraft-settings-hint">{t('settings.indentSize.hint')}</span>
@@ -250,7 +243,7 @@ export function CodeCraftSettingsCard({ view, t }: SettingsCardProps): ReactElem
               }}
             >
               {INDENT_SIZE_OPTIONS.map(size => (
-                <option key={size} value={size}>{t('settings.indentSize.spaces', { size })}</option>
+                <option key={size} value={size}>{size}</option>
               ))}
             </select>
           </div>

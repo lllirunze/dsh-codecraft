@@ -1,9 +1,18 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { ApiCallError, localizedErrorMessage } from '../src/client/api.js'
+import type { CompletionContext } from '@codemirror/autocomplete'
+import { localizeCompletionSource } from '../src/client/i18n/completion-details.js'
 import {
+  bindCodeCraftTranslator,
   CODECRAFT_LOCALE_NAMESPACE,
   en,
   zh,
+  ja,
+  es,
+  fr,
+  de,
+  ru,
+  pt,
   type MessageKey,
   type Translate,
 } from '../src/client/i18n/index.js'
@@ -50,10 +59,12 @@ describe('CodeCraft locale catalogs', () => {
     }
   })
 
-  it('keeps exact key and placeholder parity between English and Chinese', () => {
-    expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort())
-    for (const key of Object.keys(en) as MessageKey[]) {
-      expect(placeholders(zh[key]), key).toEqual(placeholders(en[key]))
+  it('keeps exact key and placeholder parity across all eight locales', () => {
+    for (const catalog of [zh, ja, es, fr, de, ru, pt]) {
+      expect(Object.keys(catalog).sort()).toEqual(Object.keys(en).sort())
+      for (const key of Object.keys(en) as MessageKey[]) {
+        expect(placeholders(catalog[key]), key).toEqual(placeholders(en[key]))
+      }
     }
   })
 
@@ -80,6 +91,36 @@ describe('CodeCraft locale catalogs', () => {
     expect(localizedErrorMessage(new ApiCallError('denied', 'Host detail'), enT)).toBe('Host detail')
     expect(localizedErrorMessage(new Error('technical detail'), enT, 'breadcrumb.readFailed'))
       .toBe('This folder could not be read.')
+  })
+
+  it('uses readable English when DSH has no translated key or binding fails', () => {
+    const missing = bindCodeCraftTranslator({
+      bind: () => key => key,
+      register: () => () => {},
+    })
+    expect(missing('status.saved')).toBe('Saved')
+    expect(missing('status.cursor', { line: 2, column: 4 })).toBe('Ln 2, Col 4')
+
+    const failed = bindCodeCraftTranslator({
+      bind: () => { throw new Error('unavailable') },
+      register: () => () => {},
+    })
+    expect(failed('action.save')).toBe('Save')
+  })
+
+  it('translates only CodeCraft-owned completion descriptions', () => {
+    const source = localizeCompletionSource(
+      () => ({ from: 0, options: [
+        { label: 'psvm', detail: 'main method' },
+        { label: 'external', detail: 'Provided by a language server' },
+      ] }),
+      () => translator(zh),
+    )
+    const result = source({} as CompletionContext)
+    expect(result).not.toBeInstanceOf(Promise)
+    if (result === null || result instanceof Promise) throw new Error('Expected a synchronous completion result')
+    expect(result.options[0]?.detail).toBe('主方法')
+    expect(result.options[1]?.detail).toBe('Provided by a language server')
   })
 })
 

@@ -7,6 +7,7 @@ export const zhWorkspace = {
   'explorer.loading': '正在载入目录…',
   'explorer.empty': '此目录为空',
   'explorer.noWorkspace': '当前会话没有工作区目录。',
+  'explorer.sessionNotConnected': '当前会话尚未连接。',
   'explorer.disconnected.title': '会话连接已断开',
   'explorer.disconnected.detail': '暂时无法访问当前工作区文件。你可以尝试刷新文件管理页面以恢复连接。',
   'explorer.disconnected.network': '无法连接工作区文件服务，请检查会话状态后重试。',

@@ -1,7 +1,8 @@
 import { EditorState } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
 import { htmlEditorLanguage } from '../src/client/languages/html/index.js'
-import { analyzeHtml } from '../src/client/languages/html/features/diagnostics.js'
+import { analyzeHtml, localizedHtmlDiagnostic } from '../src/client/languages/html/features/diagnostics.js'
+import { en, zh, type Translate } from '../src/client/i18n/index.js'
 
 function state(doc: string): EditorState {
   return EditorState.create({ doc, extensions: [htmlEditorLanguage.createSupport()] })
@@ -12,6 +13,20 @@ function rules(doc: string): string[] {
 }
 
 describe('HTML diagnostics', () => {
+  it('localizes CodeCraft rule messages while preserving their identifiers', () => {
+    const diagnostic = analyzeHtml(state('<!doctype html><html><body><img src="x"></body></html>'))
+      .find(item => item.ruleId === 'html.a11y.missing-alt')
+    expect(diagnostic).toBeDefined()
+    const translate = (catalog: typeof en | typeof zh): Translate => (key, params) =>
+      catalog[key].replace(/\{([^{}]+)\}/g, (_match, name: string) => String(params?.[name] ?? ''))
+    expect(localizedHtmlDiagnostic(diagnostic!, translate(en))).toContain('alt')
+    expect(localizedHtmlDiagnostic(diagnostic!, translate(zh))).toContain('请为此图片')
+    expect(diagnostic?.ruleId).toBe('html.a11y.missing-alt')
+    const root = analyzeHtml(state('<head><title>x</title></head>'))
+      .find(item => item.ruleId === 'html.structure.invalid-parent')
+    expect(root).toBeDefined()
+    expect(localizedHtmlDiagnostic(root!, translate(zh))).toContain('文档根级')
+  })
   it('reports mismatched explicit closing tags with an exact error range', () => {
     const doc = '<div></span>'
     const diagnostics = analyzeHtml(state(doc))

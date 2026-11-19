@@ -141,8 +141,8 @@ describe('resolveHtmlEditingAssistanceSettings', () => {
   })
 
   it('provides the required English and Chinese switch and status text', () => {
-    expect(en['settings.html.enabled.label']).toBe('Enable HTML Editing Assistance')
-    expect(zh['settings.html.enabled.label']).toBe('启用 HTML 编辑辅助')
+    expect(en['settings.html.enabled.label']).toBe('HTML Editing Assistance')
+    expect(zh['settings.html.enabled.label']).toBe('HTML 编辑辅助')
     expect(en['status.html.ready']).toBe('HTML: Ready')
     expect(en['status.html.disabled']).toBe('HTML: Disabled')
     expect(en['status.html.error']).toBe('HTML: Error')

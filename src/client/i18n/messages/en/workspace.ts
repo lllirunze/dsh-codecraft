@@ -7,6 +7,7 @@ export const enWorkspace = {
   'explorer.loading': 'Loading folder…',
   'explorer.empty': 'This folder is empty',
   'explorer.noWorkspace': 'This session has no workspace folder.',
+  'explorer.sessionNotConnected': 'The current session is not connected.',
   'explorer.disconnected.title': 'Session disconnected',
   'explorer.disconnected.detail': 'The current workspace files are temporarily unavailable. Refresh File Management to try reconnecting.',
   'explorer.disconnected.network': 'The workspace file service is unavailable. Check the Session and try again.',

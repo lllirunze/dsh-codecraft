@@ -2,7 +2,7 @@
 
 import type { ReactElement } from 'react'
 import type { Text } from '@codemirror/state'
-import type { HtmlDiagnostic } from '../languages/html/features/diagnostics.js'
+import { localizedHtmlDiagnostic, type HtmlDiagnostic } from '../languages/html/features/diagnostics.js'
 import type { Translate } from '../i18n/contract.js'
 import { ROOT_CLASS } from '../theme.js'
 
@@ -49,7 +49,7 @@ export function HtmlProblemsPanel(props: HtmlProblemsPanelProps): ReactElement {
                 >
                   <span className={`${ROOT_CLASS}-problem-severity`} aria-hidden="true" />
                   <span className={`${ROOT_CLASS}-problem-content`}>
-                    <span>{diagnostic.message}</span>
+                    <span>{localizedHtmlDiagnostic(diagnostic, props.t)}</span>
                     <small>{diagnostic.severity} · {diagnostic.ruleId} · {location(props.document, diagnostic)}</small>
                   </span>
                 </button>

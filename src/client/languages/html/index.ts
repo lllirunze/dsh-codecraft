@@ -29,10 +29,10 @@ export const htmlEditorLanguage: EditorLanguageAdapter = {
   label: 'HTML',
   extensions: ['html', 'htm'],
   createSupport: htmlSupport,
-  createEditorExtensions: () => [
+  createEditorExtensions: getTranslate => [
     htmlTagClosingExtensions(),
     htmlIndentationExtensions(),
-    htmlDiagnosticExtensions(),
+    htmlDiagnosticExtensions(getTranslate),
     htmlStructureExtensions(),
     htmlHoverExtensions(),
     htmlFormattingExtensions(),

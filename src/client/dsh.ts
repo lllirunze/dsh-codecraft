@@ -15,7 +15,8 @@ import type { Translate } from './i18n/contract.js'
 export interface LocaleService {
   register(
     namespace: string,
-    dictionaries: { zh: Record<string, string>; en: Record<string, string> },
+    dictionaries: { zh: Record<string, string>; en: Record<string, string> } &
+      Partial<Record<'ja' | 'es' | 'fr' | 'de' | 'ru' | 'pt', Record<string, string>>>,
   ): () => void
   bind(namespace: string): (key: string, params?: Record<string, string | number>) => string
 }

@@ -18,6 +18,12 @@ import {
   CODECRAFT_LOCALE_NAMESPACE,
   en,
   zh,
+  ja,
+  es,
+  fr,
+  de,
+  ru,
+  pt,
 } from '../i18n/index.js'
 import { codecraftCss } from '../theme.js'
 import { navigationCoordinator } from '../navigation/coordinator.js'
@@ -84,10 +90,14 @@ export function apply(ctx: ClientContext): void {
     }
   }, 'dsh-codecraft: editor theme')
 
-  ctx.effect(
-    () => ctx.locale.register(CODECRAFT_LOCALE_NAMESPACE, { zh, en }),
-    'dsh-codecraft: dictionaries',
-  )
+  ctx.effect(() => {
+    try {
+      return ctx.locale.register(CODECRAFT_LOCALE_NAMESPACE, { zh, en, ja, es, fr, de, ru, pt })
+    } catch (error) {
+      console.warn('CodeCraft locale registration failed; using English', error)
+      return () => {}
+    }
+  }, 'dsh-codecraft: dictionaries')
   const t = bindCodeCraftTranslator(ctx.locale)
 
   // Reveal waits for DSH's public Session Remote instead of hard-depending on

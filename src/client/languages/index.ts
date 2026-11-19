@@ -16,7 +16,8 @@ import type { Extension } from '@codemirror/state'
 import type { CompletionSource } from '@codemirror/autocomplete'
 import { CODECRAFT_EDITABLE_EXTENSIONS } from '../../protocol.js'
 import type { EditorLanguageAdapter } from './EditorLanguageAdapter.js'
-import type { MessageKey } from '../i18n/contract.js'
+import type { MessageKey, Translate } from '../i18n/contract.js'
+import { localizeCompletionSource } from '../i18n/completion-details.js'
 import { LanguageRegistry } from './registry.js'
 import { javaEditorLanguage } from './java/index.js'
 import { htmlEditorLanguage } from './html/index.js'
@@ -83,7 +84,7 @@ function resolveAdapter(name: string): EditorLanguageAdapter | undefined {
 }
 
 /** Pick the status label and CodeMirror support for one filename. */
-export function languageForFile(name: string): FileLanguage {
+export function languageForFile(name: string, getTranslate?: () => Translate): FileLanguage {
   const adapter = resolveAdapter(name)
   if (adapter === undefined) return PLAIN
   try {
@@ -91,8 +92,12 @@ export function languageForFile(name: string): FileLanguage {
       id: adapter.id,
       label: adapter.label,
       support: adapter.createSupport(),
-      editorExtensions: adapter.createEditorExtensions(),
-      ...(adapter.completionSource === undefined ? {} : { completionSource: adapter.completionSource }),
+      editorExtensions: adapter.createEditorExtensions(getTranslate),
+      ...(adapter.completionSource === undefined ? {} : {
+        completionSource: getTranslate === undefined
+          ? adapter.completionSource
+          : localizeCompletionSource(adapter.completionSource, getTranslate),
+      }),
     }
   } catch {
     return {
